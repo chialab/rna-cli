@@ -3,14 +3,13 @@ const path = require('path');
 const rollup = require('rollup');
 const Proteins = require('@chialab/proteins');
 const paths = require('../../lib/paths.js');
-const utils = require('../../lib/utils.js');
 const optionsUtils = require('../../lib/options.js');
 const importer = require('../../lib/import.js');
 
 const resolve = require('rollup-plugin-node-resolve');
 const common = require('rollup-plugin-commonjs');
 const babel = require('rollup-plugin-babel');
-const sass = require('rollup-plugin-sass');
+const sass = require('rollup-plugin-sass-modules');
 const uglify = require('rollup-plugin-uglify');
 const json = require('rollup-plugin-json');
 const url = require('rollup-plugin-url');
@@ -18,7 +17,6 @@ const jsx = require('rollup-plugin-external-jsx');
 
 const postcss = require('postcss');
 const autoprefixer = require('autoprefixer');
-const sassImporter = require('sass-module-importer');
 
 function camelize(str) {
     return str.split('/').pop().replace(/(^[a-z0-9]|[-_]([a-z0-9]))/g, (g) => (g[1] || g[0]).toUpperCase());
@@ -59,15 +57,6 @@ function getBabelConfig() {
     };
 }
 
-function customCommon() {
-    let plugin = common();
-    let transform = plugin.transform;
-    plugin.transform = function(code, id) {
-        return transform.call(plugin, code, id);
-    };
-    return plugin;
-}
-
 const bundles = {};
 
 function getConfig(app, options) {
@@ -89,13 +78,15 @@ function getConfig(app, options) {
     return global.Promise.resolve({
         name: options.name,
         input: options.input,
-        sourcemap: options.map !== false,
+        file: options.output,
+        sourcemap: options.map !== false ? 'inline' : false,
         format: 'umd',
         strict: false,
+        // https://github.com/rollup/rollup/issues/1626
         cache: bundles[options.input],
         plugins: [
             resolve(),
-            customCommon(),
+            common(),
             json(),
             url({
                 limit: 10 * 1000 * 1024,
@@ -105,10 +96,6 @@ function getConfig(app, options) {
                 ],
             }),
             sass({
-                output: path.join(
-                    path.dirname(options.output),
-                    `${path.basename(options.output, path.extname(options.output))}.css`
-                ),
                 processor: (css) =>
                     postcss(
                         [
@@ -120,9 +107,13 @@ function getConfig(app, options) {
                     '**/*.{css,scss,sass}',
                 ],
                 options: {
-                    importer: sassImporter.sync({
-                        basedir: paths.cwd,
-                    }),
+                    outFile: path.join(
+                        path.dirname(options.output),
+                        `${path.basename(options.output, path.extname(options.output))}.css`
+                    ),
+                    sourceMap: options.map !== false,
+                    sourceMapEmbed: options.map !== false,
+                    extensions: ['css', 'sass', 'scss'],
                     outputStyle: options.production ? 'compressed' : 'expanded',
                 },
             }),
@@ -167,7 +158,7 @@ function bundle(app, options) {
             path.basename(options.input, path.extname(options.input))
         );
     }
-    let task = app.log(`Bundling ${options.name}`, true);
+    let task = app.log('bundling...', true);
     return getConfig(app, options)
         .then((config) =>
             rollup.rollup(config)
@@ -176,21 +167,10 @@ function bundle(app, options) {
                     bundler.output = options.output;
                     bundler.name = options.name;
                     bundles[options.input] = bundler;
-                    return bundler.generate(config)
-                        .then((res) => {
-                            utils.ensureDir(options.output);
-                            fs.writeFileSync(
-                                options.output,
-                                res.code
-                            );
-                            if (options.map !== false) {
-                                fs.writeFileSync(
-                                    `${options.output}.map`,
-                                    res.map
-                                );
-                            }
+                    return bundler.write(config)
+                        .then(() => {
                             task();
-                            app.log(`📦  Bundled ${options.name}`.green);
+                            app.log('bundle ready!'.bold);
                             return global.Promise.resolve(bundler);
                         });
                 })

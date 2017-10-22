@@ -17,9 +17,7 @@ function queue(app,cmd, options) {
     return q;
 }
 
-let bundles;
-
-function findInBundles(file) {
+function findInBundles(bundles, file) {
     let res = [];
     Object.keys(bundles).forEach((bundleName) => {
         let bundle = bundles[bundleName];
@@ -33,6 +31,19 @@ function findInBundles(file) {
     return res;
 }
 
+let interval;
+
+function wait(clb, time) {
+    return new global.Promise((resolve, reject) => {
+        clearInterval(interval);
+        interval = setTimeout(() => {
+            clb()
+                .then((res) => resolve(res))
+                .catch((err) => reject(err));
+        }, time);
+    });
+}
+
 module.exports = (program) => {
     program
         .command('watch')
@@ -40,78 +51,77 @@ module.exports = (program) => {
         .help(`It uses \`chokidar\` to watch the project files changes, additions or remotions.
 Everytime a change has been triggered, it runs the \`lint\` and \`build\` commands.`)
         .option('[file1] [file2] [package1] [package2] [package3]', 'The packages or files to watch.')
+        .option('--exclude', 'Files to exclude (string, glob, array).')
         .option('--no-lint', 'Disable lint on changes.')
         .option('--no-build', 'Disable build on changes.')
-        .option('--exclude', 'Files to exclude (string, glob, array).')
         .action((app, options) => {
             if (!cwd) {
-                app.log('No project found.'.red);
+                app.log('no project found.'.red);
                 return global.Promise.reject();
             }
-            let buildPromise = global.Promise.resolve({});
-            if (options.build !== false) {
-                buildPromise = app.exec('build', options);
+            let bundles = options.bundles || {};
+            let filter = optionsUtils.handleArguments(options);
+            let watch = filter.files
+                .concat(Object.values(filter.packages).map((pkg) => pkg.path))
+                .filter((p) => fs.existsSync(p))
+                .map((p) => {
+                    if (fs.statSync(p).isFile()) {
+                        return p;
+                    }
+                    return path.join(p, '**/*');
+                });
+            app.log('watching files...'.bold);
+            let ignored = options.exclude || [];
+            if (!Array.isArray(ignored)) {
+                ignored = [ignored];
             }
-            return buildPromise.then((buildBundles) => {
-                bundles = buildBundles;
-                let filter = optionsUtils.handleArguments(options);
-                let watch = filter.files
-                    .concat(Object.values(filter.packages).map((pkg) => pkg.path))
-                    .filter((p) => fs.existsSync(p))
-                    .map((p) => {
-                        if (fs.statSync(p).isFile()) {
-                            return p;
-                        }
-                        return path.join(p, '**/*');
-                    });
-                let task = app.log('Watching files...'.bold, true);
-                let ignored = options.exclude || [];
-                if (!Array.isArray(ignored)) {
-                    ignored = [ignored];
+            ignored = ignored.map((p) => path.resolve(cwd, p));
+            ignored.push(/(^\.|\/\.)/);
+            chokidar.watch(watch, {
+                ignored,
+                ignoreInitial: true,
+            }).on('all', (event, p) => {
+                let res = wait(() => global.Promise.resolve(), 200);
+                if (event === 'change') {
+                    app.log(`${formatPath(p)} changed.`.grey);
+                    if (options.lint !== false) {
+                        let opts = Proteins.clone(options);
+                        opts.arguments = [p];
+                        opts.warning = false;
+                        res = wait(() => queue(app, 'lint', opts), 200);
+                    }
+                } else if (event === 'add') {
+                    app.log(`${formatPath(p)} created.`.grey);
+                    if (options.lint !== false) {
+                        let opts = Proteins.clone(options);
+                        opts.arguments = [p];
+                        opts.warning = false;
+                        res = wait(() => queue(app, 'lint', opts), 200);
+                    }
+                } else if (event === 'unlink') {
+                    app.log(`${formatPath(p)} removed.`.grey);
                 }
-                ignored = ignored.map((p) => path.resolve(cwd, p));
-                ignored.push(/(^\.|\/\.)/);
-                chokidar.watch(watch, {
-                    ignored,
-                    ignoreInitial: true,
-                }).on('all', (event, p) => {
-                    if (task) {
-                        task();
-                        task = null;
-                    }
-                    let res = global.Promise.resolve();
-                    if (event === 'change') {
-                        app.log(`${formatPath(p)} changed.`.yellow);
-                        if (options.lint !== false) {
-                            let opts = Proteins.clone(options);
-                            opts.arguments = [p];
-                            opts.warning = false;
-                            res = queue(app, 'lint', opts);
-                        }
-                    } else if (event === 'add') {
-                        app.log(`${formatPath(p)} created.`.green);
-                        if (options.lint !== false) {
-                            let opts = Proteins.clone(options);
-                            opts.arguments = [p];
-                            opts.warning = false;
-                            res = queue(app, 'lint', opts);
-                        }
-                    } else if (event === 'unlink') {
-                        app.log(`${formatPath(p)} removed.`.red);
-                    }
-                    res.then((lintReports = []) => {
+                res
+                    .then((lintReports = []) => {
                         if (lintReports.length === 0 && options.build !== false) {
                             let opts = Proteins.clone(options);
-                            opts.arguments = findInBundles(p);
+                            opts.arguments = findInBundles(bundles, p);
                             if (opts.arguments.length) {
-                                return queue(app, 'build', opts);
+                                return queue(app, 'build', opts)
+                                    .then((resBundles) => {
+                                        bundles = resBundles;
+                                    });
                             }
                         }
                         return global.Promise.resolve();
-                    }).then(() => {
-                        task = app.log('Watching files...'.bold, true);
+                    })
+                    .catch((err) => {
+                        if (err) {
+                            // eslint-disable-next-line
+                            console.error(err);
+                        }
+                        return global.Promise.resolve();
                     });
-                });
             });
         });
 };

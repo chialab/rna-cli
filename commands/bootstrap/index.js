@@ -8,19 +8,19 @@ module.exports = (program) => {
         .help('A simple alias to `yarn install` command.')
         .action((app) => {
             if (!paths.cwd) {
-                app.log('No project found.'.red);
+                app.log('no project found.'.red);
                 return global.Promise.reject();
             }
-            let task = app.log('Syncing dependencies...', true);
+            let task = app.log('syncing dependencies...', true);
             return manager.update()
                 .then((res) => {
                     task();
-                    app.log('Dependencies successfully updated.'.green);
+                    app.log('dependencies successfully updated.'.green);
                     return global.Promise.resolve(res);
                 })
                 .catch((err) => {
                     task();
-                    app.log('Failed to update dependencies.'.red);
+                    app.log('failed to update dependencies.'.red);
                     return global.Promise.reject(err);
                 });
         });

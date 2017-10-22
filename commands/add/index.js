@@ -10,23 +10,23 @@ module.exports = (program) => {
         .option('module1 [module2] [module3]', 'The modules to add')
         .action((app, options = {}) => {
             if (!paths.cwd) {
-                app.log('No project found.'.red);
+                app.log('no project found.'.red);
                 return global.Promise.reject();
             }
             let args = options.arguments || [];
             if (args.length === 0) {
-                app.log(`${utils.extractRandom(['🤷‍', '🤷‍♂️'])} Specify the package to add.`.yellow);
+                app.log(`${utils.extractRandom(['🤷‍', '🤷‍♂️'])} specify the package to add.`.yellow);
             } else {
-                let task = app.log('Downloading packages...', true);
+                let task = app.log('downloading packages...', true);
                 return manager.add(...options.arguments)
                     .then((res) => {
                         task();
-                        app.log('Packages successfully added.'.green);
+                        app.log('packages successfully added.'.green);
                         return global.Promise.resolve(res);
                     })
                     .catch((err) => {
                         task();
-                        app.log('Failed to add packages.'.red);
+                        app.log('failed to add packages.'.red);
                         return global.Promise.reject(err);
                     });
             }
