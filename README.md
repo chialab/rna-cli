@@ -4,7 +4,7 @@ A CLI for common projects.
 
 ## Install
 ```sh
-$ npm install -g git+ssh://git@gitlab.com:chialab/rna-cli
+$ npm install -g git+https://git@gitlab.com/chialab/rna-cli
 ```
 
 ## Usage
