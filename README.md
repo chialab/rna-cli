@@ -23,10 +23,10 @@ $ rna
 * [x] **build** - Build the project.
 * [x] **watch** - Watch project files.
 * [x] **serve** - Setup a server for your project.
-* [x] **start** - `yarn/npm start` alias
-* [x] **run** - `yarn/npm run` alias
 * [ ] **test** - Run project tests.
 * [ ] **publish** - Publish to NPM.
+* [x] **start** - `yarn/npm start` alias
+* [x] **run** - `yarn/npm run` alias
 
 ## Principles
 
