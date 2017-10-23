@@ -10,12 +10,11 @@ module.exports = (program) => {
         .command('serve')
         .description('Setup a server for your project.')
         .option('[file]', 'The server base directory.')
-        .option('--public', 'The server base directory.')
         .option('--port', 'The server port.')
         .option('--watch', 'Should watch directory')
         .action((app, options = {}) =>
             new global.Promise((resolve, reject) => {
-                let base = options.public || options.arguments[0] || './public';
+                let base = options.arguments[0] || './public';
                 base = path.join(cwd, base);
                 let config = {
                     server: {

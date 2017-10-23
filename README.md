@@ -24,7 +24,6 @@ $ rna
 * [x] **watch** - Watch project files.
 * [x] **serve** - Setup a server for your project.
 * [ ] **test** - Run project tests.
-* [x] **start** - Update dependencies and serve the project.
 * [ ] **publish** - Publish to NPM.
 
 ## Principles
@@ -68,17 +67,17 @@ Progetti monorepo:
 
 * `rna [cmd]` (senza argomenti)
 
-        # Esempio: pubblica i pacchetti
+        # Esempio: pubblica i progetti
         $rna publish
 
-* `rna [cmd] $package1.name` (singolo pacchetto)
+* `rna [cmd] $package1.name` (singolo progetto)
 
-        # Esempio: testa un pacchetto
+        # Esempio: testa un progetto
         $ rna test @chialab/sidenav
 
-* `rna [cmd] $package1.name $package2.name` (pacchetti multipli)
+* `rna [cmd] $package1.name $package2.name` (progetti multipli)
 
-        # Esempio: esegue la build di più pacchetti
+        # Esempio: esegue la build di più progetti
         $ rna build @chialab/sidenav @chialab/dialog
 
 * `rna [cmd] file` (singolo file)
