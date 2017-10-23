@@ -2,32 +2,37 @@ const fs = require('fs');
 const path = require('path');
 const browserSync = require('browser-sync').create();
 const cwd = require('../../lib/paths.js').cwd;
+const optionsUtils = require('../../lib/options.js');
 const chokidar = require('chokidar');
 const md5File = require('md5-file');
+const commondir = require('commondir');
 
 module.exports = (program) => {
     program
         .command('serve')
         .description('Setup a server for your project.')
-        .option('[file]', 'The server base directory.')
+        .option('[file]', 'The server directory.')
         .option('--port', 'The server port.')
-        .option('--watch', 'Should watch directory')
+        .option('--watch', 'Should watch server directory.')
+        .option('--directory', 'Should list directories.')
         .action((app, options = {}) =>
             new global.Promise((resolve, reject) => {
-                let base = options.arguments[0] || './public';
-                base = path.join(cwd, base);
+                let filter = optionsUtils.handleArguments(options);
+                let base = filter.files.length ? commondir(filter.files) : './public';
+                base = path.resolve(cwd, base);
                 let config = {
                     server: {
                         baseDir: base,
+                        directory: !!options.directory,
                     },
-                    files: [],
+                    // files: [],
                     ghostMode: false,
                     logLevel: 'silent',
                     logFileChanges: false,
                     open: false,
                     xip: true,
                     injectChanges: true,
-                    middleware: [
+                    middleware: !options.directory && [
                         (req, res, next) => {
                             if (!req.xhr && req.headers && req.headers.accept &&
                                 req.headers.accept.indexOf('text/html') !== -1) {
@@ -40,27 +45,28 @@ module.exports = (program) => {
                 if (options.port) {
                     config.port = options.port;
                 }
-
-                let hashes = {};
-                let ready = false;
-                chokidar.watch(base, {}).on('all', (event, p) => {
-                    if (event === 'unlink') {
-                        delete hashes[p];
-                    } else if (fs.statSync(p).isFile()) {
-                        let hash = md5File.sync(p);
-                        if (ready && hashes[p] !== hash) {
-                            browserSync.reload(
-                                p.replace(base, '')
-                            );
-                            setTimeout(() => {
-                                app.log(`${p.replace(base, '')} injected.`.cyan);
-                            }, 100);
+                if (options.watch) {
+                    let hashes = {};
+                    let ready = false;
+                    chokidar.watch(options.arguments, {}).on('all', (event, p) => {
+                        if (event === 'unlink') {
+                            delete hashes[p];
+                        } else if (fs.statSync(p).isFile()) {
+                            let hash = md5File.sync(p);
+                            if (ready && hashes[p] !== hash) {
+                                browserSync.reload(
+                                    p.replace(base, '')
+                                );
+                                setTimeout(() => {
+                                    app.log(`${p.replace(base, '')} injected.`.cyan);
+                                }, 100);
+                            }
+                            hashes[p] = hash;
                         }
-                        hashes[p] = hash;
-                    }
-                }).on('ready', () => {
-                    ready = true;
-                });
+                    }).on('ready', () => {
+                        ready = true;
+                    });
+                }
 
                 browserSync.init(config, (nil, server) => {
                     if (nil) {
