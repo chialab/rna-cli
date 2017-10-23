@@ -4,6 +4,7 @@ const optionsUtils = require('../../lib/options.js');
 const Proteins = require('@chialab/proteins');
 const chokidar = require('chokidar');
 const cwd = require('../../lib/paths').cwd;
+const bundles = require('../../lib/bundles');
 
 function formatPath(p) {
     return p.replace(cwd, '').replace(/^\/*/, '');
@@ -59,7 +60,6 @@ Everytime a change has been triggered, it runs the \`lint\` and \`build\` comman
                 app.log('no project found.'.red);
                 return global.Promise.reject();
             }
-            let bundles = options.bundles || {};
             let filter = optionsUtils.handleArguments(options);
             let watch = filter.files
                 .concat(Object.values(filter.packages).map((pkg) => pkg.path))
@@ -105,12 +105,9 @@ Everytime a change has been triggered, it runs the \`lint\` and \`build\` comman
                     .then((lintReports = []) => {
                         if (lintReports.length === 0 && options.build !== false) {
                             let opts = Proteins.clone(options);
-                            opts.arguments = findInBundles(bundles, p);
+                            opts.arguments = findInBundles(bundles.generated, p);
                             if (opts.arguments.length) {
-                                return queue(app, 'build', opts)
-                                    .then((resBundles) => {
-                                        bundles = resBundles;
-                                    });
+                                return queue(app, 'build', opts);
                             }
                         }
                         return global.Promise.resolve();

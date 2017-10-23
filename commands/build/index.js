@@ -5,6 +5,7 @@ const Proteins = require('@chialab/proteins');
 const paths = require('../../lib/paths.js');
 const optionsUtils = require('../../lib/options.js');
 const importer = require('../../lib/import.js');
+const bundles = require('../../lib/bundles.js');
 
 const resolve = require('rollup-plugin-node-resolve');
 const common = require('rollup-plugin-commonjs');
@@ -38,6 +39,7 @@ function getBabelConfig() {
         return JSON.parse(fs.readFileSync(localConf), 'utf8');
     }
     return {
+        exclude: [],
         compact: false,
         presets: [
             [require('babel-preset-env'), {
@@ -48,7 +50,6 @@ function getBabelConfig() {
             }],
         ],
         plugins: [
-            require('babel-plugin-external-helpers'),
             require('babel-plugin-transform-inline-environment-variables'),
             [require('babel-plugin-transform-react-jsx'), {
                 pragma: 'IDOM.h',
@@ -56,8 +57,6 @@ function getBabelConfig() {
         ],
     };
 }
-
-const bundles = {};
 
 function getConfig(app, options) {
     let localConf = path.join(paths.cwd, 'rollup.config.js');
@@ -83,10 +82,9 @@ function getConfig(app, options) {
         format: 'umd',
         strict: false,
         // https://github.com/rollup/rollup/issues/1626
-        cache: bundles[options.input],
+        cache: bundles.generated[options.input],
         plugins: [
             resolve(),
-            common(),
             json(),
             url({
                 limit: 10 * 1000 * 1024,
@@ -113,7 +111,6 @@ function getConfig(app, options) {
                     ),
                     sourceMap: options.map !== false,
                     sourceMapEmbed: options.map !== false,
-                    extensions: ['css', 'sass', 'scss'],
                     outputStyle: options.production ? 'compressed' : 'expanded',
                 },
             }),
@@ -124,6 +121,7 @@ function getConfig(app, options) {
                 header: 'import { IDOM } from \'@dnajs/idom\';',
             }),
             babel(getBabelConfig()),
+            common(),
             options.production ? uglify({
                 output: {
                     comments: /@license/,
@@ -139,7 +137,7 @@ function getConfig(app, options) {
 }
 
 function bundle(app, options) {
-    let prev = bundles[options.input];
+    let prev = bundles.generated[options.input];
     if (prev) {
         options.output = options.output || prev.output;
         options.name = options.name || prev.name;
@@ -166,7 +164,7 @@ function bundle(app, options) {
                     options.output = options.output || config.output;
                     bundler.output = options.output;
                     bundler.name = options.name;
-                    bundles[options.input] = bundler;
+                    bundles.generated[options.input] = bundler;
                     return bundler.write(config)
                         .then(() => {
                             task();
@@ -245,6 +243,6 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
                 });
             });
 
-            return promise.then(() => global.Promise.resolve(bundles));
+            return promise;
         });
 };
