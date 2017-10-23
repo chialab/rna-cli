@@ -23,6 +23,8 @@ $ rna
 * [x] **build** - Build the project.
 * [x] **watch** - Watch project files.
 * [x] **serve** - Setup a server for your project.
+* [x] **start** - `yarn/npm start` alias
+* [x] **run** - `yarn/npm run` alias
 * [ ] **test** - Run project tests.
 * [ ] **publish** - Publish to NPM.
 
@@ -37,6 +39,14 @@ La CLI risalse in automatico il file system per identificare la root del progett
 
 Al momento, non supportiamo il merge di configurazioni, ma solo il replacement in toto. Se nel progetto è presente un file di configurazione, questo dovrà essere completo per eseguire lo step, perché la CLI userà solo quello.
 Da prevedere un'opzione generica (`--config`) che permetta di individuare il file di configurazione, al momento supportato solo in root.
+
+### Pipelines
+
+Dal momento che alcuni comandi mantengono attivo il processo, non è possibile concatenare i comandi con `&&`, ma è comunque possibile creare una pipeline separando i comandi con `+`. Esempio:
+
+```sh
+$ rna watch src/ + serve ./public
+```
 
 ### Files and packages
 Gli argomenti passati ai comandi possono essere file, cartelle e nomi di moduli (nel caso si utilizzi una struttura monorepo).

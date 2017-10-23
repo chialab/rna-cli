@@ -16,5 +16,7 @@ require('./commands/watch/index.js')(program);
 require('./commands/serve/index.js')(program);
 require('./commands/test/index.js')(program);
 require('./commands/publish/index.js')(program);
+require('./commands/start/index.js')(program);
+require('./commands/run/index.js')(program);
 
 program.start();
