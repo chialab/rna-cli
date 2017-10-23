@@ -157,7 +157,7 @@ function bundle(app, options) {
             path.basename(options.input, path.extname(options.input))
         );
     }
-    let task = app.log(`bundling "${options.input}"...`, true);
+    let task = app.log(`bundling "${options.name || options.input}"...`, true);
     return getConfig(app, options)
         .then((config) =>
             rollup.rollup(config)
@@ -176,8 +176,11 @@ function bundle(app, options) {
         )
         .catch((err) => {
             task();
+            if (err) {
+                app.log(err);
+            }
             app.log(colors.red(`Error bundling ${options.name}`));
-            return global.Promise.reject(err);
+            return global.Promise.reject();
         });
 }
 

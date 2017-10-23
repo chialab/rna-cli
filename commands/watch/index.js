@@ -15,6 +15,7 @@ let q = global.Promise.resolve();
 function queue(app,cmd, options) {
     q = q.then(() =>
         app.exec(cmd, options)
+            .catch(() => global.Promise.resolve())
     );
     return q;
 }
