@@ -17,15 +17,12 @@ module.exports = (program) => {
             if (args.length === 0) {
                 app.log(`${utils.extractRandom(['🤷‍', '🤷‍♂️'])} specify the package to remove.`.yellow);
             } else {
-                let task = app.log('removing packages...', true);
                 return manager.remove(...options.arguments)
                     .then((res) => {
-                        task();
                         app.log('packages successfully removed.'.green);
                         return global.Promise.resolve(res);
                     })
                     .catch((err) => {
-                        task();
                         app.log('failed to remove packages.'.red);
                         return global.Promise.reject(err);
                     });

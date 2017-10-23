@@ -17,15 +17,12 @@ module.exports = (program) => {
             if (args.length === 0) {
                 app.log(`${utils.extractRandom(['🤷‍', '🤷‍♂️'])} specify the package to add.`.yellow);
             } else {
-                let task = app.log('downloading packages...', true);
                 return manager.add(...options.arguments)
                     .then((res) => {
-                        task();
                         app.log('packages successfully added.'.green);
                         return global.Promise.resolve(res);
                     })
                     .catch((err) => {
-                        task();
                         app.log('failed to add packages.'.red);
                         return global.Promise.reject(err);
                     });

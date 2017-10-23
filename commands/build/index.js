@@ -105,7 +105,7 @@ function getConfig(app, options) {
                     '**/*.{css,scss,sass}',
                 ],
                 options: {
-                    outFile: path.join(
+                    outFile: options['external-css'] && path.join(
                         path.dirname(options.output),
                         `${path.basename(options.output, path.extname(options.output))}.css`
                     ),
@@ -156,7 +156,7 @@ function bundle(app, options) {
             path.basename(options.input, path.extname(options.input))
         );
     }
-    let task = app.log('bundling...', true);
+    let task = app.log(`bundling "${options.input}"...`, true);
     return getConfig(app, options)
         .then((config) =>
             rollup.rollup(config)
@@ -168,7 +168,7 @@ function bundle(app, options) {
                     return bundler.write(config)
                         .then(() => {
                             task();
-                            app.log('bundle ready!'.bold);
+                            app.log(`${'bundle ready!'.bold} ${`(${options.output})`.grey}`);
                             return global.Promise.resolve(bundler);
                         });
                 })
@@ -203,6 +203,7 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
         .option('--name', 'The bundle name.')
         .option('--output', 'The destination file.')
         .option('--production', 'Uglify bundle.')
+        .option('--external-css', 'Create an external css file.')
         .option('--no-map', 'Do not produce source map.')
         .action((app, options = {}) => {
             options = Proteins.clone(options);
@@ -236,7 +237,7 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
                     opts.input = file;
                     if (opts.output) {
                         if (filter.files.length > 1) {
-                            opts.output = path.join(opts.output, path.basename(file));
+                            opts.output = path.resolve(path.dirname(file), opts.output);
                         }
                     }
                     return bundle(app, opts);

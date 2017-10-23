@@ -11,15 +11,12 @@ module.exports = (program) => {
                 app.log('no project found.'.red);
                 return global.Promise.reject();
             }
-            let task = app.log('syncing dependencies...', true);
             return manager.update()
                 .then((res) => {
-                    task();
                     app.log('dependencies successfully updated.'.green);
                     return global.Promise.resolve(res);
                 })
                 .catch((err) => {
-                    task();
                     app.log('failed to update dependencies.'.red);
                     return global.Promise.reject(err);
                 });

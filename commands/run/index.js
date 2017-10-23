@@ -11,6 +11,6 @@ module.exports = (program) => {
                 app.log('no project found.'.red);
                 return global.Promise.reject();
             }
-            return manager.run(process.argv.slice(3));
+            return manager.run(process.argv[3], process.argv.slice(4));
         });
 };
