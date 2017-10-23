@@ -1,3 +1,4 @@
+const colors = require('colors/safe');
 const manager = require('../../lib/package-manager.js');
 const utils = require('../../lib/utils.js');
 const paths = require('../../lib/paths.js');
@@ -10,20 +11,20 @@ module.exports = (program) => {
         .option('module1 [module2] [module3]', 'The modules to remove')
         .action((app, options = {}) => {
             if (!paths.cwd) {
-                app.log('no project found.'.red);
+                app.log(colors.red('no project found.'));
                 return global.Promise.reject();
             }
             let args = options.arguments || [];
             if (args.length === 0) {
-                app.log(`${utils.extractRandom(['🤷‍', '🤷‍♂️'])} specify the package to remove.`.yellow);
+                app.log(colors.yellow(`${utils.extractRandom(['🤷‍', '🤷‍♂️'])} specify the package to remove.`));
             } else {
                 return manager.remove(...options.arguments)
                     .then((res) => {
-                        app.log('packages successfully removed.'.green);
+                        app.log(colors.green('packages successfully removed.'));
                         return global.Promise.resolve(res);
                     })
                     .catch((err) => {
-                        app.log('failed to remove packages.'.red);
+                        app.log(colors.red('failed to remove packages.'));
                         return global.Promise.reject(err);
                     });
             }

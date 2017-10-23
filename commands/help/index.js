@@ -1,3 +1,5 @@
+const colors = require('colors/safe');
+
 function getNameLength(names) {
     let longest = 0;
     names.forEach((name) => {
@@ -36,22 +38,22 @@ module.exports = (program) => {
         .action((app, options) => {
             if (!options.lite) {
                 app.log('');
-                app.log(`Welcome to RNA CLI (v${app.v})`.cyan.bold);
+                app.log(colors.bold(colors.cyan(`Welcome to RNA CLI (v${app.v})`)));
                 app.log('');
-                app.log('🔧  GENERAL'.white.bold);
+                app.log(colors.bold(colors.white('🔧  GENERAL')));
                 app.log('');
-                app.log(`   -v --version    ${'Get CLI version.'.grey}`);
-                app.log(`   --verbose       ${'Run CLI commands in verbose mode (show all logs).'.grey}`);
-                app.log(`   [command] help  ${'Display a command specific help.'.grey}`);
+                app.log(`   -v --version    ${colors.grey('Get CLI version.')}`);
+                app.log(`   --verbose       ${colors.grey('Run CLI commands in verbose mode (show all logs).')}`);
+                app.log(`   [command] help  ${colors.grey('Display a command specific help.')}`);
                 app.log('');
-                app.log('⚡️  COMMANDS'.white.bold);
+                app.log(colors.bold(colors.white('⚡️  COMMANDS')));
                 app.log('');
             }
             let names = options.commands || Object.keys(app.commands);
             let space = getNameLength(names);
             names.forEach((name) => {
                 let cmd = app.commands[name];
-                app.log(`${!options.lite ? '   ' : ''}${formatName(name, space).cyan} ${cmd.desc.grey}`);
+                app.log(`${!options.lite ? '   ' : ''}${colors.cyan(formatName(name, space))} ${colors.grey(cmd.desc)}`);
                 let h = defaultOptionsHelp(cmd);
                 if (h) {
                     app.log(`

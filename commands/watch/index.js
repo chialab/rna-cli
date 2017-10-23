@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const colors = require('colors/safe');
 const optionsUtils = require('../../lib/options.js');
 const Proteins = require('@chialab/proteins');
 const chokidar = require('chokidar');
@@ -57,7 +58,7 @@ Everytime a change has been triggered, it runs the \`lint\` and \`build\` comman
         .option('--no-build', 'Disable build on changes.')
         .action((app, options) => {
             if (!cwd) {
-                app.log('no project found.'.red);
+                app.log(colors.red('no project found.'));
                 return global.Promise.reject();
             }
             let filter = optionsUtils.handleArguments(options);
@@ -70,7 +71,7 @@ Everytime a change has been triggered, it runs the \`lint\` and \`build\` comman
                     }
                     return path.join(p, '**/*');
                 });
-            app.log('watching files...'.bold);
+            app.log(colors.bold('watching files...'));
             let ignored = options.exclude || [];
             if (!Array.isArray(ignored)) {
                 ignored = [ignored];
@@ -83,7 +84,7 @@ Everytime a change has been triggered, it runs the \`lint\` and \`build\` comman
             }).on('all', (event, p) => {
                 let res = wait(() => global.Promise.resolve(), 200);
                 if (event === 'change') {
-                    app.log(`${formatPath(p)} changed.`.grey);
+                    app.log(colors.grey(`${formatPath(p)} changed.`));
                     if (options.lint !== false) {
                         let opts = Proteins.clone(options);
                         opts.arguments = [p];
@@ -91,7 +92,7 @@ Everytime a change has been triggered, it runs the \`lint\` and \`build\` comman
                         res = wait(() => queue(app, 'lint', opts), 200);
                     }
                 } else if (event === 'add') {
-                    app.log(`${formatPath(p)} created.`.grey);
+                    app.log(colors.grey(`${formatPath(p)} created.`));
                     if (options.lint !== false) {
                         let opts = Proteins.clone(options);
                         opts.arguments = [p];
@@ -99,7 +100,7 @@ Everytime a change has been triggered, it runs the \`lint\` and \`build\` comman
                         res = wait(() => queue(app, 'lint', opts), 200);
                     }
                 } else if (event === 'unlink') {
-                    app.log(`${formatPath(p)} removed.`.grey);
+                    app.log(colors.grey(`${formatPath(p)} removed.`));
                 }
                 res
                     .then((lintReports = []) => {

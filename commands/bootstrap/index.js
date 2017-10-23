@@ -1,3 +1,4 @@
+const colors = require('colors/safe');
 const manager = require('../../lib/package-manager.js');
 const paths = require('../../lib/paths.js');
 
@@ -8,16 +9,16 @@ module.exports = (program) => {
         .help('A simple alias to `yarn install` command.')
         .action((app) => {
             if (!paths.cwd) {
-                app.log('no project found.'.red);
+                app.log(colors.red('no project found.'));
                 return global.Promise.reject();
             }
             return manager.update()
                 .then((res) => {
-                    app.log('dependencies successfully updated.'.green);
+                    app.log(colors.green('dependencies successfully updated.'));
                     return global.Promise.resolve(res);
                 })
                 .catch((err) => {
-                    app.log('failed to update dependencies.'.red);
+                    app.log(colors.red('failed to update dependencies.'));
                     return global.Promise.reject(err);
                 });
         });

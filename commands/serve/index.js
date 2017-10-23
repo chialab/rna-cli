@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const colors = require('colors/safe');
 const browserSync = require('browser-sync').create();
 const cwd = require('../../lib/paths.js').cwd;
 const optionsUtils = require('../../lib/options.js');
@@ -58,7 +59,7 @@ module.exports = (program) => {
                                     p.replace(base, '')
                                 );
                                 setTimeout(() => {
-                                    app.log(`${p.replace(base, '')} injected.`.cyan);
+                                    app.log(colors.cyan(`${p.replace(base, '')} injected.`));
                                 }, 100);
                             }
                             hashes[p] = hash;
@@ -73,7 +74,7 @@ module.exports = (program) => {
                         return reject(nil);
                     }
                     let urlStr = server.options.get('urls').toJS().local.magenta;
-                    app.log(`server ready at ${urlStr}`.cyan);
+                    app.log(colors.cyan(`server ready at ${urlStr}`));
                     resolve({
                         config,
                         bs: browserSync,

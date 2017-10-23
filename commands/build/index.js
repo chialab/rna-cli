@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const colors = require('colors/safe');
 const rollup = require('rollup');
 const Proteins = require('@chialab/proteins');
 const paths = require('../../lib/paths.js');
@@ -66,12 +67,12 @@ function getConfig(app, options) {
                 if (!conf.input) {
                     conf.input = options.input;
                 }
-                app.log(`Config file: ${localConf}`.grey);
+                app.log(colors.grey(`Config file: ${localConf}`));
                 return conf;
             });
     }
     if (!options.output) {
-        app.log(`Missing 'output' option for ${options.input}.`.red);
+        app.log(colors.red(`Missing 'output' option for ${options.input}.`));
         return global.Promise.reject();
     }
     return global.Promise.resolve({
@@ -130,7 +131,7 @@ function getConfig(app, options) {
         ],
         onwarn(message) {
             if (options.verbose) {
-                app.log(`⚠️  ${message}`);
+                app.log(colors.yellow(`⚠️  ${message}`));
             }
         },
     });
@@ -168,14 +169,14 @@ function bundle(app, options) {
                     return bundler.write(config)
                         .then(() => {
                             task();
-                            app.log(`${'bundle ready!'.bold} ${`(${options.output})`.grey}`);
+                            app.log(`${colors.bold('bundle ready!')} ${colors.grey(`(${options.output})`)}`);
                             return global.Promise.resolve(bundler);
                         });
                 })
         )
         .catch((err) => {
             task();
-            app.log(`Error bundling ${options.name}`.red);
+            app.log(colors.red(`Error bundling ${options.name}`));
             return global.Promise.reject(err);
         });
 }
@@ -208,7 +209,7 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
         .action((app, options = {}) => {
             options = Proteins.clone(options);
             if (!paths.cwd) {
-                app.log('No project found.'.red);
+                app.log(colors.red('no project found.'));
                 return global.Promise.reject();
             }
             let filter = optionsUtils.handleArguments(options);
@@ -217,7 +218,7 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
                 promise = promise.then(() => {
                     let json = pkg.json;
                     if (!json.main && !options.output) {
-                        app.log(`Missing 'output' property for ${pkg.name} module.`.red);
+                        app.log(colors.red(`Missing 'output' property for ${pkg.name} module.`));
                         return global.Promise.reject();
                     }
                     let opts = Proteins.clone(options);

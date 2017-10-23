@@ -1,3 +1,4 @@
+const colors = require('colors/safe');
 const manager = require('../../lib/package-manager.js');
 const paths = require('../../lib/paths.js');
 
@@ -8,7 +9,7 @@ module.exports = (program) => {
         .help('A simple alias to `yarn start` command.')
         .action((app) => {
             if (!paths.cwd) {
-                app.log('no project found.'.red);
+                app.log(colors.red('no project found.'));
                 return global.Promise.reject();
             }
             return manager.start();

@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const colors = require('colors/safe');
 const Linter = require('eslint').CLIEngine;
 const SassLinter = require('sass-lint');
 const paths = require('../../lib/paths.js');
@@ -39,7 +40,7 @@ function eslintTask(app, sourceFiles, options) {
                 (options.warning !== false || report.errorCount) ? report : undefined
             );
         }
-        app.log('👮  everything is fine with ESLint.'.bold);
+        app.log(colors.bold('👮  everything is fine with ESLint.'));
         return global.Promise.resolve();
     }
     return global.Promise.resolve();
@@ -71,7 +72,7 @@ function sasslintTask(app, sourceFiles, options) {
             SassLinter.outputResults(reports);
             return global.Promise.resolve(reports);
         }
-        app.log('👮  everything is fine with SassLint.'.bold);
+        app.log(colors.bold('👮  everything is fine with SassLint.'));
     }
     return global.Promise.resolve();
 }
@@ -94,7 +95,7 @@ Anyway, the developer can use a custom configuration if the \`sass-lint.yml\` fi
         .option('--no-warnings', 'Do not check for warnings.')
         .action((app, options) => {
             if (!paths.cwd) {
-                app.log('No project found.'.red);
+                app.log(colors.red('no project found.'));
                 return global.Promise.reject();
             }
             let filter = optionsUtils.handleArguments(options);

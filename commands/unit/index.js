@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
 const glob = require('glob');
 const karma = require('karma');
@@ -160,7 +161,7 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
             options = Proteins.clone(options);
             options.ci = options.hasOwnProperty('ci') ? options.ci : process.env.CI;
             if (!paths.cwd) {
-                app.log('No project found.'.red);
+                app.log(colors.red('no project found.'));
                 return global.Promise.reject();
             }
             let config = getConfig(app, options);
@@ -194,7 +195,7 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
                     });
                 });
             }
-            app.log('No unit tests found.'.yellow);
+            app.log(colors.yellow('no unit tests found.'));
             return global.Promise.resolve();
         });
 };
