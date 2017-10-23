@@ -175,8 +175,7 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
                     )
                 );
             if (files.length) {
-                // let tempDir = require('os').tmpdir();
-                let tempDir = '/Users/edoardocavazza/Desktop';
+                let tempDir = require('os').tmpdir();
                 let tempSource = path.join(tempDir, `source-${Date.now()}.js`);
                 let tempUnit = path.join(tempDir, `unit-${Date.now()}.js`);
                 fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
