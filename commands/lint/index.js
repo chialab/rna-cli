@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const glob = require('glob');
 const colors = require('colors/safe');
 const Linter = require('eslint').CLIEngine;
 const SassLinter = require('sass-lint');
@@ -15,64 +16,78 @@ function getConfig() {
 }
 
 function eslintTask(app, sourceFiles, options) {
-    if (options.js !== false) {
+    if (options.js !== false && sourceFiles.length) {
         let configFile = getConfig();
-        let jsFiles = sourceFiles
+        let jsFiles = [];
+        sourceFiles
             .filter((src) => fs.existsSync(src))
             .filter((src) => !fs.statSync(src).isFile() || src.match(/\.jsx?$/i))
-            .map((src) => {
+            .forEach((src) => {
                 if (fs.statSync(src).isFile()) {
-                    return src;
+                    jsFiles.push(src);
+                } else {
+                    jsFiles.push(...glob.sync(
+                        path.join(src, 'src/**/*.{js,jsx}')
+                    ));
                 }
-                return path.join(src, 'src/**/*.{js,jsx}');
             });
-        let task = app.log('running ESLint...', true);
-        const linter = new Linter({
-            configFile,
-            cwd: paths.cwd,
-        });
-        const report = linter.executeOnFiles(jsFiles);
-        task();
-        if (report.errorCount || report.warningCount) {
-            const formatter = linter.getFormatter();
-            app.log(formatter(report.results));
-            return global.Promise.resolve(
-                (options.warning !== false || report.errorCount) ? report : undefined
-            );
+        if (jsFiles.length) {
+            let task = app.log('running ESLint...', true);
+            const linter = new Linter({
+                configFile,
+                cwd: paths.cwd,
+            });
+            const report = linter.executeOnFiles(jsFiles);
+            task();
+            if (report.errorCount || report.warningCount) {
+                const formatter = linter.getFormatter();
+                app.log(formatter(report.results));
+                return global.Promise.resolve(
+                    (options.warnings !== false || report.errorCount) ? report : undefined
+                );
+            }
+            app.log(colors.bold('👮  everything is fine with ESLint.'));
+            return global.Promise.resolve();
         }
-        app.log(colors.bold('👮  everything is fine with ESLint.'));
-        return global.Promise.resolve();
     }
     return global.Promise.resolve();
 }
 
 function sasslintTask(app, sourceFiles, options) {
-    if (options.styles !== false) {
+    if (options.styles !== false && sourceFiles.length) {
         let task = app.log('running SassLint...', true);
-        let sassFiles = sourceFiles
+        let sassFiles = [];
+        sourceFiles
             .filter((src) => fs.existsSync(src))
             .filter((src) => !fs.statSync(src).isFile() || src.match(/\.(css|sass|scss)$/i))
-            .map((src) => {
+            .forEach((src) => {
                 if (fs.statSync(src).isFile()) {
-                    return src;
+                    sassFiles.push(src);
+                } else {
+                    sassFiles.push(...glob.sync(
+                        path.join(src, 'src/**/*.{scss,sass,css}')
+                    ));
                 }
-                return path.join(src, 'src/**/*.{scss,sass,css}');
             });
-        let count = 0;
-        let reports = [];
-        sassFiles.forEach((src) => {
-            let report = SassLinter.lintFiles(src, {});
-            report.forEach((r) => {
-                count += r.errorCount + r.warningCount;
+        if (sourceFiles.length) {
+            let reports = [];
+            sassFiles.forEach((src) => {
+                let report = SassLinter.lintFiles(src, {});
+                report.forEach((r) => {
+                    if (r.errorCount) {
+                        reports.push(r);
+                    } else if (r.warningCount && options.warnings !== false) {
+                        reports.push(r);
+                    }
+                });
             });
-            reports.push(...report);
-        });
-        task();
-        if (count) {
-            SassLinter.outputResults(reports);
-            return global.Promise.resolve(reports);
+            task();
+            if (reports.length) {
+                SassLinter.outputResults(reports);
+                return global.Promise.resolve(reports);
+            }
+            app.log(colors.bold('👮  everything is fine with SassLint.'));
         }
-        app.log(colors.bold('👮  everything is fine with SassLint.'));
     }
     return global.Promise.resolve();
 }

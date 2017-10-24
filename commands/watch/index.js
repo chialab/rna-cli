@@ -89,7 +89,7 @@ Everytime a change has been triggered, it runs the \`lint\` and \`build\` comman
                     if (options.lint !== false) {
                         let opts = Proteins.clone(options);
                         opts.arguments = [p];
-                        opts.warning = false;
+                        opts.warnings = false;
                         res = wait(() => queue(app, 'lint', opts), 200);
                     }
                 } else if (event === 'add') {
@@ -97,7 +97,7 @@ Everytime a change has been triggered, it runs the \`lint\` and \`build\` comman
                     if (options.lint !== false) {
                         let opts = Proteins.clone(options);
                         opts.arguments = [p];
-                        opts.warning = false;
+                        opts.warnings = false;
                         res = wait(() => queue(app, 'lint', opts), 200);
                     }
                 } else if (event === 'unlink') {
