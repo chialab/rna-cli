@@ -1,5 +1,7 @@
 # RNA CLI
 
+> A CLI to rule them all
+
 A CLI for common projects.
 
 ## Install
