@@ -138,10 +138,9 @@ function getConfig(app, options) {
 }
 
 function bundle(app, options) {
-    let prev = bundles.generated[options.input];
+    let prev = bundles.options[options.input];
     if (prev) {
-        options.output = options.output || prev.output;
-        options.name = options.name || prev.name;
+        options = bundles.options[options.input];
     } else if (options.output) {
         options.output = path.resolve(paths.cwd, options.output);
         let final = options.output.split(path.sep).pop();
@@ -163,9 +162,8 @@ function bundle(app, options) {
             rollup.rollup(config)
                 .then((bundler) => {
                     options.output = options.output || config.output;
-                    bundler.output = options.output;
-                    bundler.name = options.name;
                     bundles.generated[options.input] = bundler;
+                    bundles.options[options.input] = options;
                     return bundler.write(config)
                         .then(() => {
                             task();
