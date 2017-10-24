@@ -26,7 +26,7 @@ $ rna
 * [x] **watch** - Watch project files.
 * [x] **serve** - Setup a server for your project.
 * [x] **unit** - Run project unit tests.
-* [ ] **publish** - Publish to NPM.
+* [x] **publish** - Publish to NPM.
 * [x] **start** - `yarn/npm start` alias
 * [x] **run** - `yarn/npm run` alias
 
