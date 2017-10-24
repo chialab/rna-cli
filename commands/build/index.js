@@ -169,7 +169,7 @@ function bundle(app, options) {
                     return bundler.write(config)
                         .then(() => {
                             task();
-                            app.log(`${colors.bold('bundle ready!')} ${colors.grey(`(${options.output})`)}`);
+                            app.log(`${colors.bold(colors.green('bundle ready!'))} ${colors.grey(`(${options.output})`)}`);
                             return global.Promise.resolve(bundler);
                         });
                 })
@@ -179,7 +179,7 @@ function bundle(app, options) {
             if (err) {
                 app.log(err);
             }
-            app.log(colors.red(`Error bundling ${options.name}`));
+            app.log(colors.red(`error bundling ${options.name}`));
             return global.Promise.reject();
         });
 }

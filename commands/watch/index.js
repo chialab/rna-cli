@@ -11,12 +11,28 @@ function formatPath(p) {
     return p.replace(cwd, '').replace(/^\/*/, '');
 }
 
+let current = {};
+let scheduled = {};
 let q = global.Promise.resolve();
-function queue(app,cmd, options) {
+
+function queue(app, cmd, options) {
+    let f = options.arguments[0];
+    if (scheduled[f]) {
+        return scheduled[f];
+    }
     q = q.then(() =>
         app.exec(cmd, options)
             .catch(() => global.Promise.resolve())
     );
+    if (current[f]) {
+        scheduled[f] = q;
+    } else {
+        current[f] = q;
+    }
+    q.then(() => {
+        current[f] = scheduled[f];
+        delete scheduled[f];
+    });
     return q;
 }
 
@@ -34,16 +50,22 @@ function findInBundles(bundles, file) {
     return res;
 }
 
-let interval;
+const timeouts = {};
 
-function wait(clb, time) {
+function wait(file, time) {
+    if (timeouts[file]) {
+        timeouts[file].reject();
+        clearInterval(timeouts[file].timeout);
+    }
     return new global.Promise((resolve, reject) => {
-        clearInterval(interval);
-        interval = setTimeout(() => {
-            clb()
-                .then((res) => resolve(res))
-                .catch((err) => reject(err));
-        }, time);
+        timeouts[file] = {
+            resolve,
+            reject,
+            timeout: setTimeout(() => {
+                resolve();
+                delete timeouts[file];
+            }, time),
+        };
     });
 }
 
@@ -83,44 +105,49 @@ Everytime a change has been triggered, it runs the \`lint\` and \`build\` comman
                 ignored,
                 ignoreInitial: true,
             }).on('all', (event, p) => {
-                let res = wait(() => global.Promise.resolve(), 200);
-                if (event === 'change') {
-                    app.log(colors.grey(`${formatPath(p)} changed.`));
-                    if (options.lint !== false) {
-                        let opts = Proteins.clone(options);
-                        opts.arguments = [p];
-                        opts.warnings = false;
-                        res = wait(() => queue(app, 'lint', opts), 200);
-                    }
-                } else if (event === 'add') {
-                    app.log(colors.grey(`${formatPath(p)} created.`));
-                    if (options.lint !== false) {
-                        let opts = Proteins.clone(options);
-                        opts.arguments = [p];
-                        opts.warnings = false;
-                        res = wait(() => queue(app, 'lint', opts), 200);
-                    }
-                } else if (event === 'unlink') {
-                    app.log(colors.grey(`${formatPath(p)} removed.`));
-                }
-                res
-                    .then((lintReports = []) => {
-                        if (lintReports.length === 0 && options.build !== false) {
+                wait(p, 200).then(() => {
+                    let res = global.Promise.resolve();
+                    if (event === 'change') {
+                        app.log(colors.grey(`${formatPath(p)} changed.`));
+                        if (options.lint !== false) {
                             let opts = Proteins.clone(options);
-                            opts.arguments = findInBundles(bundles.generated, p);
-                            if (opts.arguments.length) {
-                                return queue(app, 'build', opts);
+                            opts.arguments = [p];
+                            opts.warnings = false;
+                            res = queue(app, 'lint', opts);
+                        }
+                    } else if (event === 'add') {
+                        app.log(colors.grey(`${formatPath(p)} created.`));
+                        if (options.lint !== false) {
+                            let opts = Proteins.clone(options);
+                            opts.arguments = [p];
+                            opts.warnings = false;
+                            res = queue(app, 'lint', opts);
+                        }
+                    } else if (event === 'unlink') {
+                        app.log(colors.grey(`${formatPath(p)} removed.`));
+                    }
+                    res.then((lintReports = []) => {
+                        if (lintReports.length === 0 && options.build !== false) {
+                            let regenerate = findInBundles(bundles.generated, p);
+                            if (regenerate.length) {
+                                return global.Promise.all(
+                                    regenerate.map((f) => {
+                                        let opts = Proteins.clone(options);
+                                        opts.arguments = [f];
+                                        return queue(app, 'build', opts);
+                                    })
+                                );
                             }
                         }
                         return global.Promise.resolve();
-                    })
-                    .catch((err) => {
+                    }).catch((err) => {
                         if (err) {
                             // eslint-disable-next-line
                             console.error(err);
                         }
                         return global.Promise.resolve();
                     });
+                }).catch(() => {});
             });
         });
 };

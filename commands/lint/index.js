@@ -46,7 +46,7 @@ function eslintTask(app, sourceFiles, options) {
                     (options.warnings !== false || report.errorCount) ? report : undefined
                 );
             }
-            app.log(colors.bold('👮  everything is fine with ESLint.'));
+            app.log(colors.bold('everything is fine with ESLint.'));
             return global.Promise.resolve();
         }
     }
@@ -86,7 +86,7 @@ function sasslintTask(app, sourceFiles, options) {
                 SassLinter.outputResults(reports);
                 return global.Promise.resolve(reports);
             }
-            app.log(colors.bold('👮  everything is fine with SassLint.'));
+            app.log(colors.bold('everything is fine with SassLint.'));
         }
     }
     return global.Promise.resolve();
