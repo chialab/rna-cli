@@ -157,7 +157,7 @@ function bundle(app, options) {
             path.basename(options.input, path.extname(options.input))
         );
     }
-    let task = app.log(`bundling "${options.name || options.input}"...`, true);
+    let task = app.log(`bundling${bundles.generated[options.input] ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
     return getConfig(app, options)
         .then((config) =>
             rollup.rollup(config)

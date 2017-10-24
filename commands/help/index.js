@@ -39,6 +39,7 @@ module.exports = (program) => {
             if (!options.lite) {
                 app.log('');
                 app.log(colors.bold(colors.cyan(`Welcome to RNA CLI (v${app.v})`)));
+                app.log(colors.grey('"A CLI to rule them all."'));
                 app.log('');
                 app.log(colors.bold(colors.white('🔧  GENERAL')));
                 app.log('');
