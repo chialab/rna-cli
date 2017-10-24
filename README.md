@@ -4,7 +4,7 @@
 
 ## Install
 ```sh
-$ npm install -g git+https://git@gitlab.com/chialab/rna-cli
+$ [sudo] npm install -g git+https://git@gitlab.com/chialab/rna-cli
 ```
 
 ## Usage
@@ -78,12 +78,12 @@ Progetti monorepo:
 * `rna [cmd]` (senza argomenti)
 
         # Esempio: pubblica i progetti
-        $rna publish
+        $ rna publish
 
 * `rna [cmd] $package1.name` (singolo progetto)
 
         # Esempio: testa un progetto
-        $ rna test @chialab/sidenav
+        $ rna unit @chialab/sidenav
 
 * `rna [cmd] $package1.name $package2.name` (progetti multipli)
 
