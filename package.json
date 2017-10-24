@@ -8,7 +8,7 @@
     "url": "git+https://gitlab.com/chialab/rna-cli.git"
   },
   "author": "Chialab <dev@chialab.io> (https://chialab.io)",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "bugs": {
     "url": "https://gitlab.com/chialab/rna-cli/issues"
   },
