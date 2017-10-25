@@ -15,7 +15,7 @@ $ rna
 ## Commands
 
 * [x] **help** - Show CLI help
-* [ ] **setup** - Setup a new project.
+* [x] **setup** - Setup a new project.
 * [x] **add** - Add a project dependency.
 * [x] **remove** - Remove a project dependency.
 * [x] **bootstrap** - Sync project dependencies.
@@ -25,6 +25,8 @@ $ rna
 * [x] **serve** - Setup a server for your project.
 * [x] **unit** - Run project unit tests.
 * [x] **publish** - Publish to NPM.
+* [ ] **cdn** - Publish to CDN.
+* [ ] **documentation** - Generate API references.
 * [x] **start** - `yarn/npm start` alias
 * [x] **run** - `yarn/npm run` alias
 
