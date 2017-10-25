@@ -338,6 +338,7 @@ module.exports = (program) => {
     program
         .command('setup')
         .description('Setup a new project.')
+        .option('[dir]', 'The project root to create.')
         .option('--no-git', 'Skip git setup.')
         .option('--no-npm', 'Skip package.json setup.')
         .option('--no-ignore', 'Skip .gitignore and .npmignore generation.')
