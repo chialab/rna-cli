@@ -4,7 +4,7 @@
 
 ## Install
 ```sh
-$ [sudo] npm install -g git+https://git@gitlab.com/chialab/rna-cli
+$ [sudo] npm install -g git+https://gitlab.com/chialab/rna-cli
 ```
 
 ## Usage
