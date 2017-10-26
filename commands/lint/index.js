@@ -40,8 +40,10 @@ function eslintTask(app, sourceFiles, options) {
             const report = linter.executeOnFiles(jsFiles);
             task();
             if (report.errorCount || report.warningCount) {
-                const formatter = linter.getFormatter();
-                app.log(formatter(report.results));
+                if (options.warnings !== false || report.errorCount) {
+                    const formatter = linter.getFormatter();
+                    app.log(formatter(report.results));
+                }
                 return global.Promise.resolve(
                     (options.warnings !== false || report.errorCount) ? report : undefined
                 );
