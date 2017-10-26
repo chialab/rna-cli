@@ -48,18 +48,21 @@ function gitTask(app, options) {
 }
 
 function npmTask(app, options) {
+    let cwd = paths.cwd;
+    const jsonFile = path.join(cwd, 'package.json');
+    let json = {};
+    if (fs.existsSync(jsonFile)) {
+        json = require(jsonFile);
+        json.structure = json.structure || (json.workspaces ? 'monorepo' : 'module');
+    }
+    params.json = json;
     if (options.npm !== false) {
-        let cwd = paths.cwd;
-        const jsonFile = path.join(cwd, 'package.json');
-        let json = {};
-        if (fs.existsSync(jsonFile)) {
-            json = require(jsonFile);
+        if (json.name) {
             if (!options.force) {
                 app.log(`${colors.green('package.json found.')} ${colors.grey(`(${jsonFile})`)}`);
                 return global.Promise.resolve();
             }
         }
-        params.json = json;
 
         const formatQuestion = (msg) => `${colors.cyan('package')} > ${msg}:`;
         const prompt = inquirer.createPromptModule();
@@ -306,14 +309,14 @@ function licenseTask(app, options) {
         const json = require(jsonFile);
         const license = path.join(cwd, 'LICENSE');
         if (!fs.existsSync(license) || options.force) {
-            let licenseCode = json.license;
-            if (licenseCode) {
+            let licenseCode = json.license.toLowerCase();
+            if (licenseCode !== 'unlicensed') {
                 let list = require('spdx-license-list/spdx-full.json');
                 let licenses = {};
                 Object.keys(list).forEach((key) => {
                     licenses[key.toLowerCase()] = list[key].licenseText;
                 });
-                let text = licenses[licenseCode.toLowerCase()];
+                let text = licenses[licenseCode];
                 if (text) {
                     text = text.replace(/<year>/gi, (new Date()).getFullYear());
                     if (json.author) {
@@ -334,6 +337,107 @@ function licenseTask(app, options) {
     return global.Promise.resolve();
 }
 
+function readmeTask(app, options) {
+    if (options.readme !== false) {
+        const cwd = paths.cwd;
+        let readme = path.join(cwd, 'README.md');
+        if (fs.existsSync(readme) && !options.force) {
+            app.log(`${colors.green('readme found.')} ${colors.grey(`(${readme})`)}`);
+            return global.Promise.resolve();
+        }
+        const json = params.json;
+
+        let requirements = `### Requirements
+
+* Node (>= 6)
+* RNA cli ([https://gitlab.com/chialab/rna-cli](https://gitlab.com/chialab/rna-cli))
+`;
+
+        let content = `# ${json.name}
+
+${json.description || ''}
+`;
+        if (json.structure === 'webapp') {
+            content += `${requirements}
+
+### Build the project.
+
+\`\`\`
+$ rna bootstrap
+$ rna build --production --external-css
+\`\`\`
+
+### Develpment mode.
+\`\`\`
+$ rna start
+\`\`\`
+`;
+        } else if (json.structure === 'module') {
+            content += `[![NPM](https://img.shields.io/npm/v/${json.name}.svg)](https://www.npmjs.com/package/${json.name})
+
+## Install
+
+\`\`\`sh
+$ npm install ${json.name}
+\`\`\`
+
+## Development
+${requirements}
+
+### Build the project.
+
+\`\`\`
+$ rna bootstrap
+$ rna build --production
+\`\`\`
+
+### Watch the project.
+\`\`\`
+$ rna bootstrap
+$ rna watch
+\`\`\`
+`;
+        } else if (json.structure === 'monorepo') {
+            let packages = require('../../lib/packages.js');
+            if (Object.keys(packages).length) {
+                content += `
+| **Package** | **Path** | **Status** |
+|---------|--------|--------|
+${Object.keys(packages).map((p) => `| ${packages[p].name} | ./${path.relative(cwd, p)} | [![NPM](https://img.shields.io/npm/v/${packages[p].name}.svg)](https://www.npmjs.com/package/${packages[p].name}) |`).join('\n')}
+`;
+            }
+            content += `
+## Development
+${requirements}
+
+### Build all projects.
+
+\`\`\`
+$ rna bootstrap
+$ rna build --production
+\`\`\`
+
+### Build projects selectively.
+
+\`\`\`
+$ rna bootstrap
+$ rna build [package-name] [package-name] --production
+\`\`\`
+
+### Watch the projects.
+\`\`\`
+$ rna bootstrap
+$ rna watch
+\`\`\`
+`;
+        }
+
+        fs.writeFileSync(readme, content);
+        app.log(`${colors.green('readme created.')} ${colors.grey(`(${readme})`)}`);
+    }
+    return global.Promise.resolve();
+}
+
 module.exports = (program) => {
     program
         .command('setup')
@@ -345,6 +449,7 @@ module.exports = (program) => {
         .option('--no-config', 'Skip editor config files.')
         .option('--no-linting', 'Skip lint config files.')
         .option('--no-license', 'Skip license files.')
+        .option('--no-readme', 'Skip README generation.')
         .option('--force', 'Force project setup if already initialized.')
         .action((app, options) => {
             params = {};
@@ -355,6 +460,7 @@ module.exports = (program) => {
                 .then(() => directoriesTask(app, options))
                 .then(() => configTask(app, options))
                 .then(() => lintingTask(app, options))
-                .then(() => licenseTask(app, options));
+                .then(() => licenseTask(app, options))
+                .then(() => readmeTask(app, options));
         });
 };
