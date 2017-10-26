@@ -16,6 +16,7 @@ const uglify = require('rollup-plugin-uglify');
 const json = require('rollup-plugin-json');
 const url = require('rollup-plugin-url');
 const jsx = require('rollup-plugin-external-jsx');
+const string = require('rollup-plugin-string');
 
 const postcss = require('postcss');
 const autoprefixer = require('autoprefixer');
@@ -40,6 +41,7 @@ function getBabelConfig() {
         return JSON.parse(fs.readFileSync(localConf), 'utf8');
     }
     return {
+        include: '**/*.{js,jsx}',
         exclude: [],
         compact: false,
         presets: [
@@ -52,9 +54,6 @@ function getBabelConfig() {
         ],
         plugins: [
             require('babel-plugin-transform-inline-environment-variables'),
-            [require('babel-plugin-transform-react-jsx'), {
-                pragma: 'IDOM.h',
-            }],
         ],
     };
 }
@@ -75,6 +74,8 @@ function getConfig(app, options) {
         app.log(colors.red(`Missing 'output' option for ${options.input}.`));
         return global.Promise.reject();
     }
+    const babelConfig = getBabelConfig();
+    babelConfig.runtimeHelpers = true;
     return global.Promise.resolve({
         name: options.name,
         input: options.input,
@@ -87,11 +88,16 @@ function getConfig(app, options) {
         plugins: [
             resolve(),
             json(),
+            string({
+                include: [
+                    '**/*.{html,txt,svg,md}',
+                ],
+            }),
             url({
                 limit: 10 * 1000 * 1024,
                 exclude: [],
                 include: [
-                    '**/*.{woff,ttf,eot,svg,gif,png,jpg}',
+                    '**/*.{woff,ttf,eot,gif,png,jpg}',
                 ],
             }),
             sass({
@@ -121,8 +127,17 @@ function getConfig(app, options) {
                 // import header
                 header: 'import { IDOM } from \'@dnajs/idom\';',
             }),
-            babel(getBabelConfig()),
+            babel({
+                compact: false,
+                include: '**/*.{js,jsx}',
+                plugins: [
+                    [require('babel-plugin-transform-react-jsx'), {
+                        pragma: 'IDOM.h',
+                    }],
+                ],
+            }),
             common(),
+            babel(babelConfig),
             options.production ? uglify({
                 output: {
                     comments: /@license/,
@@ -130,7 +145,17 @@ function getConfig(app, options) {
             }) : {},
         ],
         onwarn(message) {
-            if (options.verbose) {
+            const whitelisted = () => {
+                message = message.toString();
+                if (message.indexOf('The \'this\' keyword') !== -1) {
+                    return false;
+                }
+                if (message.indexOf('It\'s strongly recommended that you use the "external-helpers" plugin') !== -1) {
+                    return false;
+                }
+                return true;
+            };
+            if (message && options.verbose || whitelisted()) {
                 app.log(colors.yellow(`⚠️  ${message}`));
             }
         },
