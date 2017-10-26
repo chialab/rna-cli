@@ -2,11 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const browserSync = require('browser-sync').create();
-const cwd = require('../../lib/paths.js').cwd;
-const optionsUtils = require('../../lib/options.js');
 const chokidar = require('chokidar');
 const md5File = require('md5-file');
 const commondir = require('commondir');
+const cwd = require('../../lib/paths.js').cwd;
+const optionsUtils = require('../../lib/options.js');
+const wait = require('../../lib/watch-queue.js');
 
 module.exports = (program) => {
     program
@@ -50,20 +51,22 @@ module.exports = (program) => {
                     let hashes = {};
                     let ready = false;
                     chokidar.watch(options.arguments, {}).on('all', (event, p) => {
-                        if (event === 'unlink') {
-                            delete hashes[p];
-                        } else if (fs.statSync(p).isFile()) {
-                            let hash = md5File.sync(p);
-                            if (ready && hashes[p] !== hash) {
-                                browserSync.reload(
-                                    p.replace(base, '')
-                                );
-                                setTimeout(() => {
-                                    app.log(colors.cyan(`${p.replace(base, '')} injected.`));
-                                }, 100);
+                        wait(p, 200).then(() => {
+                            if (event === 'unlink') {
+                                delete hashes[p];
+                            } else if (fs.statSync(p).isFile()) {
+                                let hash = md5File.sync(p);
+                                if (ready && hashes[p] !== hash) {
+                                    browserSync.reload(
+                                        p.replace(base, '')
+                                    );
+                                    setTimeout(() => {
+                                        app.log(colors.cyan(`${p.replace(base, '')} injected.`));
+                                    }, 100);
+                                }
+                                hashes[p] = hash;
                             }
-                            hashes[p] = hash;
-                        }
+                        });
                     }).on('ready', () => {
                         ready = true;
                     });

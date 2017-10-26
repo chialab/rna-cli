@@ -1,11 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
-const optionsUtils = require('../../lib/options.js');
 const Proteins = require('@chialab/proteins');
 const chokidar = require('chokidar');
-const cwd = require('../../lib/paths').cwd;
-const bundles = require('../../lib/bundles');
+const optionsUtils = require('../../lib/options.js');
+const cwd = require('../../lib/paths.js').cwd;
+const bundles = require('../../lib/bundles.js');
+const wait = require('../../lib/watch-queue.js');
 
 function formatPath(p) {
     return p.replace(cwd, '').replace(/^\/*/, '');
@@ -48,25 +49,6 @@ function findInBundles(bundles, file) {
         });
     });
     return res;
-}
-
-const timeouts = {};
-
-function wait(file, time) {
-    if (timeouts[file]) {
-        timeouts[file].reject();
-        clearInterval(timeouts[file].timeout);
-    }
-    return new global.Promise((resolve, reject) => {
-        timeouts[file] = {
-            resolve,
-            reject,
-            timeout: setTimeout(() => {
-                resolve();
-                delete timeouts[file];
-            }, time),
-        };
-    });
 }
 
 module.exports = (program) => {
