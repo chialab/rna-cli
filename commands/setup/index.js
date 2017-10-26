@@ -23,17 +23,19 @@ function gitTask(app, options) {
                             return global.Promise.resolve();
                         }
                     }
-                    return global.Promise.reject();
+                    return global.Promise.reject(res);
                 })
-                .catch(() => {
+                .catch((remote) => {
                     const prompt = inquirer.createPromptModule();
-                    return prompt([
-                        {
-                            type: 'input',
-                            name: 'repository',
-                            message: `${colors.cyan('git')} > remote repository:`,
-                        },
-                    ]).then((answers) => {
+                    let opts = {
+                        type: 'input',
+                        name: 'repository',
+                        message: `${colors.cyan('git')} > remote repository:`,
+                    };
+                    if (remote) {
+                        opts.default = remote;
+                    }
+                    return prompt([opts]).then((answers) => {
                         params.repository = answers.repository;
                         return git.addRemote(answers.repository)
                             .then(() => {
