@@ -51,7 +51,7 @@ module.exports = (program) => {
                     let hashes = {};
                     let ready = false;
                     chokidar.watch(options.arguments, {}).on('all', (event, p) => {
-                        wait(p, 200).then(() => {
+                        const onchange = (event, p) => {
                             if (event === 'unlink') {
                                 delete hashes[p];
                             } else if (fs.statSync(p).isFile()) {
@@ -66,7 +66,12 @@ module.exports = (program) => {
                                 }
                                 hashes[p] = hash;
                             }
-                        });
+                        };
+                        if (ready) {
+                            wait(p, 200).then(() => onchange(event, p)).catch(() => { });
+                        } else {
+                            onchange(event, p);
+                        }
                     }).on('ready', () => {
                         ready = true;
                     });
