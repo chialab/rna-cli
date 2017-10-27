@@ -5,7 +5,6 @@ const Proteins = require('@chialab/proteins');
 const chokidar = require('chokidar');
 const optionsUtils = require('../../lib/options.js');
 const cwd = require('../../lib/paths.js').cwd;
-const bundles = require('../../lib/bundles.js');
 const wait = require('../../lib/watch-queue.js');
 
 function formatPath(p) {
@@ -100,7 +99,7 @@ module.exports = (app, options) => {
             }
             res.then((lintReports = []) => {
                 if (lintReports.length === 0 && options.build !== false) {
-                    let regenerate = findInBundles(bundles.generated, p);
+                    let regenerate = findInBundles(app.generated, p);
                     if (regenerate.length) {
                         return global.Promise.all(
                             regenerate.map((f) => {

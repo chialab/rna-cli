@@ -6,7 +6,6 @@ const Proteins = require('@chialab/proteins');
 const paths = require('../../lib/paths.js');
 const optionsUtils = require('../../lib/options.js');
 const importer = require('../../lib/import.js');
-const bundles = require('../../lib/bundles.js');
 
 const resolve = require('rollup-plugin-node-resolve');
 const common = require('rollup-plugin-commonjs');
@@ -84,7 +83,7 @@ function getConfig(app, options) {
         format: 'umd',
         strict: false,
         // https://github.com/rollup/rollup/issues/1626
-        cache: bundles.generated[options.input],
+        cache: app.generated[options.input],
         plugins: [
             resolve(),
             json(),
@@ -163,9 +162,9 @@ function getConfig(app, options) {
 }
 
 function bundle(app, options) {
-    let prev = bundles.options[options.input];
+    let prev = app.generatedOptions[options.input];
     if (prev) {
-        options = bundles.options[options.input];
+        options = app.generatedOptions[options.input];
     } else if (options.output) {
         options.output = path.resolve(paths.cwd, options.output);
         let final = options.output.split(path.sep).pop();
@@ -181,14 +180,14 @@ function bundle(app, options) {
             path.basename(options.input, path.extname(options.input))
         );
     }
-    let task = app.log(`bundling${bundles.generated[options.input] ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
+    let task = app.log(`bundling${app.generated[options.input] ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
     return getConfig(app, options)
         .then((config) =>
             rollup.rollup(config)
                 .then((bundler) => {
                     options.output = options.output || config.output;
-                    bundles.generated[options.input] = bundler;
-                    bundles.options[options.input] = options;
+                    app.generated[options.input] = bundler;
+                    app.generatedOptions[options.input] = options;
                     return bundler.write(config)
                         .then(() => {
                             task();
@@ -208,6 +207,8 @@ function bundle(app, options) {
 }
 
 module.exports = (app, options = {}) => {
+    app.generated = app.generated || {};
+    app.generatedOptions = app.generatedOptions || {};
     options = Proteins.clone(options);
     if (!paths.cwd) {
         app.log(colors.red('no project found.'));
