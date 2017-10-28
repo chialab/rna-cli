@@ -36,11 +36,17 @@ function gitTask(app, options) {
                         opts.default = remote;
                     }
                     return prompt([opts]).then((answers) => {
-                        params.repository = answers.repository;
-                        return git.addRemote(answers.repository)
+                        if (answers.repository) {
+                            params.repository = answers.repository;
+                            return git.addRemote(answers.repository)
+                                .then(() => {
+                                    app.log(`${colors.green('git project created.')} ${colors.grey(`(${cwd})`)}`);
+                                    return global.Promise.resolve();
+                                });
+                        }
+                        return git.removeRemote()
                             .then(() => {
-                                app.log(`${colors.green('git project created.')} ${colors.grey(`(${cwd})`)}`);
-                                return global.Promise.resolve();
+                                app.log(`${colors.green('git project created without remote.')} ${colors.grey(`(${cwd})`)}`);
                             });
                     });
                 })
