@@ -40,6 +40,9 @@ function findInBundles(bundles, file) {
     let res = [];
     Object.keys(bundles).forEach((bundleName) => {
         let bundle = bundles[bundleName];
+        if (bundleName === file) {
+            res.push(bundleName);
+        }
         bundle.modules.forEach((mod) => {
             let deps = mod.dependencies || [];
             if (deps.indexOf(file) !== -1 && res.indexOf(bundleName) === -1) {
