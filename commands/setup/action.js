@@ -5,6 +5,7 @@ const inquirer = require('inquirer');
 const utils = require('../../lib/utils.js');
 const paths = require('../../lib/paths.js');
 const git = require('../../lib/git.js');
+const manager = require('../../lib/package-manager.js');
 
 let params = {};
 
@@ -277,6 +278,7 @@ function configTask(app, options) {
 }
 
 function lintingTask(app, options) {
+    let eslintPromise = global.Promise.resolve();
     if (options.linting !== false) {
         const cwd = paths.cwd;
         // ESLINT
@@ -288,6 +290,7 @@ function lintingTask(app, options) {
             );
             fs.writeFileSync(eslintConfig, content);
             app.log(`${colors.green('eslint created.')} ${colors.grey(`(${eslintConfig})`)}`);
+            eslintPromise = manager.dev('eslint-plugin-mocha');
         } else {
             app.log(`${colors.green('eslint found.')} ${colors.grey(`(${eslintConfig})`)}`);
         }
@@ -304,7 +307,7 @@ function lintingTask(app, options) {
             app.log(`${colors.green('sass-lint found.')} ${colors.grey(`(${sasslintConfig})`)}`);
         }
     }
-    return global.Promise.resolve();
+    return global.Promise.all([eslintPromise]);
 }
 
 function licenseTask(app, options) {
