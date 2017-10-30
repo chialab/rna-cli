@@ -79,6 +79,7 @@ function getConfig(app, options) {
         strict: false,
         // https://github.com/rollup/rollup/issues/1626
         cache: app.generated[options.input],
+        indent: false,
         plugins: [
             resolve(),
             json(),

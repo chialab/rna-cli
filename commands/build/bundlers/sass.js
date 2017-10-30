@@ -6,6 +6,9 @@ const sass = require('node-sass');
 const resolve = require('resolve');
 const STYLE_EXTENSIONS = ['.scss', '.sass', '.css'];
 
+const postcss = require('postcss');
+const autoprefixer = require('autoprefixer');
+
 function alternatives(url) {
     let res = path.extname(url) ?
         [url] :
@@ -68,6 +71,16 @@ function nodeResolver(url, prev, options) {
     };
 }
 
+function getPostCssConfig() {
+    let localConf = path.join(paths.cwd, 'postcss.json');
+    if (fs.existsSync(localConf)) {
+        return require(localConf);
+    }
+    return {
+        browsers: ['last 3 versions'],
+    };
+}
+
 module.exports = (app, options) => {
     let prev = app.generatedOptions[options.input];
     if (prev) {
@@ -101,17 +114,25 @@ module.exports = (app, options) => {
                 app.log(colors.red(`sass error ${options.name}`));
                 reject(err);
             } else {
-                fs.writeFileSync(options.output, result.css.toString());
-                app.generated[options.input] = {
-                    modules: [
-                        {
-                            dependencies: result.stats.includedFiles || [],
-                        },
-                    ],
-                };
-                app.generatedOptions[options.input] = options;
-                app.log(`${colors.bold(colors.green('sass done!'))} ${colors.grey(`(${options.output})`)}`);
-                resolve();
+                postcss([autoprefixer(getPostCssConfig())])
+                    .process(result.css.toString(), {
+                        from: options.input,
+                        to: options.output,
+                        map: { inline: options.map !== false },
+                    })
+                    .then((result) => {
+                        fs.writeFileSync(options.output, result.css);
+                        app.generated[options.input] = {
+                            modules: [
+                                {
+                                    dependencies: result.stats.includedFiles || [],
+                                },
+                            ],
+                        };
+                        app.generatedOptions[options.input] = options;
+                        app.log(`${colors.bold(colors.green('sass done!'))} ${colors.grey(`(${options.output})`)}`);
+                        resolve();
+                    });
             }
         });
     });
