@@ -161,9 +161,8 @@ module.exports = (app, options = {}) => {
             )
         );
     if (files.length) {
-        let tempDir = require('os').tmpdir();
-        let tempSource = path.join(tempDir, `source-${Date.now()}.js`);
-        let tempUnit = path.join(tempDir, `unit-${Date.now()}.js`);
+        let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
+        let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
         fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
         return app.exec('build', {
             arguments: [tempSource],
