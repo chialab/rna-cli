@@ -107,7 +107,7 @@ module.exports = (app, options) => {
             outputStyle: options.production ? 'compressed' : 'expanded',
             importer: (url, prev) => nodeResolver(url, prev, options),
             includePaths: options.includePaths,
-        }, (err, result) => {
+        }, (err, sassResult) => {
             task();
             if (err) {
                 app.log(err);
@@ -115,7 +115,7 @@ module.exports = (app, options) => {
                 reject(err);
             } else {
                 postcss([autoprefixer(getPostCssConfig())])
-                    .process(result.css.toString(), {
+                    .process(sassResult.css.toString(), {
                         from: options.input,
                         to: options.output,
                         map: { inline: options.map !== false },
@@ -125,7 +125,7 @@ module.exports = (app, options) => {
                         app.generated[options.input] = {
                             modules: [
                                 {
-                                    dependencies: result.stats.includedFiles || [],
+                                    dependencies: sassResult.stats.includedFiles || [],
                                 },
                             ],
                         };
