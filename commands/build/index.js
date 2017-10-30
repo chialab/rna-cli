@@ -21,7 +21,6 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
         .option('--name', 'The bundle name.')
         .option('--output', 'The destination file.')
         .option('--production', 'Uglify bundle.')
-        .option('--external-css', 'Create an external css file.')
         .option('--no-map', 'Do not produce source map.')
         .action((app, options = {}) => require('./action')(app, options));
 };

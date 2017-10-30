@@ -42,6 +42,7 @@
     "lerna": "^2.4.0",
     "md5-file": "^3.2.3",
     "mocha": "^4.0.1",
+    "node-sass": "^4.5.3",
     "npm-which": "^3.0.1",
     "rollup": "^0.50.0",
     "rollup-plugin-babel": "^3.0.2",

@@ -4245,9 +4245,9 @@ rollup-plugin-node-resolve@^3.0.0:
     is-module "^1.0.0"
     resolve "^1.1.6"
 
-rollup-plugin-sass-modules@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.npmjs.org/rollup-plugin-sass-modules/-/rollup-plugin-sass-modules-1.2.0.tgz#6cbdce922deacfb7287ab38cd3f478d202478c99"
+rollup-plugin-sass-modules@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.npmjs.org/rollup-plugin-sass-modules/-/rollup-plugin-sass-modules-1.2.1.tgz#ec57f1c00990870a88fda7a8a43d3ac6dba9a1e3"
   dependencies:
     node-sass "^4.5.3"
     resolve "^1.4.0"

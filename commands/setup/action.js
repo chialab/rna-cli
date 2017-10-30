@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const colors = require('colors');
+const colors = require('colors/safe');
 const inquirer = require('inquirer');
 const utils = require('../../lib/utils.js');
 const paths = require('../../lib/paths.js');
