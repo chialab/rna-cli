@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const inquirer = require('inquirer');
-const paths = require('../../lib/paths.js');
-const git = require('../../lib/git.js');
+const paths = require('../../../lib/paths.js');
+const git = require('../../../lib/git.js');
 const configurator = require('../../../lib/configurator.js');
 
 module.exports = (app, options) => {

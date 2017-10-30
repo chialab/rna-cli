@@ -68,7 +68,7 @@ $ rna watch
 \`\`\`
 `;
         } else if (json.structure === 'monorepo') {
-            let packages = require('../../lib/packages.js');
+            let packages = require('../../../lib/packages.js');
             if (Object.keys(packages).length) {
                 content += `
 | **Package** | **Path** | **Status** |
