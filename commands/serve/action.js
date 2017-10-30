@@ -72,8 +72,8 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
         if (nil) {
             return reject(nil);
         }
-        let urlStr = server.options.get('urls').toJS().local.magenta;
-        app.log(colors.cyan(`server ready at ${urlStr}`));
+        let urlStr = server.options.get('urls').toJS().local;
+        app.log(colors.cyan(`server ready at ${colors.magenta(urlStr)}`));
         resolve({
             config,
             bs: browserSync,
