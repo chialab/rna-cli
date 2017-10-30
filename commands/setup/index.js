@@ -5,7 +5,6 @@ module.exports = (program) => {
         .option('[dir]', 'The project root to create.')
         .option('--no-git', 'Skip git setup.')
         .option('--no-npm', 'Skip package.json setup.')
-        .option('--no-ignore', 'Skip .gitignore and .npmignore generation.')
         .option('--no-config', 'Skip editor config files.')
         .option('--no-linting', 'Skip lint config files.')
         .option('--no-license', 'Skip license files.')
