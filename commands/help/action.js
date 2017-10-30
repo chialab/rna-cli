@@ -21,7 +21,7 @@ function defaultOptionsHelp(cmd) {
     if (options.length) {
         let length = getNameLength(options.map((cmd) => cmd.name));
         return options.map((option) => {
-            let res = `${formatName(option.name, length)} ${option.description.grey}`;
+            let res = `${formatName(option.name, length)} ${colors.grey(option.description)}`;
             if (option.required) {
                 res = res.bold;
             }
