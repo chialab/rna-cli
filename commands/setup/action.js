@@ -3,7 +3,7 @@ const utils = require('../../lib/utils.js');
 const paths = require('../../lib/paths.js');
 
 module.exports = (app, options) => {
-    paths.cwd = options.arguments.length ? path.resolve(process.cwd(), options.arguments[0]) : paths.cwd;
+    paths.cwd = options.arguments.length ? path.resolve(process.cwd(), options.arguments[0]) : (paths.cwd || process.cwd());
     utils.ensureDir(paths.cwd);
     return require('./tasks/git.js')(app, options)
         .then(() => require('./tasks/npm.js')(app, options))
