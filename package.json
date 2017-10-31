@@ -29,6 +29,7 @@
     "cli-spinner": "^0.2.6",
     "colors": "^1.1.2",
     "commondir": "^1.0.1",
+    "connect-history-api-fallback": "^1.4.0",
     "eslint": "^4.9.0",
     "eslint-plugin-mocha": "^4.11.0",
     "glob": "^7.1.2",

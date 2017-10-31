@@ -5,6 +5,7 @@ const browserSync = require('browser-sync').create();
 const chokidar = require('chokidar');
 const md5File = require('md5-file');
 const commondir = require('commondir');
+const historyApiFallback = require('connect-history-api-fallback');
 const cwd = require('../../lib/paths.js').cwd;
 const optionsUtils = require('../../lib/options.js');
 const wait = require('../../lib/watch-queue.js');
@@ -16,7 +17,7 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
     let config = {
         server: {
             baseDir: base,
-            directory: !!options.directory,
+            directory: options.directory === true,
         },
         // files: [],
         ghostMode: false,
@@ -25,15 +26,7 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
         open: false,
         xip: true,
         injectChanges: true,
-        middleware: !options.directory && [
-            (req, res, next) => {
-                if (!req.xhr && req.headers && req.headers.accept &&
-                    req.headers.accept.indexOf('text/html') !== -1) {
-                    req.url = '/index.html';
-                }
-                return next();
-            },
-        ],
+        middleware: !options.directory && [historyApiFallback()],
     };
     if (options.port) {
         config.port = options.port;
@@ -41,7 +34,7 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
     if (options.watch) {
         let hashes = {};
         let ready = false;
-        chokidar.watch(options.arguments, {}).on('all', (event, p) => {
+        chokidar.watch(options.watch !== true ? options.watch : options.arguments, {}).on('all', (event, p) => {
             const onchange = (event, p) => {
                 if (event === 'unlink') {
                     delete hashes[p];
