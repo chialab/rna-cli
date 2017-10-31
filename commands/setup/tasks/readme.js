@@ -34,7 +34,7 @@ ${json.description || ''}
 
 \`\`\`
 $ rna bootstrap
-$ rna build --production --external-css
+$ rna build --production
 \`\`\`
 
 ### Develpment mode.
