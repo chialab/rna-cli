@@ -7,23 +7,36 @@ const karma = require('karma');
 const paths = require('../../lib/paths.js');
 const optionsUtils = require('../../lib/options.js');
 
+/**
+ * Get SauceLabs browsers configuration.
+ *
+ * @returns {Object}
+ */
 function getSauceBrowsers() {
-    let localConf = path.join(paths.cwd, 'sauce.brosers.js');
+    let localConf = path.join(paths.cwd, 'sauce.brosers.js'); // Typo? ~~fquffio
     if (fs.existsSync(localConf)) {
         return require(localConf);
     }
     return require('../../configs/unit/sauce.brosers.js');
 }
 
+/**
+ * Get Karma configuration.
+ *
+ * @param {CLI} app CLI.
+ * @param {Object} options Options.
+ * @returns {string|Object}
+ */
 function getConfig(app, options) {
     let localConf = path.join(paths.cwd, 'karma.conf.js');
     if (fs.existsSync(localConf)) {
+        // Local Karma config exists. Use that.
         return localConf;
     }
+
     let conf = {
         // base path that will be used to resolve all patterns (eg. files, exclude)
         basePath: paths.cwd,
-
 
         // frameworks to use
         // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
@@ -37,28 +50,22 @@ function getConfig(app, options) {
             'coverage',
         ],
 
-
         // web server port
         port: 9876,
 
-
         // enable / disable colors in the output (reporters and logs)
         colors: true,
-
 
         // level of logging
         // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
         logLevel: 'INFO',
 
-
         // enable / disable watching file and executing tests whenever any file changes
         autoWatch: true,
-
 
         // start these browsers
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
         browsers: [],
-
 
         // Continuous Integration mode
         // if true, Karma captures browsers, runs the tests and exits
@@ -77,21 +84,25 @@ function getConfig(app, options) {
     };
 
     if (options.chrome !== false) {
+        // Test on Chrome.
         conf.browsers.push('Chrome_CI');
     }
 
     if (options.firefox !== false) {
+        // Test on Firefox.
         conf.browsers.push('Firefox');
     }
 
     if (options.ci) {
+        // Optimal configuration for CI environment.
         conf.client = conf.client || {};
         conf.client.captureConsole = false;
-        conf.autoWatch = false; 
+        conf.autoWatch = false;
         conf.logLevel = 'ERROR';
     }
 
     if (options.saucelabs) {
+        // SauceLabs configuration.
         conf.retryLimit = 3;
         conf.browserDisconnectTimeout = 10000;
         conf.browserDisconnectTolerance = 1;
@@ -122,12 +133,14 @@ function getConfig(app, options) {
     }
 
     if (options.electron) {
+        // Test on Electron.
         conf.browsers = ['Electron'];
         conf.client = conf.client || {};
         conf.client.useIframe = false;
     }
 
     if (options.coverage !== false) {
+        // Collect code coverage.
         conf.coverageReporter = {
             dir: 'coverage',
             reporters: [
@@ -143,14 +156,26 @@ function getConfig(app, options) {
     return conf;
 }
 
+/**
+ * Command action to run tests.
+ *
+ * @param {CLI} app CLI instance.
+ * @param {Object} options Options.
+ * @returns {Promise}
+ */
 module.exports = (app, options = {}) => {
-    options = Proteins.clone(options);
-    options.ci = options.hasOwnProperty('ci') ? options.ci : process.env.CI;
     if (!paths.cwd) {
+        // Unable to detect project root.
         app.log(colors.red('no project found.'));
         return global.Promise.reject();
     }
+
+    // Load options.
+    options = Proteins.clone(options);
+    options.ci = options.hasOwnProperty('ci') ? options.ci : process.env.CI; // Is this CI environment?
     let config = getConfig(app, options);
+
+    // Load list of files to be tested.
     let files = [];
     let filter = optionsUtils.handleArguments(options);
     filter.files.forEach((f) => files.push(...glob.sync(f)));
@@ -160,25 +185,27 @@ module.exports = (app, options = {}) => {
                 path.join(pkg.path, '**/unit/**/*.spec.js'))
             )
         );
-    if (files.length) {
-        let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
-        let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
-        fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
-        return app.exec('build', {
-            arguments: [tempSource],
-            output: tempUnit,
-            map: false,
-        }).then(() => {
-            let karmaOptions = typeof config === 'string' ?
-                { configFile: config } :
-                config;
-            karmaOptions.files = [tempUnit];
-            return new global.Promise((resolve) => {
-                let server = new karma.Server(karmaOptions, resolve);
-                server.start();
-            });
-        });
+
+    if (!files.length) {
+        app.log(colors.yellow('no unit tests found.'));
+        return global.Promise.resolve();
     }
-    app.log(colors.yellow('no unit tests found.'));
-    return global.Promise.resolve();
+
+    let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
+    let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
+    fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
+    return app.exec('build', { // Build sources.
+        arguments: [tempSource],
+        output: tempUnit,
+        map: false,
+    }).then(() => { // Test built sources.
+        let karmaOptions = typeof config === 'string' ?
+            { configFile: config } :
+            config;
+        karmaOptions.files = [tempUnit];
+        return new global.Promise((resolve) => {
+            let server = new karma.Server(karmaOptions, resolve);
+            server.start();
+        });
+    });
 };
