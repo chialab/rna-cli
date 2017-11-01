@@ -5,6 +5,13 @@ const paths = require('../../../lib/paths.js');
 const manager = require('../../../lib/package-manager.js');
 const configurator = require('../../../lib/configurator.js');
 
+/**
+ * Ensure ESLint configuration file is present.
+ *
+ * @param {CLI} app CLI.
+ * @param {Object} options Options.
+ * @returns {Promise}
+ */
 module.exports = (app, options) => {
     let eslintPromise = global.Promise.resolve();
     if (options.linting !== false) {
@@ -14,14 +21,20 @@ module.exports = (app, options) => {
             path.join(paths.cli, './configs/lint/eslintignore'),
             'utf8'
         );
+
+        // "Append" configuration to `.eslintignore`.
         configurator(eslintIgnore, ignoreContent, '# RNA');
+
         let eslintConfig = path.join(cwd, '.eslintrc.yml');
         let isNew = !fs.existsSync(eslintConfig);
         let content = fs.readFileSync(
             path.join(paths.cli, './configs/lint/eslintrc.yml'),
             'utf8'
         );
+
+        // "Append" configuration to `.eslintrc.yml`.
         configurator(eslintConfig, content, '# RNA');
+
         if (isNew) {
             eslintPromise = manager.dev('eslint', 'eslint-plugin-mocha');
             app.log(`${colors.green('.eslintrc.yml created.')} ${colors.grey(`(${eslintConfig})`)}`);

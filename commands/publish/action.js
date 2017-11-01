@@ -4,6 +4,13 @@ const which = require('npm-which')(cli);
 
 const BIN = which.sync('lerna');
 
+/**
+ * Command action to publish modules to NPM.
+ *
+ * @param {CLI} app CLI instance.
+ * @param {Object} options Options.
+ * @returns {Promise}
+ */
 module.exports = (app, options) => {
     let args = ['publish', '--use-workspaces'];
     if (options.beta) {

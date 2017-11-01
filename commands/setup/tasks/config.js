@@ -4,6 +4,13 @@ const colors = require('colors/safe');
 const paths = require('../../../lib/paths.js');
 const configurator = require('../../../lib/configurator.js');
 
+/**
+ * Ensure EditorConfig configuration file is present.
+ *
+ * @param {CLI} app CLI.
+ * @param {Object} options Options.
+ * @returns {Promise}
+ */
 module.exports = (app, options) => {
     if (options.config !== false) {
         const cwd = paths.cwd;
@@ -13,7 +20,10 @@ module.exports = (app, options) => {
             path.join(paths.cli, './configs/editorconfig'),
             'utf8'
         );
+
+        // "Append" configuration to `.editorconfig`.
         configurator(editorConfig, content, '# RNA');
+
         if (isNew) {
             app.log(`${colors.green('.editorconfig created.')} ${colors.grey(`(${editorConfig})`)}`);
         } else {
