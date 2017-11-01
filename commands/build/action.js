@@ -7,16 +7,26 @@ const utils = require('../../lib/utils.js');
 const bundle = require('./bundlers/rollup.js');
 const sass = require('./bundlers/sass.js');
 
+/**
+ * Command action to build sources.
+ *
+ * @param {CLI} app CLI instance.
+ * @param {Object} options Options.
+ * @returns {Promise}
+ */
 module.exports = (app, options = {}) => {
     app.generated = app.generated || {};
     app.generatedOptions = app.generatedOptions || {};
     options = Proteins.clone(options);
     if (!paths.cwd) {
+        // Unable to detect project root.
         app.log(colors.red('no project found.'));
         return global.Promise.reject();
     }
     let filter = optionsUtils.handleArguments(options);
     let promise = global.Promise.resolve();
+
+    // Process packages.
     Object.values(filter.packages).forEach((pkg) => {
         promise = promise.then(() => {
             let json = pkg.json;
@@ -35,6 +45,8 @@ module.exports = (app, options = {}) => {
             return bundle(app, opts);
         });
     });
+
+    // Process single files.
     filter.files.forEach((file) => {
         promise = promise.then(() => {
             let opts = Proteins.clone(options);

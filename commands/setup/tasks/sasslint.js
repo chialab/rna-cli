@@ -4,6 +4,13 @@ const colors = require('colors/safe');
 const paths = require('../../../lib/paths.js');
 const configurator = require('../../../lib/configurator.js');
 
+/**
+ * Ensure SASS Lint configuration file is present.
+ *
+ * @param {CLI} app CLI.
+ * @param {Object} options Options.
+ * @returns {Promise}
+ */
 module.exports = (app, options) => {
     if (options.linting !== false) {
         const cwd = paths.cwd;
@@ -13,7 +20,10 @@ module.exports = (app, options) => {
             path.join(paths.cli, './configs/lint/sass-lint.yml'),
             'utf8'
         );
+
+        // "Append" configuration to `.sass-lint.yml`.
         configurator(sasslintConfig, content, '# RNA');
+
         if (isNew) {
             app.log(`${colors.green('.sass-lint.yml created.')} ${colors.grey(`(${sasslintConfig})`)}`);
         } else {

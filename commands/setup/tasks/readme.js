@@ -3,6 +3,13 @@ const path = require('path');
 const colors = require('colors/safe');
 const paths = require('../../../lib/paths.js');
 
+/**
+ * Ensure README file is present.
+ *
+ * @param {CLI} app CLI.
+ * @param {Object} options Options.
+ * @returns {Promise}
+ */
 module.exports = (app, options) => {
     if (options.readme !== false) {
         const cwd = paths.cwd;
@@ -13,6 +20,7 @@ module.exports = (app, options) => {
         const json = require(jsonFile);
         let readme = path.join(cwd, 'README.md');
         if (fs.existsSync(readme) && !options.force) {
+            // README already there: leave it as is.
             app.log(`${colors.green('readme found.')} ${colors.grey(`(${readme})`)}`);
             return global.Promise.resolve();
         }
@@ -28,6 +36,7 @@ module.exports = (app, options) => {
 ${json.description || ''}
 `;
         if (json.structure === 'webapp') {
+            // README for Web applications.
             content += `${requirements}
 
 ### Build the project.
@@ -43,6 +52,7 @@ $ rna start
 \`\`\`
 `;
         } else if (json.structure === 'module') {
+            // README for modules.
             content += `[![NPM](https://img.shields.io/npm/v/${json.name}.svg)](https://www.npmjs.com/package/${json.name})
 
 ## Install
@@ -68,6 +78,7 @@ $ rna watch
 \`\`\`
 `;
         } else if (json.structure === 'monorepo') {
+            // README for repositories that contain multiple modules.
             let packages = require('../../../lib/packages.js');
             if (Object.keys(packages).length) {
                 content += `
@@ -102,6 +113,7 @@ $ rna watch
 `;
         }
 
+        // Write file contents.
         fs.writeFileSync(readme, content);
         app.log(`${colors.green('readme created.')} ${colors.grey(`(${readme})`)}`);
     }

@@ -6,6 +6,13 @@ const paths = require('../../../lib/paths.js');
 const git = require('../../../lib/git.js');
 const configurator = require('../../../lib/configurator.js');
 
+/**
+ * Ensure package is ready for the wonderful world of NPM.
+ *
+ * @param {CLI} app CLI.
+ * @param {Object} options Options.
+ * @returns {Promise}
+ */
 module.exports = (app, options) => {
     let cwd = paths.cwd;
     const jsonFile = path.join(cwd, 'package.json');
@@ -17,6 +24,7 @@ module.exports = (app, options) => {
     if (options.npm !== false) {
         if (json.name) {
             if (!options.force) {
+                // `package.json` already present: leave it as is.
                 app.log(`${colors.green('package.json found.')} ${colors.grey(`(${jsonFile})`)}`);
                 return global.Promise.resolve();
             }
@@ -28,6 +36,7 @@ module.exports = (app, options) => {
                 const formatQuestion = (msg) => `${colors.cyan('package')} > ${msg}:`;
                 const prompt = inquirer.createPromptModule();
 
+                // Ask user a shitload of questions about its new package.
                 return prompt([
                     {
                         type: 'input',
@@ -36,7 +45,7 @@ module.exports = (app, options) => {
                         default: json.name || path.basename(cwd),
                         validate: (input) => input.length > 0
                             && input.length <= 214
-                            && !input.match(/A-Z/)
+                            && !input.match(/A-Z/) // Is "C-A-Z-Z-O" not allowed here? ~~fquffio
                             && !input.match(/^[._]/)
                             && !input.match(/^\s/)
                             && !input.match(/\s$/)
@@ -103,6 +112,7 @@ module.exports = (app, options) => {
                         default: json.license || 'MIT',
                     },
                 ]).then((answers) => {
+                    // User answered all questions. Are we done here? Not quite yet…
                     json.name = answers.name;
                     json.version = answers.json;
                     json.description = answers.description || '';
@@ -124,8 +134,11 @@ module.exports = (app, options) => {
                         json.repository.type = json.repository.type || 'git';
                         json.repository.url = answers.repository || json.repository.url;
                     }
+
+                    // Write `package.json`.
                     fs.writeFileSync(jsonFile, JSON.stringify(json, null, 2));
                     app.log(`${colors.green('package.json created.')} ${colors.grey(`(${jsonFile})`)}`);
+
                     if (options.ignore !== false) {
                         // GITIGNORE
                         let gitIgnore = path.join(cwd, '.gitignore');
@@ -135,13 +148,18 @@ module.exports = (app, options) => {
                         } else if (json.structure === 'webapp') {
                             content = json.main.replace(path.extname(json.main), '.*{js,css,map}');
                         }
+
+                        // "Append" configuration to `.gitignore`.
                         configurator(gitIgnore, content, '# RNA-STRUCTURE');
+
                         // NPMIGNORE
                         let npmIgnore = path.join(cwd, '.npmignore');
                         content = fs.readFileSync(
                             path.join(paths.cli, './configs/npm/npmignore'),
                             'utf8'
                         );
+
+                        // "Append" configuration to `.npmignore`.
                         configurator(npmIgnore, content, '# RNA-STRUCTURE');
                     }
                 });
