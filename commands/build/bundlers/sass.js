@@ -8,6 +8,7 @@ const STYLE_EXTENSIONS = ['.scss', '.sass', '.css'];
 
 const postcss = require('postcss');
 const autoprefixer = require('autoprefixer');
+const cssnano = require('cssnano');
 
 function alternatives(url) {
     let res = path.extname(url) ?
@@ -98,12 +99,17 @@ module.exports = (app, options) => {
     return new global.Promise((resolve, reject) => {
         let task = app.log(`sass${app.generated[options.input] ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
         options.includePaths = options.includePaths || [];
+        let postCssPlugins = [
+            autoprefixer(getPostCssConfig()),
+        ];
+        if (options.production) {
+            postCssPlugins.push(cssnano());
+        }
         sass.render({
             file: options.input,
             outFile: options.output,
             sourceMap: options.map !== false,
             sourceMapEmbed: options.map !== false,
-            outputStyle: options.production ? 'compressed' : 'expanded',
             importer: (url, prev) => nodeResolver(url, prev, options),
             includePaths: options.includePaths,
         }, (err, sassResult) => {
@@ -113,7 +119,7 @@ module.exports = (app, options) => {
                 app.log(colors.red(`sass error ${options.name}`));
                 reject(err);
             } else {
-                postcss([autoprefixer(getPostCssConfig())])
+                postcss(postCssPlugins)
                     .process(sassResult.css.toString(), {
                         from: options.input,
                         to: options.output,
