@@ -66,8 +66,8 @@ function nodeResolver(url, prev, options) {
         url = toCheck.find((f) => fs.existsSync(f));
     }
     return {
-        file: url,
-        contents: options ? fs.readFileSync(url, 'utf8') : '',
+        // file: url,
+        contents: fs.readFileSync(url, 'utf8'),
     };
 }
 
