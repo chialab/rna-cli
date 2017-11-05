@@ -4352,6 +4352,10 @@ sass-lint@^1.12.1:
     path-is-absolute "^1.0.0"
     util "^0.10.3"
 
+sass@^1.0.0-beta.3:
+  version "1.0.0-beta.3"
+  resolved "https://registry.npmjs.org/sass/-/sass-1.0.0-beta.3.tgz#b3aa1b8e760471340dfe11014c9af59c0bf48cdc"
+
 scss-tokenizer@^0.2.3:
   version "0.2.3"
   resolved "https://registry.npmjs.org/scss-tokenizer/-/scss-tokenizer-0.2.3.tgz#8eb06db9a9723333824d3f5530641149847ce5d1"

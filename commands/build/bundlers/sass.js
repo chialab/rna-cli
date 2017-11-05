@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const paths = require('../../../lib/paths.js');
 const colors = require('colors/safe');
-const sass = require('node-sass');
+const sass = require('sass');
 const resolve = require('resolve');
 const STYLE_EXTENSIONS = ['.scss', '.sass', '.css'];
 
@@ -100,7 +100,6 @@ module.exports = (app, options) => {
         options.includePaths = options.includePaths || [];
         sass.render({
             file: options.input,
-            data: fs.readFileSync(options.input, 'utf8'),
             outFile: options.output,
             sourceMap: options.map !== false,
             sourceMapEmbed: options.map !== false,
