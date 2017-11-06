@@ -30,17 +30,15 @@ function alternatives(url) {
 function nodeResolver(url, prev, options) {
     let mod;
     let includePaths = options.includePaths;
-    if (!url.match(/^[./]/)) {
-        if (url[0] === '~') {
-            mod = url.substring(1);
+    if (url[0] === '~') {
+        mod = url.substring(1);
+    } else {
+        let toCheck = alternatives(path.join(path.dirname(prev), url));
+        let resolved = toCheck.find((f) => fs.existsSync(f));
+        if (resolved) {
+            url = resolved;
         } else {
-            let toCheck = alternatives(path.join(path.dirname(prev), url));
-            let resolved = toCheck.find((f) => fs.existsSync(f));
-            if (resolved) {
-                url = resolved;
-            } else {
-                mod = url;
-            }
+            mod = url;
         }
     }
     if (mod) {
@@ -67,8 +65,7 @@ function nodeResolver(url, prev, options) {
         url = toCheck.find((f) => fs.existsSync(f));
     }
     return {
-        // file: url,
-        contents: fs.readFileSync(url, 'utf8'),
+        file: url,
     };
 }
 
