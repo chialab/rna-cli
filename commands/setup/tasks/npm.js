@@ -55,7 +55,7 @@ module.exports = (app, options) => {
                         type: 'input',
                         name: 'version',
                         message: formatQuestion('version'),
-                        default: '1.0.0',
+                        default: json.version || '1.0.0',
                         validate: (input) => /\bv?(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[\da-z-]+(?:\.[\da-z-]+)*)?(?:\+[\da-z-]+(?:\.[\da-z-]+)*)?\b/ig.test(input),
                     },
                     {
@@ -123,7 +123,7 @@ module.exports = (app, options) => {
                     if (answers.module) {
                         json.module = answers.module;
                     }
-                    if (remote) {
+                    if (remote && answers.workspaces) {
                         json.workspaces = answers.workspaces.split(/,\s*/);
                         json.private = true;
                     }
