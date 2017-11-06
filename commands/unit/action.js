@@ -188,7 +188,7 @@ module.exports = (app, options = {}) => {
         return global.Promise.resolve();
     }
 
-    let dependencies = global.Promise.resolve();
+    let dependencies = [global.Promise.resolve()];
     if (options.saucelabs) {
         dependencies.push(manager.addToCli('karma-sauce-launcher'));
     }
@@ -196,7 +196,7 @@ module.exports = (app, options = {}) => {
         dependencies.push(manager.addToCli('electron karma-electron-launcher'));
     }
 
-    return dependencies.then(() => {
+    return global.Promise.all(dependencies).then(() => {
         let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
         let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
         fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
