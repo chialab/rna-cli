@@ -6,6 +6,7 @@ const glob = require('glob');
 const karma = require('karma');
 const paths = require('../../lib/paths.js');
 const optionsUtils = require('../../lib/options.js');
+const manager = require('../../lib/package-manager.js');
 
 /**
  * Get SauceLabs browsers configuration.
@@ -187,21 +188,31 @@ module.exports = (app, options = {}) => {
         return global.Promise.resolve();
     }
 
-    let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
-    let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
-    fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
-    return app.exec('build', { // Build sources.
-        arguments: [tempSource],
-        output: tempUnit,
-        map: false,
-    }).then(() => { // Test built sources.
-        let karmaOptions = typeof config === 'string' ?
-            { configFile: config } :
-            config;
-        karmaOptions.files = [tempUnit];
-        return new global.Promise((resolve) => {
-            let server = new karma.Server(karmaOptions, resolve);
-            server.start();
+    let dependencies = global.Promise.resolve();
+    if (options.saucelabs) {
+        dependencies.push(manager.addToCli('karma-sauce-launcher'));
+    }
+    if (options.electron) {
+        dependencies.push(manager.addToCli('electron karma-electron-launcher'));
+    }
+
+    return dependencies.then(() => {
+        let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
+        let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
+        fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
+        return app.exec('build', { // Build sources.
+            arguments: [tempSource],
+            output: tempUnit,
+            map: false,
+        }).then(() => { // Test built sources.
+            let karmaOptions = typeof config === 'string' ?
+                { configFile: config } :
+                config;
+            karmaOptions.files = [tempUnit];
+            return new global.Promise((resolve) => {
+                let server = new karma.Server(karmaOptions, resolve);
+                server.start();
+            });
         });
     });
 };
