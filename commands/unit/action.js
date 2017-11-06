@@ -209,8 +209,14 @@ module.exports = (app, options = {}) => {
                 { configFile: config } :
                 config;
             karmaOptions.files = [tempUnit];
-            return new global.Promise((resolve) => {
-                let server = new karma.Server(karmaOptions, resolve);
+            return new global.Promise((resolve, reject) => {
+                let server = new karma.Server(karmaOptions, (exitCode) => {
+                    if (exitCode && !options.server) {
+                        reject(exitCode);
+                    } else {
+                        resolve();
+                    }
+                });
                 server.start();
             });
         });
