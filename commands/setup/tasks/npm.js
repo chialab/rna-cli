@@ -114,7 +114,7 @@ module.exports = (app, options) => {
                 ]).then((answers) => {
                     // User answered all questions. Are we done here? Not quite yet…
                     json.name = answers.name;
-                    json.version = answers.json;
+                    json.version = answers.version;
                     json.description = answers.description || '';
                     json.structure = answers.structure;
                     if (answers.main) {
