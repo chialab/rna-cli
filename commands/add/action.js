@@ -22,7 +22,8 @@ module.exports = (app, options) => {
         app.log(colors.yellow(`${utils.extractRandom(['🤷‍', '🤷‍♂️'])} specify the package to add.`));
     } else {
         // Add requested packages.
-        return manager.add(...options.arguments)
+        let request = options.dev ? manager.dev(...options.arguments) : manager.add(...options.arguments);
+        return request
             .then((res) => {
                 app.log(colors.green('packages successfully added.'));
                 return global.Promise.resolve(res);
