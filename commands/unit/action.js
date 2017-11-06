@@ -17,7 +17,7 @@ function getSauceBrowsers() {
     if (fs.existsSync(localConf)) {
         return require(localConf);
     }
-    return require('../../configs/unit/sauce.brosers.js');
+    return require('../../configs/unit/sauce.browsers.js');
 }
 
 /**
@@ -119,12 +119,8 @@ function getConfig(app, options) {
             options: {},
             username: process.env.SAUCE_USERNAME,
             accessKey: process.env.SAUCE_ACCESS_KEY,
-            build: process.env.TRAVIS ?
-                `TRAVIS # ${process.env.TRAVIS_BUILD_NUMBER} (${process.env.TRAVIS_BUILD_ID})` :
-                undefined,
-            tunnelIdentifier: process.env.TRAVIS ?
-                process.env.TRAVIS_JOB_NUMBER :
-                undefined,
+            build: process.env.TRAVIS ? `TRAVIS # ${process.env.TRAVIS_BUILD_NUMBER} (${process.env.TRAVIS_BUILD_ID})` : undefined,
+            tunnelIdentifier: process.env.TRAVIS ? process.env.TRAVIS_JOB_NUMBER : undefined,
             recordScreenshots: true,
         };
         let saucelabsBrowsers = getSauceBrowsers();
