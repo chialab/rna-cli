@@ -38,7 +38,6 @@ function getBabelConfig() {
         include: '**/*.{mjs,js,jsx}',
         exclude: [],
         compact: false,
-        externalHelpers: true,
         presets: [
             [require('babel-preset-env'), {
                 targets: {
@@ -48,7 +47,9 @@ function getBabelConfig() {
             }],
         ],
         plugins: [
-            require('babel-plugin-external-helpers'),
+            [require('babel-plugin-transform-react-jsx'), {
+                pragma: 'IDOM.h',
+            }],
             require('babel-plugin-transform-inline-environment-variables'),
         ],
     };
@@ -119,17 +120,8 @@ function getConfig(app, options) {
                 // import header
                 header: 'import { IDOM } from \'@dnajs/idom\';',
             }),
-            babel({
-                compact: false,
-                include: '**/*.{mjs,js,jsx}',
-                plugins: [
-                    [require('babel-plugin-transform-react-jsx'), {
-                        pragma: 'IDOM.h',
-                    }],
-                ],
-            }),
-            common(),
             options.transpile !== false ? babel(babelConfig) : {},
+            common(),
             options.production ? uglify({
                 output: {
                     comments: /@license/,
