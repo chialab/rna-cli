@@ -12,6 +12,7 @@ require('./commands/remove/index.js')(program);
 require('./commands/bootstrap/index.js')(program);
 require('./commands/lint/index.js')(program);
 require('./commands/build/index.js')(program);
+require('./commands/icons/index.js')(program);
 require('./commands/watch/index.js')(program);
 require('./commands/serve/index.js')(program);
 require('./commands/unit/index.js')(program);
