@@ -16,7 +16,7 @@ function remember(app, output) {
             console.log('Registration failed with ' + error);
             });
     }
-<script>`));
+</script>`));
     app.log(colors.yellow('in your index.html file.'));
 }
 
