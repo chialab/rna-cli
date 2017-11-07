@@ -35,7 +35,7 @@ function getBabelConfig() {
         return JSON.parse(fs.readFileSync(localConf), 'utf8');
     }
     return {
-        include: '**/*.{js,jsx}',
+        include: '**/*.{mjs,js,jsx}',
         exclude: [],
         compact: false,
         presets: [
@@ -109,7 +109,6 @@ function getConfig(app, options) {
                 options: {
                     sourceMap: options.map !== false,
                     sourceMapEmbed: options.map !== false,
-                    outputStyle: options.production ? 'compressed' : 'expanded',
                 },
             }),
             jsx({
@@ -120,7 +119,7 @@ function getConfig(app, options) {
             }),
             babel({
                 compact: false,
-                include: '**/*.{js,jsx}',
+                include: '**/*.{mjs,js,jsx}',
                 plugins: [
                     [require('babel-plugin-transform-react-jsx'), {
                         pragma: 'IDOM.h',
@@ -128,7 +127,7 @@ function getConfig(app, options) {
                 ],
             }),
             common(),
-            babel(babelConfig),
+            options.transpile !== false ? babel(babelConfig) : {},
             options.production ? uglify({
                 output: {
                     comments: /@license/,
@@ -171,6 +170,9 @@ module.exports = (app, options) => {
         options.name = utils.camelize(
             path.basename(options.input, path.extname(options.input))
         );
+    }
+    if (options.transpile === false) {
+        app.log(colors.yellow('⚠️ skipping Babel task.'));
     }
     let task = app.log(`bundling${app.generated[options.input] ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
     return getConfig(app, options)

@@ -102,7 +102,6 @@ module.exports = (app, options) => {
                         res.favicon.html_code.replace(path.join(iconsPath, 'manifest.json'), '/manifest.json')
                     ));
                     app.log(colors.yellow('in your index.html file.'));
-
                 }
                 resolve(res);
             }

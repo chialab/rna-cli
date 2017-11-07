@@ -24,9 +24,10 @@ Anyway, the developer can use a custom configuration if the \`rollup.config.js\`
 It supports \`.babelrc\` too, to replace the default babel configuration.`)
         .option('[file]', 'The file to build.')
         .option('[package1] [package2] [package3]', 'The packages to build.')
-        .option('--name', 'The bundle name.')
         .option('--output', 'The destination file.')
-        .option('--production', 'Uglify bundle.')
-        .option('--no-map', 'Do not produce source map.')
+        .option('[--name]', 'The bundle name.')
+        .option('[--production]', 'Uglify bundle.')
+        .option('[--no-map]', 'Do not produce source map.')
+        .option('[--no-transpile]', 'Skip Babel task. ⚠️')
         .action((app, options = {}) => require('./action')(app, options));
 };

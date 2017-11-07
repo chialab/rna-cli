@@ -60,6 +60,7 @@
     "sass": "^1.0.0-beta.3",
     "sass-lint": "^1.12.1",
     "spdx-license-list": "^3.0.1",
+    "workbox-build": "^2.1.1",
     "yarn": "^1.2.1"
   }
 }
