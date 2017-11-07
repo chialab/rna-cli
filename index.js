@@ -3,7 +3,7 @@
 const CLI = require('./lib/cli.js');
 const program = new CLI();
 
-program.version('0.17.2');
+program.version('0.18.0');
 
 require('./commands/help/index.js')(program);
 require('./commands/setup/index.js')(program);
