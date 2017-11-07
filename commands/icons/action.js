@@ -96,6 +96,14 @@ module.exports = (app, options) => {
                     fs.unlinkSync(newManifest);
                     app.log(`${colors.bold(colors.green('menifest generated!'))} ${colors.grey(`(${realManifest})`)}`);
                 }
+                if (res.favicon.html_code) {
+                    app.log(colors.yellow('remember to include'));
+                    app.log(colors.grey(
+                        res.favicon.html_code.replace(path.join(iconsPath, 'manifest.json'), '/manifest.json')
+                    ));
+                    app.log(colors.yellow('in your index.html file.'));
+
+                }
                 resolve(res);
             }
         });
