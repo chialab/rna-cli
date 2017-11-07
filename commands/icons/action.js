@@ -52,7 +52,7 @@ module.exports = (app, options) => {
                 path: iconsPath,
             },
             favicon_design: {
-                desktop_browsers: options.favicons !== false ? {} : undefined,
+                desktop_browser: options.favicons !== false ? {} : undefined,
                 ios: options.ios !== false ? {
                     picture_aspect: 'background_and_margin',
                     background_color: (manifest && (manifest.theme_color || manifest.background_color)) || '#fff',
@@ -87,14 +87,14 @@ module.exports = (app, options) => {
                 let icons = res.favicon.files_urls
                     .filter((url) => url.indexOf('manifest.json') === -1)
                     .map((url) => path.join(iconsPath, path.basename(url)));
-                app.log(colors.green('icons generated.'));
-                app.log(colors.grey(icons.join('\n')));
+                app.log(colors.bold(colors.green('icons generated!')));
+                app.log(colors.grey(`(${icons.join(')\n(')})`));
                 let newManifest = path.join(output, iconsPath, 'manifest.json');
                 if (fs.existsSync(newManifest)) {
                     let realManifest = path.join(output, 'manifest.json');
                     fs.writeFileSync(realManifest, fs.readFileSync(newManifest));
                     fs.unlinkSync(newManifest);
-                    app.log(`${colors.green('menifest generated.')} ${colors.grey(`(${realManifest})`)}`);
+                    app.log(`${colors.bold(colors.green('menifest generated!'))} ${colors.grey(`(${realManifest})`)}`);
                 }
                 resolve(res);
             }
