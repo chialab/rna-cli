@@ -38,6 +38,7 @@ function getBabelConfig() {
         include: '**/*.{mjs,js,jsx}',
         exclude: [],
         compact: false,
+        externalHelpers: true,
         presets: [
             [require('babel-preset-env'), {
                 targets: {
@@ -47,6 +48,7 @@ function getBabelConfig() {
             }],
         ],
         plugins: [
+            require('babel-plugin-external-helpers'),
             require('babel-plugin-transform-inline-environment-variables'),
         ],
     };
