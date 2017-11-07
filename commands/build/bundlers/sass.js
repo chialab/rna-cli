@@ -120,7 +120,7 @@ module.exports = (app, options) => {
                     .process(sassResult.css.toString(), {
                         from: options.input,
                         to: options.output,
-                        map: { inline: options.map !== false },
+                        map: options.map !== false ? { inline: true } : false,
                     })
                     .then((result) => {
                         fs.writeFileSync(options.output, result.css);
