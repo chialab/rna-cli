@@ -12,5 +12,6 @@ module.exports = (program) => {
         .option('--port', 'The server port.')
         .option('--watch', 'Should watch server directory.')
         .option('--directory', 'Should list directories.')
+        .option('--https', 'Path to server https key.')
         .action((app, options = {}) => require('./action')(app, options));
 };

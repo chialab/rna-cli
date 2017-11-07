@@ -39,8 +39,17 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
         open: false,
         xip: true,
         injectChanges: true,
-        middleware: !options.directory && [historyApiFallback()],
+        middleware: !options.directory && [historyApiFallback({
+            disableDotRule: true,
+            htmlAcceptHeaders: ['text/html'],
+        })],
     };
+    if (options.https) {
+        config.https = {
+            key: options.https,
+            cert: options.cert || path.join(path.dirname(options.https), 'cert.pem'),
+        };
+    }
     if (options.port) {
         // Use custom port.
         config.port = options.port;
