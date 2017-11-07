@@ -20,6 +20,8 @@ rules:
   nesting-depth:
     - 1
     - max-depth: 5
+  no-color-literals:
+    - 0
   property-sort-order:
     - 1
     -
