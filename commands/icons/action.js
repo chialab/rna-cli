@@ -22,7 +22,7 @@ module.exports = (app, options) => {
     }
     const icon = path.resolve(process.cwd(), options.arguments[0]);
     const output = path.resolve(process.cwd(), options.output);
-    const iconsPath = options.path || '/icons';
+    const iconsPath = options.path || 'icons';
     if (!fs.existsSync(icon)) {
         app.log(`${colors.red('icon file not found.')} ${colors.grey(`(${icon})`)}`);
         return global.Promise.reject();

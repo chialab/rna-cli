@@ -116,6 +116,13 @@ module.exports = (app, options) => {
                 app.log(colors.red(`sass error ${options.name}`));
                 reject(err);
             } else {
+                if (sassResult.stats && sassResult.stats.includedFiles) {
+                    app.generated[options.input] = [
+                        {
+                            dependencies: sassResult.stats.includedFiles,
+                        },
+                    ];
+                }
                 postcss(postCssPlugins)
                     .process(sassResult.css.toString(), {
                         from: options.input,

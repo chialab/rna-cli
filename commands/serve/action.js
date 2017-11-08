@@ -58,7 +58,7 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
         // Configure watch.
         let hashes = {};
         let ready = false;
-        chokidar.watch(options.watch !== true ? options.watch : options.arguments, {}).on('all', (event, p) => {
+        chokidar.watch(base, {}).on('all', (event, p) => {
             /**
              * On change callback.
              * @param {string} event Filesystem event type.
@@ -72,12 +72,11 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
                 } else if (fs.statSync(p).isFile()) {
                     let hash = md5File.sync(p);
                     if (ready && hashes[p] !== hash) {
+                        let toReload = p.replace(base, '').replace(/^\/*/, '');
                         // File updated: notify BrowserSync so that it can be reloaded.
-                        browserSync.reload(
-                            p.replace(base, '')
-                        );
+                        browserSync.reload(toReload);
                         setTimeout(() => {
-                            app.log(colors.cyan(`${p.replace(base, '')} injected.`));
+                            app.log(colors.cyan(`${toReload} injected.`));
                         }, 100);
                     }
                     hashes[p] = hash;

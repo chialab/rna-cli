@@ -9,11 +9,9 @@ function remember(app, output) {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('${output}', {scope: '/'})
             .then(function(reg) {
-            // registration worked
-            console.log('Registration succeeded. Scope is ' + reg.scope);
+                // registration worked
             }).catch(function(error) {
-            // registration failed
-            console.log('Registration failed with ' + error);
+                // registration failed
             });
     }
 </script>`));

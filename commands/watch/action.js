@@ -89,6 +89,14 @@ function findInBundles(bundles, file) {
         }
         bundle.modules.forEach((mod) => {
             let deps = mod.dependencies || [];
+            deps.forEach((p) => {
+                if (fs.existsSync(p)) {
+                    let realP = fs.realpathSync(p);
+                    if (realP !== p) {
+                        deps.push(realP);
+                    }
+                }
+            });
             if (deps.indexOf(file) !== -1 && res.indexOf(bundleName) === -1) {
                 // Path in dependencies and not added to results yet.
                 res.push(bundleName);
