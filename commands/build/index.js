@@ -22,12 +22,13 @@ It also produce sourcemaps and uglify the code in production mode.
 A default configuration is also provided.
 Anyway, the developer can use a custom configuration if the \`rollup.config.js\` file exists in the root of the project.
 It supports \`.babelrc\` too, to replace the default babel configuration.`)
-        .option('[file]', 'The file to build.')
-        .option('[package1] [package2] [package3]', 'The packages to build.')
+        .option('<file>', 'The file to build.')
+        .option('<package1> <package2> <package3>', 'The packages to build.')
         .option('--output', 'The destination file.')
         .option('[--name]', 'The bundle name.')
         .option('[--production]', 'Uglify bundle.')
         .option('[--no-map]', 'Do not produce source map.')
-        .option('[--no-transpile]', 'Skip Babel task. ⚠️')
+        .option('[--no-transpile]', 'Skip Babel task. [⚠️  experimental]')
+        .option('[--external-css]', 'Split out css files from bundle. [⛔️  deprecated]')
         .action((app, options = {}) => require('./action')(app, options));
 };

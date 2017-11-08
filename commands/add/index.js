@@ -9,7 +9,7 @@ module.exports = (program) => {
         .command('add')
         .description('Add project dependencies.')
         .help('A simple alias to `yarn add` command.')
-        .option('module1 [module2] [module3]', 'The modules to add')
-        .option('--dev', 'Add to dev dependencies.')
+        .option('<module1> <module2> <module3>', 'The modules to add')
+        .option('[--dev]', 'Add to dev dependencies.')
         .action((app, options = {}) => require('./action')(app, options));
 };

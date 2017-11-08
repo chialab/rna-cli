@@ -12,11 +12,11 @@ module.exports = (program) => {
 
 A default configuration is also provided.
 Anyway, the developer can use a custom configuration if the \`karma.conf.js\` file exists in the root of the project.`)
-        .option('--ci', 'Run in continuous integration mode.')
-        .option('--saucelabs', 'Use saucelabs as browsers provider.')
-        .option('--electron', 'Use electron.')
-        .option('--no-coverage', 'Disable code coverage.')
-        .option('--no-chrome', 'Do not start Chrome browser.')
-        .option('--no-firefox', 'Do not start Firefox browser.')
+        .option('[--ci]', 'Run in continuous integration mode.')
+        .option('[--saucelabs]', 'Use saucelabs as browsers provider.')
+        .option('[--electron]', 'Use electron.')
+        .option('[--no-coverage]', 'Disable code coverage.')
+        .option('[--no-chrome]', 'Do not start Chrome browser.')
+        .option('[--no-firefox]', 'Do not start Firefox browser.')
         .action((app, options = {}) => require('./action')(app, options));
 };
