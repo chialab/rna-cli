@@ -5,6 +5,7 @@ const rollup = require('rollup');
 const paths = require('../../../lib/paths.js');
 const importer = require('../../../lib/import.js');
 const utils = require('../../../lib/utils.js');
+const isCore = require('resolve').isCore;
 
 const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel.js');
 const resolve = require('rollup-plugin-node-resolve');
@@ -124,7 +125,9 @@ function getConfig(app, options) {
                 header: 'import { IDOM } from \'@dnajs/idom\';',
             }),
             babel(babelConfig),
-            common(),
+            common({
+                ignore: (id) => isCore(id),
+            }),
             options.production ? uglify({
                 output: {
                     comments: /@license/,
