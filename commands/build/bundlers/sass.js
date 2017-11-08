@@ -94,6 +94,7 @@ module.exports = (app, options) => {
         }
     }
     return new global.Promise((resolve, reject) => {
+        app.profiler.task('sass');
         let task = app.log(`sass${app.generated[options.input] ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
         options.includePaths = options.includePaths || [];
         let postCssPlugins = [
@@ -116,6 +117,7 @@ module.exports = (app, options) => {
                 app.log(colors.red(`sass error ${options.name}`));
                 reject(err);
             } else {
+                app.profiler.endTask('sass');
                 if (sassResult.stats && sassResult.stats.includedFiles) {
                     app.generated[options.input] = [
                         {
@@ -123,6 +125,7 @@ module.exports = (app, options) => {
                         },
                     ];
                 }
+                app.profiler.task('postcss');
                 postcss(postCssPlugins)
                     .process(sassResult.css.toString(), {
                         from: options.input,
@@ -140,6 +143,7 @@ module.exports = (app, options) => {
                         };
                         app.generatedOptions[options.input] = options;
                         app.log(`${colors.bold(colors.green('sass done!'))} ${colors.grey(`(${options.output})`)}`);
+                        app.profiler.endTask('postcss');
                         resolve();
                     });
             }

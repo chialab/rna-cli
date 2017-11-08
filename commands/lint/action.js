@@ -33,7 +33,7 @@ function eslintTask(app, sourceFiles, options) {
         let jsFiles = [];
         sourceFiles
             .filter((src) => fs.existsSync(src))
-            .filter((src) => !fs.statSync(src).isFile() || src.match(/\.jsx?$/i))
+            .filter((src) => !fs.statSync(src).isFile() || src.match(/\.m?jsx?$/i))
             .forEach((src) => {
                 if (fs.statSync(src).isFile()) {
                     // Physical file.
@@ -46,12 +46,14 @@ function eslintTask(app, sourceFiles, options) {
                 }
             });
         if (jsFiles.length) {
+            app.profiler.task('eslint');
             let task = app.log('running ESLint...', true);
             const linter = new Linter({
                 configFile,
                 cwd: paths.cwd,
             });
             const report = linter.executeOnFiles(jsFiles);
+            app.profiler.endTask('eslint');
             task(); // Stop loader.
             if (report.errorCount || report.warningCount) {
                 if (options.warnings !== false || report.errorCount) {
@@ -78,7 +80,6 @@ function eslintTask(app, sourceFiles, options) {
  */
 function sasslintTask(app, sourceFiles, options) {
     if (options.styles !== false && sourceFiles.length) {
-        let task = app.log('running SassLint...', true);
         let sassFiles = [];
         sourceFiles
             .filter((src) => fs.existsSync(src))
@@ -95,6 +96,8 @@ function sasslintTask(app, sourceFiles, options) {
                 }
             });
         if (sourceFiles.length) {
+            app.profiler.task('sass-lint');
+            let task = app.log('running SassLint...', true);
             let reports = [];
             sassFiles.forEach((src) => {
                 let report = SassLinter.lintFiles(src, {});
@@ -106,6 +109,7 @@ function sasslintTask(app, sourceFiles, options) {
                     }
                 });
             });
+            app.profiler.endTask('sass-lint');
             task(); // Stop loader.
             if (reports.length) {
                 SassLinter.outputResults(reports);

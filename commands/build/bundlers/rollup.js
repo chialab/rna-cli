@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const rollup = require('rollup');
+const RollupTimer = require('rollup-timer').RollupTimer;
 const paths = require('../../../lib/paths.js');
 const importer = require('../../../lib/import.js');
 const utils = require('../../../lib/utils.js');
@@ -152,6 +153,18 @@ function getConfig(app, options) {
     });
 }
 
+function timeReport(profiler, timer) {
+    let timings = timer._timings || {};
+    for (let k in timings) {
+        let data = timings[k];
+        if (data.length) {
+            let sum = 0;
+            data.forEach((t) => sum += t);
+            profiler.task(k, false).set(sum);
+        }
+    }
+}
+
 module.exports = (app, options) => {
     let prev = app.generatedOptions[options.input];
     if (prev) {
@@ -174,22 +187,27 @@ module.exports = (app, options) => {
     if (options.transpile === false) {
         app.log(colors.yellow('⚠️ skipping Babel task.'));
     }
+    let profiler = app.profiler.task('rollup');
     let task = app.log(`bundling${app.generated[options.input] ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
     return getConfig(app, options)
-        .then((config) =>
-            rollup.rollup(config)
+        .then((config) => {
+            const timer = new RollupTimer();
+            config.plugins = timer.time(config.plugins);
+            return rollup.rollup(config)
                 .then((bundler) => {
                     options.output = options.output || config.output;
                     app.generated[options.input] = bundler;
                     app.generatedOptions[options.input] = options;
                     return bundler.write(config)
                         .then(() => {
+                            timeReport(profiler, timer);
+                            app.profiler.endTask('rollup');
                             task();
                             app.log(`${colors.bold(colors.green('bundle ready!'))} ${colors.grey(`(${options.output})`)}`);
                             return global.Promise.resolve(bundler);
                         });
-                })
-        )
+                });
+        })
         .catch((err) => {
             task();
             if (err) {

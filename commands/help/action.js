@@ -1,4 +1,5 @@
 const colors = require('colors/safe');
+const utils = require('../../lib/utils.js');
 
 /**
  * Find length of longest string in list.
@@ -15,21 +16,6 @@ function getNameLength(names) {
 }
 
 /**
- * Right-pad a string to a desired length with whitespaces. And add a bonus whitespace for the folks at home.
- *
- * @param {string} name String to be padded.
- * @param {integer} space Desired length.
- * @returns {string}
- */
-function formatName(name, space) {
-    while (name.length !== space) {
-        name += ' ';
-    }
-    name += ' ';
-    return name;
-}
-
-/**
  * Display help for command.
  *
  * @param {Command} cmd Command.
@@ -40,7 +26,7 @@ function defaultOptionsHelp(cmd) {
     if (options.length) {
         let length = getNameLength(options.map((cmd) => cmd.name));
         return options.map((option) => {
-            let res = `${formatName(option.name, length)} ${colors.grey(option.description)}`;
+            let res = `${utils.rightPad(option.name, length - option.name.length)}  ${colors.grey(option.description)} `;
             if (option.required) {
                 res = res.bold;
             }
@@ -68,7 +54,8 @@ module.exports = (app, options) => {
         app.log('');
         app.log(`   -v --version    ${colors.grey('Get CLI version.')}`);
         app.log(`   --verbose       ${colors.grey('Run CLI commands in verbose mode (show all logs).')}`);
-        app.log(`   [command] help  ${colors.grey('Display a command specific help.')}`);
+        app.log(`   --profile       ${colors.grey('Profile CLI tasks.')}`);
+        app.log(`   <command> help  ${colors.grey('Display a command specific help.')}`);
         app.log('');
         app.log(colors.bold(colors.white('⚡️  COMMANDS')));
         app.log('');
@@ -78,11 +65,11 @@ module.exports = (app, options) => {
     names.forEach((name) => {
         // Display command-specific help text.
         let cmd = app.commands[name];
-        app.log(`${!options.lite ? '   ' : ''}${colors.cyan(formatName(name, space))} ${colors.grey(cmd.desc)}`);
+        app.log(`${!options.lite ? '   ' : ''}${colors.cyan(utils.rightPad(name, space - name.length))}  ${colors.grey(cmd.desc)}`);
         let h = defaultOptionsHelp(cmd);
         if (h) {
             app.log(`
-${h.replace(/^/gm, formatName('', space + (!options.lite ? 4 : 0)))}
+${h.replace(/^/gm, `${utils.rightPad('', space + (!options.lite ? 4 : 0))} `)}
 `);
         }
     });
