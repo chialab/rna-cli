@@ -6,9 +6,9 @@ const paths = require('../../../lib/paths.js');
 const importer = require('../../../lib/import.js');
 const utils = require('../../../lib/utils.js');
 
+const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel.js');
 const resolve = require('rollup-plugin-node-resolve');
 const common = require('rollup-plugin-commonjs');
-const babel = require('rollup-plugin-babel');
 const sass = require('rollup-plugin-sass-modules');
 const uglify = require('rollup-plugin-uglify');
 const json = require('rollup-plugin-json');
@@ -39,7 +39,7 @@ function getBabelConfig(options) {
         exclude: [],
         compact: false,
         presets: options.transpile !== false ? [
-            [require('babel-preset-env'), {
+            [require('@babel/preset-env'), {
                 targets: {
                     browsers: ['ie >= 11', 'safari >= 8'],
                 },
@@ -47,7 +47,7 @@ function getBabelConfig(options) {
             }],
         ] : undefined,
         plugins: [
-            [require('babel-plugin-transform-react-jsx'), {
+            [require('@babel/plugin-transform-react-jsx'), {
                 pragma: 'IDOM.h',
             }],
             require('babel-plugin-transform-inline-environment-variables'),
@@ -72,7 +72,6 @@ function getConfig(app, options) {
         return global.Promise.reject();
     }
     const babelConfig = getBabelConfig(options);
-    babelConfig.runtimeHelpers = true;
     return global.Promise.resolve({
         name: options.name,
         input: options.input,
