@@ -12,7 +12,7 @@ module.exports = (program) => {
 It handles multiple sources:
 
  * JS and JSX (transpiled with Babel)
- * css/sass/scss (with node-sass)
+ * css/sass/scss (with dart-sass)
  * json
  * binary files as blob urls
  * other JS modules (ES6, commonjs)
