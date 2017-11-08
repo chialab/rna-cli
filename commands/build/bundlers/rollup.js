@@ -29,7 +29,7 @@ function getPostCssConfig() {
     };
 }
 
-function getBabelConfig() {
+function getBabelConfig(options) {
     let localConf = path.join(paths.cwd, '.babelrc');
     if (fs.existsSync(localConf)) {
         return JSON.parse(fs.readFileSync(localConf), 'utf8');
@@ -38,14 +38,14 @@ function getBabelConfig() {
         include: '**/*.{mjs,js,jsx}',
         exclude: [],
         compact: false,
-        presets: [
+        presets: options.transpile !== false ? [
             [require('babel-preset-env'), {
                 targets: {
                     browsers: ['ie >= 11', 'safari >= 8'],
                 },
                 modules: false,
             }],
-        ],
+        ] : undefined,
         plugins: [
             [require('babel-plugin-transform-react-jsx'), {
                 pragma: 'IDOM.h',
@@ -71,7 +71,7 @@ function getConfig(app, options) {
         app.log(colors.red(`Missing 'output' option for ${options.input}.`));
         return global.Promise.reject();
     }
-    const babelConfig = getBabelConfig();
+    const babelConfig = getBabelConfig(options);
     babelConfig.runtimeHelpers = true;
     return global.Promise.resolve({
         name: options.name,
@@ -120,7 +120,7 @@ function getConfig(app, options) {
                 // import header
                 header: 'import { IDOM } from \'@dnajs/idom\';',
             }),
-            options.transpile !== false ? babel(babelConfig) : {},
+            babel(babelConfig),
             common(),
             options.production ? uglify({
                 output: {
