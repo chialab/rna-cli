@@ -144,6 +144,9 @@ function getConfig(app, options) {
                 if (message.indexOf('It\'s strongly recommended that you use the "external-helpers" plugin') !== -1) {
                     return false;
                 }
+                if (message.indexOf('commonjs-proxy:rollupPluginBabelHelper') !== -1) {
+                    return false;
+                }
                 return true;
             };
             if (message && options.verbose || whitelisted()) {
@@ -192,7 +195,9 @@ module.exports = (app, options) => {
     return getConfig(app, options)
         .then((config) => {
             const timer = new RollupTimer();
-            config.plugins = timer.time(config.plugins);
+            if (app.options.profile) {
+                config.plugins = timer.time(config.plugins);
+            }
             return rollup.rollup(config)
                 .then((bundler) => {
                     options.output = options.output || config.output;
