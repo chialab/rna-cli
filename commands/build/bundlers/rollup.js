@@ -49,6 +49,9 @@ function getBabelConfig(options) {
             }],
         ] : undefined,
         plugins: [
+            [require('@babel/plugin-transform-template-literals'), {
+                loose: true,
+            }],
             [require('@babel/plugin-transform-react-jsx'), {
                 pragma: 'IDOM.h',
             }],
