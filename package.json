@@ -49,7 +49,7 @@
     "npm-which": "^3.0.1",
     "resolve": "^1.5.0",
     "rfg-api": "^0.3.0",
-    "rollup": "^0.50.0",
+    "rollup": "0.50.0",
     "rollup-plugin-commonjs": "^8.2.3",
     "rollup-plugin-external-jsx": "^1.0.3",
     "rollup-plugin-json": "^2.3.0",
