@@ -64,6 +64,11 @@ function nodeResolver(url, prev, options) {
         let toCheck = alternatives(path.resolve(path.dirname(prev), url));
         url = toCheck.find((f) => fs.existsSync(f));
     }
+    if (path.extname(url) === '.css') {
+        return {
+            contents: fs.readFileSync(url, 'utf8'),
+        };
+    }
     return {
         file: url,
     };
