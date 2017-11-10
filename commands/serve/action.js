@@ -1,14 +1,11 @@
-const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const browserSync = require('browser-sync').create();
-const chokidar = require('chokidar');
-const md5File = require('md5-file');
+const watcher = require('../../lib/watcher.js');
 const commondir = require('commondir');
 const historyApiFallback = require('connect-history-api-fallback');
 const cwd = require('../../lib/paths.js').cwd;
 const optionsUtils = require('../../lib/options.js');
-const wait = require('../../lib/watch-queue.js');
 
 /**
  * Command action to run a local development server.
@@ -56,40 +53,17 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
     }
     if (options.watch) {
         // Configure watch.
-        let hashes = {};
-        let ready = false;
-        chokidar.watch(base, {}).on('all', (event, p) => {
-            /**
-             * On change callback.
-             * @param {string} event Filesystem event type.
-             * @param {string} p Path.
-             * @returns {void}
-             */
-            const onchange = (event, p) => {
-                if (event === 'unlink') {
-                    // Deleted file: stop watching it.
-                    delete hashes[p];
-                } else if (fs.statSync(p).isFile()) {
-                    let hash = md5File.sync(p);
-                    if (ready && hashes[p] !== hash) {
-                        let toReload = p.replace(base, '').replace(/^\/*/, '');
-                        // File updated: notify BrowserSync so that it can be reloaded.
-                        browserSync.reload(toReload);
-                        setTimeout(() => {
-                            app.log(colors.cyan(`${toReload} injected.`));
-                        }, 100);
-                    }
-                    hashes[p] = hash;
-                }
-            };
-            if (ready) {
-                // Not yet ready: delay onchange event by a little bit.
-                wait(p, 200).then(() => onchange(event, p)).catch(() => { });
-            } else {
-                onchange(event, p);
+        watcher(app, base, (event, p) => {
+            if (event !== 'unlink') {
+                let toReload = p.replace(base, '').replace(/^\/*/, '');
+                // File updated: notify BrowserSync so that it can be reloaded.
+                browserSync.reload(toReload);
+                app.log(colors.cyan(`${toReload} injected.`));
             }
-        }).on('ready', () => {
-            ready = true;
+            return global.Promise.resolve();
+        }, {
+            debounce: 200,
+            log: false,
         });
     }
 
