@@ -51,21 +51,6 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
         // Use custom port.
         config.port = options.port;
     }
-    if (options.watch) {
-        // Configure watch.
-        watcher(app, base, (event, p) => {
-            if (event !== 'unlink') {
-                let toReload = p.replace(base, '').replace(/^\/*/, '');
-                // File updated: notify BrowserSync so that it can be reloaded.
-                browserSync.reload(toReload);
-                app.log(colors.cyan(`${toReload} injected.`));
-            }
-            return global.Promise.resolve();
-        }, {
-            debounce: 200,
-            log: false,
-        });
-    }
 
     // Start BrowserSync server.
     browserSync.init(config, (nil, server) => {
@@ -79,5 +64,21 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
             bs: browserSync,
             server,
         });
+
+        if (options.watch) {
+            // Configure watch.
+            watcher(app, base, (event, p) => {
+                if (event !== 'unlink') {
+                    let toReload = p.replace(base, '').replace(/^\/*/, '');
+                    // File updated: notify BrowserSync so that it can be reloaded.
+                    browserSync.reload(toReload);
+                    app.log(colors.cyan(`${toReload} injected.`));
+                }
+                return global.Promise.resolve();
+            }, {
+                debounce: 200,
+                log: false,
+            });
+        }
     });
 });
