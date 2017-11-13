@@ -62,10 +62,7 @@ module.exports = (app, options) => {
     }
     let names = options.commands || Object.keys(app.commands);
     // Remove deprecated or active if options.deprecated === true
-    names = names.filter((n) => {
-        let cmd = app.commands[n];
-        return options.deprecated ? !!cmd.deprecated : !cmd.deprecated;
-    });
+    names = names.filter((n) => options.deprecated || !app.commands[n].deprecated);
     let space = getNameLength(names);
     names.forEach((name) => {
         // Display command-specific help text.
