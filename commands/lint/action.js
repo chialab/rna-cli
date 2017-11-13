@@ -95,7 +95,7 @@ function sasslintTask(app, sourceFiles, options) {
                     ));
                 }
             });
-        if (sourceFiles.length) {
+        if (sassFiles.length) {
             app.profiler.task('sass-lint');
             let task = app.log('running SassLint...', true);
             let reports = [];
