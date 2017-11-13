@@ -25,7 +25,7 @@ function getConfig() {
  * @param {string|Array<string>} files Glob string or array of files to lint.
  *
  * @namespace options
- * @property {Boolean} warnings Should exclude warnings from the response.
+ * @property {Boolean} warnings Should include warnings in the response.
  */
 module.exports = function eslint(app, options, files) {
     let configFile = getConfig();

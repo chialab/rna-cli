@@ -7,9 +7,12 @@ const SassLinter = require('sass-lint');
 /**
  * Run SASS Lint.
  *
- * @param {CLI} app CLI.
- * @param {Object} options Options.
- * @param {string|Array<string>} sourceFiles List of files to be linted.
+ * @param {CLI} app The current CLI instance.
+ * @param {object} options A set of options for the linter.
+ * @param {string|Array<string>} files Glob string or array of files to lint.
+ *
+ * @namespace options
+ * @property {Boolean} warnings Should include warnings in the response.
  */
 module.exports = function sasslintTask(app, options, files) {
     let sassFiles = [];
