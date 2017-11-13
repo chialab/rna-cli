@@ -61,7 +61,7 @@ module.exports = (app, options) => {
         app.log('');
     }
     let names = options.commands || Object.keys(app.commands);
-    // Remove deprecated or active if options.deprecated === true
+    // Remove deprecated unless options.deprecated === true
     names = names.filter((n) => options.deprecated || !app.commands[n].deprecated);
     let space = getNameLength(names);
     names.forEach((name) => {
