@@ -61,11 +61,13 @@ module.exports = (app, options) => {
         app.log('');
     }
     let names = options.commands || Object.keys(app.commands);
+    // Remove deprecated unless options.deprecated === true
+    names = names.filter((n) => options.deprecated || !app.commands[n].deprecated);
     let space = getNameLength(names);
     names.forEach((name) => {
         // Display command-specific help text.
         let cmd = app.commands[name];
-        app.log(`${!options.lite ? '   ' : ''}${colors.cyan(utils.rightPad(name, space - name.length))}  ${colors.grey(cmd.desc)}`);
+        app.log(`${!options.lite ? '   ' : ''}${colors.cyan(utils.rightPad(name, space - name.length))}  ${colors.grey(cmd.desc)} ${cmd.deprecated ? colors.red(`Deprecated since ${cmd.deprecated}`) : ''}`);
         let h = defaultOptionsHelp(cmd);
         if (h) {
             app.log(`
