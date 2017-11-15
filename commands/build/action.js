@@ -97,12 +97,10 @@ module.exports = (app, options = {}) => {
             });
         });
 
-        promise = promise.then(() => global.Promise.resolve(bundleManifests));
-
         return promise
-            .then((res) => {
+            .then(() => {
                 let files = {};
-                res.forEach((bundleManifest) => {
+                bundleManifests.forEach((bundleManifest) => {
                     bundleManifest.files.forEach((f) => {
                         files[f] = files[f] || [];
                         files[f].push(bundleManifest);
@@ -124,7 +122,7 @@ module.exports = (app, options = {}) => {
                         });
                     });
                 }
-                return global.Promise.resolve(res);
+                return global.Promise.resolve(bundleManifests);
             });
     });
 };
