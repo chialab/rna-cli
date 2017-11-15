@@ -84,6 +84,7 @@ module.exports = (app, options = {}) => {
                     // Style file
                     return sass(app, opts)
                         .then((manifest) => {
+                            // collect the generated BundleManifest
                             bundleManifests.push(manifest);
                             return global.Promise.resolve(manifest);
                         });
@@ -91,6 +92,7 @@ module.exports = (app, options = {}) => {
                 // Javascript file
                 return bundle(app, opts)
                     .then((manifest) => {
+                        // collect the generated BundleManifest
                         bundleManifests.push(manifest);
                         return global.Promise.resolve(manifest);
                     });
@@ -99,18 +101,27 @@ module.exports = (app, options = {}) => {
 
         return promise
             .then(() => {
-                let files = {};
-                bundleManifests.forEach((bundleManifest) => {
-                    bundleManifest.files.forEach((f) => {
-                        files[f] = files[f] || [];
-                        files[f].push(bundleManifest);
-                    });
-                });
+                // once bundles are generated, check for watch option.
                 if (options.watch) {
+                    // collect bundles dependencies.
+                    let files = {};
+                    // iterate BundleManifest instances.
+                    bundleManifests.forEach((bundleManifest) => {
+                        // iterate bundle dependencies.
+                        bundleManifest.files.forEach((f) => {
+                            // collect file manifest dependents.
+                            files[f] = files[f] || [];
+                            files[f].push(bundleManifest);
+                        });
+                    });
+                    // start the watch task
                     watcher(app, Object.keys(files), (event, fp) => {
+                        // find out manifests with changed file dependency.
                         let bundles = files[fp];
+                        // setup a rebuild Promises chain.
                         let rebuildPromise = global.Promise.resolve();
                         bundles.forEach((bundle) => {
+                            // exec build again using cache.
                             rebuildPromise = rebuildPromise.then(() => app.exec('build', {
                                 'arguments': [bundle.input],
                                 'output': bundle.output,
@@ -122,6 +133,7 @@ module.exports = (app, options = {}) => {
                         });
                     });
                 }
+                // resolve build task with the list of generated manifests.
                 return global.Promise.resolve(bundleManifests);
             });
     });
