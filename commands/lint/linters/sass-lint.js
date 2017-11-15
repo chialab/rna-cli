@@ -53,4 +53,4 @@ module.exports = function sasslintTask(app, options, files) {
         app.log(colors.bold('everything is fine with SassLint.'));
     }
     return global.Promise.resolve();
-}
+};

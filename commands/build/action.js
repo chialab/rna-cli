@@ -7,42 +7,7 @@ const utils = require('../../lib/utils.js');
 const bundle = require('./bundlers/rollup.js');
 const sass = require('./bundlers/sass.js');
 const watcher = require('../../lib/watcher.js');
-
-/**
- * List of javascript extensions.
- * - javascript
- * - jsx
- * - javascript module
- * - typescript
- * @type {Array<string>}
- */
-const JS_EXTENSIONS = ['.js', '.jsx', '.mjs', '.ts'];
-
-/**
- * List of style extensions.
- * - css
- * - sass
- * @type {Array<string>}
- */
-const STYLE_EXENSIONS = ['.css', '.scss', '.sass'];
-
-/**
- * Check if file is a javascript file.
- * @param {string} file The file to check.
- * @return {Boolean}
- */
-function isJSFile(file) {
-    return ~JS_EXTENSIONS.indexOf(path.extname(file));
-}
-
-/**
- * Check if file is a style file.
- * @param {string} file The file to check.
- * @return {Boolean}
- */
-function isStyleFile(file) {
-    return ~STYLE_EXENSIONS.indexOf(path.extname(file));
-}
+const ext = require('../../lib/extensions.js');
 
 /**
  * Command action to build sources.
@@ -98,12 +63,12 @@ module.exports = (app, options = {}) => {
                 // build `modules` > `main`.js
                 // clone options in order to use for js bundler.
                 let jsOptions = Proteins.clone(options);
-                if (json.module && isJSFile(json.module)) {
+                if (json.module && ext.isJSFile(json.module)) {
                     // if module field is a javascript file, use it as source file.
                     jsOptions.input = path.join(pkg.path, json.module);
                     // if the output option is missing, use the main field.
                     jsOptions.output = jsOptions.output || path.join(pkg.path, json.main);
-                } else if (jsOptions.output && isJSFile(json.main)) {
+                } else if (jsOptions.output && ext.isJSFile(json.main)) {
                     // if output option is different from the main field
                     // we can use the main file as source if it is javascript.
                     jsOptions.input = path.join(pkg.path, json.main);
@@ -123,19 +88,19 @@ module.exports = (app, options = {}) => {
                 // build `style` > `main`.css
                 // clone options in order to use for sass bundler.
                 let styleOptions = Proteins.clone(options);
-                if (json.style && isStyleFile(json.style)) {
+                if (json.style && ext.isStyleFile(json.style)) {
                     // if style field is a style file, use it as source file.
                     styleOptions.input = path.join(pkg.path, json.style);
                     // if the output option is missing, use the main field.
                     styleOptions.output = styleOptions.output || path.join(pkg.path, json.main);
                     // ensure output style file.
-                    if (!isStyleFile(styleOptions.output)) {
+                    if (!ext.isStyleFile(styleOptions.output)) {
                         styleOptions.output = path.join(
                             path.dirname(styleOptions.output),
                             `${path.basename(styleOptions.output, path.extname(styleOptions.output))}.css`
                         );
                     }
-                } else if (styleOptions.output && isStyleFile(json.main)) {
+                } else if (styleOptions.output && ext.isStyleFile(json.main)) {
                     // if output option is different from the main field
                     // we can use the main file as source if it is a style.
                     styleOptions.input = path.join(pkg.path, json.main);

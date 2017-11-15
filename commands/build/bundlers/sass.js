@@ -5,19 +5,28 @@ const colors = require('colors/safe');
 const sass = require('sass');
 const resolve = require('resolve');
 const BundleManifest = require('../../../lib/bundle.js');
-const STYLE_EXTENSIONS = ['.scss', '.sass', '.css'];
+const ext = require('../../../lib/extensions.js');
 
 const postcss = require('postcss');
 const autoprefixer = require('autoprefixer');
 const cssnano = require('cssnano');
 
+/**
+ * Generate a list of file paths with all style extensions.
+ * @param {string} url
+ * @return {Array<string>}
+ */
 function alternatives(url) {
     let res = path.extname(url) ?
+        // url already has an extension.
         [url] :
-        STYLE_EXTENSIONS.map((ext) => `${url}${ext}`);
-    if (path.basename(url) !== '_') {
+        // remap the path with all style extensions.
+        ext.STYLE_EXTENSIONS.map((ext) => `${url}${ext}`);
+    // look for sass partials too.
+    if (path.basename(url)[0] !== '_') {
         for (let i = 0, len = res.length; i < len; i++) {
             res.push(
+                // add the _ for partial syntax
                 path.join(
                     path.dirname(res[i]),
                     `_${path.basename(res[i])}`
@@ -28,63 +37,112 @@ function alternatives(url) {
     return res;
 }
 
-function nodeResolver(url, prev, options) {
+/**
+ * @typedef {Object} ImporterResult
+ * @property {string} [file] The url of the path to import.
+ * @property {string} [contents] The contents of the file to import.
+ */
+
+/**
+ * Resolve the file path of an imported style.
+ * @param {string} url The url to import.
+ * @param {string} prev The url of the parent file.
+ * @return {ImporterResult} The result of the import.
+ */
+function nodeResolver(url, prev) {
     let mod;
-    let includePaths = options.includePaths;
     if (url[0] === '~') {
+        // some modules use ~ for node_modules import
         mod = url.substring(1);
     } else {
+        // generate file alternatives starting from the previous path
         let toCheck = alternatives(path.join(path.dirname(prev), url));
+        // find out existing file
         let resolved = toCheck.find((f) => fs.existsSync(f));
         if (resolved) {
+            // the local file exists, node resolution is not required
             url = resolved;
         } else {
+            // maybe the file is a module
             mod = url;
         }
     }
     if (mod) {
-        let toCheck = alternatives(mod);
-        let ok = false;
-        toCheck.forEach((modCheck) => {
-            if (!ok) {
-                try {
-                    url = resolve.sync(modCheck, {
-                        basedir: path.dirname(prev) || process.cwd(),
-                    });
-                    let base = path.join(url.replace(modCheck, ''), '**/*');
-                    if (includePaths.indexOf(base) === -1) {
-                        includePaths.push(base);
+        // generate alternatives for style starting from the module path
+        // add package json check for `style` field.
+        let toCheck = alternatives(mod).concat([path.join(mod, 'package.json')]);
+        for (let i = 0, len = toCheck.length; i < len; i++) {
+            let modCheck = toCheck[i];
+            try {
+                // use node resolution to get the full file path
+                // it throws if the file does not exist.
+                let checked = resolve.sync(modCheck, {
+                    basedir: path.dirname(prev) || process.cwd(),
+                });
+                if (path.extname(checked) === '.json') {
+                    // package.json found
+                    let json = require(url);
+                    if (json.style) {
+                        // style field found.
+                        url = path.join(mod, json.style);
+                    } else if (json.main && ext.isStyleFile(json.main)) {
+                        // try to use the main field if it is a css file.
+                        url = path.join(mod, json.main);
                     }
-                    ok = true;
-                } catch (ex) {
-                    //
+                } else {
+                    // url found!
+                    url = checked;
                 }
+                if (url) {
+                    // file found, stop the search.
+                    break;
+                }
+            } catch (ex) {
+                //
             }
-        });
-    } else if (!path.isAbsolute(url)) {
-        let toCheck = alternatives(path.resolve(path.dirname(prev), url));
-        url = toCheck.find((f) => fs.existsSync(f));
+        }
     }
     if (path.extname(url) === '.css') {
+        // if the file has css extension, return it contents.
+        // (sass doet not include css file using plain css import, so we have to pass the content).
         return {
             contents: fs.readFileSync(url, 'utf8'),
         };
     }
+    // return the found url.
     return {
         file: url,
     };
 }
 
+/**
+ * Get the postcss config.
+ */
 function getPostCssConfig() {
     let localConf = path.join(paths.cwd, 'postcss.json');
     if (fs.existsSync(localConf)) {
+        // local configuration
         return require(localConf);
     }
+    // default configuration
     return {
         browsers: ['last 3 versions'],
     };
 }
 
+/**
+ * Command action to run linter.
+ *
+ * @param {CLI} app CLI instance.
+ * @param {Object} options Options.
+ * @returns {Promise}
+ *
+ * @namespace options
+ * @property {string} input The sass source file.
+ * @property {string} output The file to create.
+ * @property {Boolean} map Should generate sourcemaps.
+ * @property {Boolean} production Should generate files in production mode.
+ */
 module.exports = (app, options) => {
     if (options.output) {
         options.output = path.resolve(paths.cwd, options.output);
@@ -99,7 +157,6 @@ module.exports = (app, options) => {
     return new global.Promise((resolve, reject) => {
         app.profiler.task('sass');
         let task = app.log(`sass... ${colors.grey(`(${options.input})`)}`, true);
-        options.includePaths = options.includePaths || [];
         let postCssPlugins = [
             autoprefixer(getPostCssConfig()),
         ];
@@ -111,14 +168,13 @@ module.exports = (app, options) => {
             outFile: options.output,
             sourceMap: options.map !== false,
             sourceMapEmbed: options.map !== false,
-            importer: (url, prev) => nodeResolver(url, prev, options),
-            includePaths: options.includePaths,
+            importer: (url, prev) => nodeResolver(url, prev),
         }, (err, sassResult) => {
             task();
             if (err) {
                 app.log(err);
                 app.log(colors.red(`sass error ${options.name}`));
-                reject(err);
+                reject();
             } else {
                 app.profiler.endTask('sass');
                 app.profiler.task('postcss');
