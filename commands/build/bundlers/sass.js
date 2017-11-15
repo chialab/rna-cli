@@ -4,6 +4,7 @@ const paths = require('../../../lib/paths.js');
 const colors = require('colors/safe');
 const sass = require('sass');
 const resolve = require('resolve');
+const BundleManifest = require('../../../lib/bundle.js');
 const STYLE_EXTENSIONS = ['.scss', '.sass', '.css'];
 
 const postcss = require('postcss');
@@ -85,10 +86,7 @@ function getPostCssConfig() {
 }
 
 module.exports = (app, options) => {
-    let prev = app.generatedOptions[options.input];
-    if (prev) {
-        options = app.generatedOptions[options.input];
-    } else if (options.output) {
+    if (options.output) {
         options.output = path.resolve(paths.cwd, options.output);
         let final = options.output.split(path.sep).pop();
         if (!final.match(/\./)) {
@@ -100,7 +98,7 @@ module.exports = (app, options) => {
     }
     return new global.Promise((resolve, reject) => {
         app.profiler.task('sass');
-        let task = app.log(`sass${app.generated[options.input] ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
+        let task = app.log(`sass... ${colors.grey(`(${options.input})`)}`, true);
         options.includePaths = options.includePaths || [];
         let postCssPlugins = [
             autoprefixer(getPostCssConfig()),
@@ -123,13 +121,6 @@ module.exports = (app, options) => {
                 reject(err);
             } else {
                 app.profiler.endTask('sass');
-                if (sassResult.stats && sassResult.stats.includedFiles) {
-                    app.generated[options.input] = [
-                        {
-                            dependencies: sassResult.stats.includedFiles,
-                        },
-                    ];
-                }
                 app.profiler.task('postcss');
                 postcss(postCssPlugins)
                     .process(sassResult.css.toString(), {
@@ -139,17 +130,13 @@ module.exports = (app, options) => {
                     })
                     .then((result) => {
                         fs.writeFileSync(options.output, result.css);
-                        app.generated[options.input] = {
-                            modules: [
-                                {
-                                    dependencies: sassResult.stats.includedFiles || [],
-                                },
-                            ],
-                        };
-                        app.generatedOptions[options.input] = options;
                         app.log(`${colors.bold(colors.green('sass done!'))} ${colors.grey(`(${options.output})`)}`);
                         app.profiler.endTask('postcss');
-                        resolve();
+                        let manifest = new BundleManifest(options.input, options.output);
+                        if (sassResult.stats && sassResult.stats.includedFiles) {
+                            manifest.addFile(...sassResult.stats.includedFiles);
+                        }
+                        resolve(manifest);
                     });
             }
         });

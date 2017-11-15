@@ -6,6 +6,7 @@ const RollupTimer = require('rollup-timer').RollupTimer;
 const paths = require('../../../lib/paths.js');
 const importer = require('../../../lib/import.js');
 const utils = require('../../../lib/utils.js');
+const BundleManifest = require('../../../lib/bundle.js');
 const isCore = require('resolve').isCore;
 
 const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel.js');
@@ -20,6 +21,8 @@ const string = require('rollup-plugin-string');
 
 const postcss = require('postcss');
 const autoprefixer = require('autoprefixer');
+
+const caches = {};
 
 function getPostCssConfig() {
     let localConf = path.join(paths.cwd, 'postcss.json');
@@ -85,7 +88,7 @@ function getConfig(app, options) {
         format: 'umd',
         strict: false,
         // https://github.com/rollup/rollup/issues/1626
-        cache: app.generated[options.input],
+        cache: options.cache ? caches[options.input] : undefined,
         indent: false,
         plugins: [
             resolve(),
@@ -172,10 +175,7 @@ function timeReport(profiler, timer) {
 }
 
 module.exports = (app, options) => {
-    let prev = app.generatedOptions[options.input];
-    if (prev) {
-        options = app.generatedOptions[options.input];
-    } else if (options.output) {
+    if (options.output) {
         options.output = path.resolve(paths.cwd, options.output);
         let final = options.output.split(path.sep).pop();
         if (!final.match(/\./)) {
@@ -194,7 +194,7 @@ module.exports = (app, options) => {
         app.log(colors.yellow('⚠️ skipping Babel task.'));
     }
     let profiler = app.profiler.task('rollup');
-    let task = app.log(`bundling${app.generated[options.input] ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
+    let task = app.log(`bundling${caches[options.input] ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
     return getConfig(app, options)
         .then((config) => {
             const timer = new RollupTimer();
@@ -204,15 +204,25 @@ module.exports = (app, options) => {
             return rollup.rollup(config)
                 .then((bundler) => {
                     options.output = options.output || config.output;
-                    app.generated[options.input] = bundler;
-                    app.generatedOptions[options.input] = options;
+                    caches[options.input] = bundler;
                     return bundler.write(config)
                         .then(() => {
                             timeReport(profiler, timer);
                             app.profiler.endTask('rollup');
                             task();
                             app.log(`${colors.bold(colors.green('bundle ready!'))} ${colors.grey(`(${options.output})`)}`);
-                            return global.Promise.resolve(bundler);
+                            let manifest = new BundleManifest(options.input, options.output);
+                            // get bundle dependencies
+                            bundler.modules.forEach((mod) => {
+                                let dependencies = mod.dependencies || [];
+                                // filter files
+                                dependencies = dependencies.filter((p) => fs.existsSync(p));
+                                // map to real files
+                                dependencies = dependencies.map((p) => fs.realpathSync(p));
+                                // add to manifest
+                                manifest.addFile(...dependencies);
+                            });
+                            return global.Promise.resolve(manifest);
                         });
                 });
         })

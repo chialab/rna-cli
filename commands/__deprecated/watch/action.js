@@ -3,9 +3,9 @@ const path = require('path');
 const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
 const chokidar = require('chokidar');
-const optionsUtils = require('../../lib/options.js');
-const cwd = require('../../lib/paths.js').cwd;
-const wait = require('../../lib/watch-queue.js');
+const optionsUtils = require('../../../lib/options.js');
+const cwd = require('../../../lib/paths.js').cwd;
+const wait = require('../../../lib/watch-queue.js');
 
 /**
  * Turn an absolute path in a relative path, for readability.
