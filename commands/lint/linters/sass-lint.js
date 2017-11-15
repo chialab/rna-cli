@@ -33,24 +33,30 @@ module.exports = function sasslintTask(app, options, files) {
     if (sassFiles.length) {
         app.profiler.task('sass-lint');
         let task = app.log('running SassLint...', true);
-        let reports = [];
-        sassFiles.forEach((src) => {
-            let report = SassLinter.lintFiles(src, {});
-            report.forEach((r) => {
-                if (r.errorCount) {
-                    reports.push(r);
-                } else if (r.warningCount && options.warnings !== false) {
-                    reports.push(r);
-                }
+        try {
+            let reports = [];
+            sassFiles.forEach((src) => {
+                let report = SassLinter.lintFiles(src, {});
+                report.forEach((r) => {
+                    if (r.errorCount) {
+                        reports.push(r);
+                    } else if (r.warningCount && options.warnings !== false) {
+                        reports.push(r);
+                    }
+                });
             });
-        });
-        app.profiler.endTask('sass-lint');
-        task(); // Stop loader.
-        if (reports.length) {
-            SassLinter.outputResults(reports);
-            return global.Promise.resolve(reports);
+            app.profiler.endTask('sass-lint');
+            task(); // Stop loader.
+            if (reports.length) {
+                SassLinter.outputResults(reports);
+                return global.Promise.resolve(reports);
+            }
+            app.log(colors.bold('everything is fine with SassLint.'));
+        } catch (err) {
+            task();
+            app.log(colors.red('failed to execute SassLint.'));
+            return global.Promise.reject(err);
         }
-        app.log(colors.bold('everything is fine with SassLint.'));
     }
     return global.Promise.resolve();
 }

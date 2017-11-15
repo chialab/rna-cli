@@ -47,23 +47,29 @@ module.exports = function eslint(app, options, files) {
     if (jsFiles.length) {
         app.profiler.task('eslint');
         let task = app.log('running ESLint...', true);
-        const linter = new Linter({
-            configFile,
-            cwd: paths.cwd,
-        });
-        const report = linter.executeOnFiles(jsFiles);
-        app.profiler.endTask('eslint');
-        task(); // Stop loader.
-        if (report.errorCount || report.warningCount) {
-            if (options.warnings !== false || report.errorCount) {
-                const formatter = linter.getFormatter();
-                app.log(formatter(report.results));
+        try {
+            const linter = new Linter({
+                configFile,
+                cwd: paths.cwd,
+            });
+            const report = linter.executeOnFiles(jsFiles);
+            app.profiler.endTask('eslint');
+            task(); // Stop loader.
+            if (report.errorCount || report.warningCount) {
+                if (options.warnings !== false || report.errorCount) {
+                    const formatter = linter.getFormatter();
+                    app.log(formatter(report.results));
+                }
+                return global.Promise.resolve(
+                    (options.warnings !== false || report.errorCount) ? report : undefined
+                );
             }
-            return global.Promise.resolve(
-                (options.warnings !== false || report.errorCount) ? report : undefined
-            );
+            app.log(colors.bold('everything is fine with ESLint.'));
+        } catch (err) {
+            task();
+            app.log(colors.red('failed to execute ESLint.'));
+            return global.Promise.reject(err);
         }
-        app.log(colors.bold('everything is fine with ESLint.'));
     }
     return global.Promise.resolve();
 };
