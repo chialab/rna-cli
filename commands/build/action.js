@@ -22,7 +22,7 @@ const ext = require('../../lib/extensions.js');
  * @property {Boolean} lint Should lint files before bundle.
  * @property {Boolean} lint-styles Should lint SASS files.
  * @property {Boolean} lint-js Should lint JavaScript files.
- * @property {Boolean} watch Should watch fils.
+ * @property {Boolean} watch Should watch files.
  * @property {Boolean} cache Use cache if available.
  */
 module.exports = (app, options = {}) => {

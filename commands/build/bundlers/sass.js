@@ -63,7 +63,7 @@ function nodeResolver(url, prev) {
             // the local file exists, node resolution is not required
             url = resolved;
         } else {
-            // maybe the file is a module
+            // if file is a module
             mod = url;
         }
     }
@@ -90,7 +90,7 @@ function nodeResolver(url, prev) {
                         url = path.join(mod, json.main);
                     }
                 } else {
-                    // url found!
+                    // url found
                     url = checked;
                 }
                 if (url) {
@@ -103,8 +103,8 @@ function nodeResolver(url, prev) {
         }
     }
     if (path.extname(url) === '.css') {
-        // if the file has css extension, return it contents.
-        // (sass doet not include css file using plain css import, so we have to pass the content).
+        // if the file has css extension, return its contents.
+        // (sass does not include css file using plain css import, so we have to pass the content).
         return {
             contents: fs.readFileSync(url, 'utf8'),
         };
@@ -117,6 +117,7 @@ function nodeResolver(url, prev) {
 
 /**
  * Get the postcss config.
+ * @return {Object} The post css configuration.
  */
 function getPostCssConfig() {
     let localConf = path.join(paths.cwd, 'postcss.json');
