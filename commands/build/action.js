@@ -61,7 +61,6 @@ module.exports = (app, options = {}) => {
                 } else {
                     opts.input = path.join(pkg.path, json.main);
                 }
-                opts.name = opts.name || utils.camelize(json.name);
                 return bundle(app, opts)
                     .then((manifest) => {
                         bundleManifests.push(manifest);
