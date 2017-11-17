@@ -6,6 +6,7 @@ const sass = require('sass');
 const resolve = require('resolve');
 const BundleManifest = require('../../../lib/bundle.js');
 const ext = require('../../../lib/extensions.js');
+const utils = require('../../../lib/utils.js');
 
 const postcss = require('postcss');
 const autoprefixer = require('autoprefixer');
@@ -81,13 +82,14 @@ function nodeResolver(url, prev) {
                 });
                 if (path.extname(checked) === '.json') {
                     // package.json found
-                    let json = require(url);
+                    checked = fs.realpathSync(checked);
+                    let json = require(checked);
                     if (json.style) {
                         // style field found.
-                        url = path.join(mod, json.style);
+                        url = path.join(path.dirname(checked), json.style);
                     } else if (json.main && ext.isStyleFile(json.main)) {
                         // try to use the main field if it is a css file.
-                        url = path.join(mod, json.main);
+                        url = path.join(path.dirname(checked), json.main);
                     }
                 } else {
                     // url found
@@ -164,6 +166,7 @@ module.exports = (app, options) => {
         if (options.production) {
             postCssPlugins.push(cssnano());
         }
+        utils.ensureDir(path.dirname(options.output));
         sass.render({
             file: options.input,
             outFile: options.output,
