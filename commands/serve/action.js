@@ -25,9 +25,6 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
         server: {
             baseDir: base,
             directory: options.directory === true,
-            routes: {
-                '/node_modules': 'node_modules',
-            },
         },
         // files: [],
         ghostMode: false,
@@ -40,6 +37,13 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
             disableDotRule: true,
             htmlAcceptHeaders: ['text/html'],
         })],
+        serveStatic: [
+            {
+                route: '/node_modules',
+                dir: 'node_modules',
+            },
+            base,
+        ],
     };
     if (options.https) {
         config.https = {
