@@ -20,5 +20,6 @@ Anyway, the developer can use a custom configuration if the \`sass-lint.yml\` fi
         .option('[--no-js]', 'Do not exec javascript linting.')
         .option('[--no-styles]', 'Do not exec style linting.')
         .option('[--no-warnings]', 'Do not check for warnings.')
+        .option('[--watch]', 'Watch files and re-lint on changes.')
         .action((app, options = {}) => require('./action')(app, options));
 };
