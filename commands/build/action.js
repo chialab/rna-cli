@@ -41,7 +41,10 @@ module.exports = (app, options = {}) => {
             warnings: false,
         });
     }
-    return lintTask.then(() => {
+    return lintTask.then((lintErrors) => {
+        if (lintErrors && lintErrors.length) {
+            return global.Promise.reject();
+        }
         let filter = optionsUtils.handleArguments(options);
         let promise = global.Promise.resolve();
 
