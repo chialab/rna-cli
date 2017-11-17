@@ -7,6 +7,7 @@ const utils = require('../../lib/utils.js');
 const bundle = require('./bundlers/rollup.js');
 const sass = require('./bundlers/sass.js');
 const watcher = require('../../lib/watcher.js');
+const ext = require('../../lib/extensions.js');
 
 /**
  * Command action to build sources.
@@ -21,7 +22,7 @@ const watcher = require('../../lib/watcher.js');
  * @property {Boolean} lint Should lint files before bundle.
  * @property {Boolean} lint-styles Should lint SASS files.
  * @property {Boolean} lint-js Should lint JavaScript files.
- * @property {Boolean} watch Should watch fils.
+ * @property {Boolean} watch Should watch files.
  * @property {Boolean} cache Use cache if available.
  */
 module.exports = (app, options = {}) => {
@@ -50,22 +51,72 @@ module.exports = (app, options = {}) => {
         Object.values(filter.packages).forEach((pkg) => {
             promise = promise.then(() => {
                 let json = pkg.json;
+
+                // if package has not main field and options output is missing
+                // the cli cannot detect where to build the files.
                 if (!json.main && !options.output) {
                     app.log(colors.red(`Missing 'output' property for ${pkg.name} module.`));
                     return global.Promise.reject();
                 }
-                let opts = Proteins.clone(options);
-                if (json.module) {
-                    opts.input = path.join(pkg.path, json.module);
-                    opts.output = path.join(pkg.path, json.main);
-                } else {
-                    opts.input = path.join(pkg.path, json.main);
+                let packageBundlePromise = global.Promise.resolve();
+
+                // build `modules` > `main`.js
+                // clone options in order to use for js bundler.
+                let jsOptions = Proteins.clone(options);
+                if (json.module && ext.isJSFile(json.module)) {
+                    // if module field is a javascript file, use it as source file.
+                    jsOptions.input = path.join(pkg.path, json.module);
+                    // if the output option is missing, use the main field.
+                    jsOptions.output = jsOptions.output || path.join(pkg.path, json.main);
+                } else if (jsOptions.output && ext.isJSFile(json.main)) {
+                    // if output option is different from the main field
+                    // we can use the main file as source if it is javascript.
+                    jsOptions.input = path.join(pkg.path, json.main);
                 }
-                return bundle(app, opts)
-                    .then((manifest) => {
-                        bundleManifests.push(manifest);
-                        return global.Promise.resolve(manifest);
-                    });
+                if (jsOptions.input) {
+                    // a javascript source has been detected.
+                    packageBundlePromise = packageBundlePromise.then(() =>
+                        bundle(app, jsOptions)
+                            .then((manifest) => {
+                                bundleManifests.push(manifest);
+                                return global.Promise.resolve(manifest);
+                            })
+                    );
+                }
+
+                // build `style` > `main`.css
+                // clone options in order to use for sass bundler.
+                let styleOptions = Proteins.clone(options);
+                if (json.style && ext.isStyleFile(json.style)) {
+                    // if style field is a style file, use it as source file.
+                    styleOptions.input = path.join(pkg.path, json.style);
+                    // if the output option is missing, use the main field.
+                    styleOptions.output = styleOptions.output || path.join(pkg.path, json.main);
+                    // ensure output style file.
+                    if (!ext.isStyleFile(styleOptions.output)) {
+                        styleOptions.output = path.join(
+                            path.dirname(styleOptions.output),
+                            `${path.basename(styleOptions.output, path.extname(styleOptions.output))}.css`
+                        );
+                    }
+                } else if (styleOptions.output && ext.isStyleFile(json.main)) {
+                    // if output option is different from the main field
+                    // we can use the main file as source if it is a style.
+                    styleOptions.input = path.join(pkg.path, json.main);
+                }
+                if (styleOptions.input) {
+                    // a style source has been detected.
+                    packageBundlePromise = packageBundlePromise.then(() =>
+                        sass(app, styleOptions)
+                            .then((manifest) => {
+                                // collect the generated BundleManifest
+                                bundleManifests.push(manifest);
+                                return global.Promise.resolve(manifest);
+                            })
+                    );
+                }
+
+                return packageBundlePromise;
             });
         });
 

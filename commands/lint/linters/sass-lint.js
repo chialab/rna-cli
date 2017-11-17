@@ -59,4 +59,4 @@ module.exports = function sasslintTask(app, options, files) {
         }
     }
     return global.Promise.resolve();
-}
+};
