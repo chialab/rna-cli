@@ -75,7 +75,6 @@ module.exports = (app, options = {}) => {
                 }
                 if (jsOptions.input) {
                     // a javascript source has been detected.
-                    jsOptions.name = jsOptions.name || utils.camelize(json.name);
                     packageBundlePromise = packageBundlePromise.then(() =>
                         bundle(app, jsOptions)
                             .then((manifest) => {

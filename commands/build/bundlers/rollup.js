@@ -187,7 +187,7 @@ module.exports = (app, options) => {
     }
     if (!options.name) {
         options.name = utils.camelize(
-            path.basename(options.input, path.extname(options.input))
+            path.basename(options.output, path.extname(options.output))
         );
     }
     if (options.transpile === false) {
