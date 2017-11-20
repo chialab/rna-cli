@@ -175,16 +175,17 @@ module.exports = (app, options = {}) => {
     // Load list of files to be tested.
     let files = [];
     let filter = optionsUtils.handleArguments(options);
-    filter.files.forEach((f) => files.push(...glob.sync(f)));
+    filter.files.forEach((f) => files.push(...glob.sync(f, {
+        ignore: '**/node_modules/**/*',
+    })));
     Object.values(filter.packages)
         .forEach((pkg) =>
             files.push(...glob.sync(
                 path.join(pkg.path, '**/unit/**/*.js'), {
-                    ignore: 'node_modules',
+                    ignore: '**/node_modules/**/*',
                 })
             )
         );
-
     if (!files.length) {
         app.log(colors.yellow('no unit tests found.'));
         return global.Promise.resolve();
