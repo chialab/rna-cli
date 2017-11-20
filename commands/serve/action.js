@@ -1,9 +1,10 @@
+const fs = require('fs');
 const path = require('path');
+const url = require('url');
 const colors = require('colors/safe');
 const browserSync = require('browser-sync').create();
 const watcher = require('../../lib/watcher.js');
 const commondir = require('commondir');
-const historyApiFallback = require('connect-history-api-fallback');
 const cwd = require('../../lib/paths.js').cwd;
 const optionsUtils = require('../../lib/options.js');
 
@@ -33,10 +34,19 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
         open: false,
         xip: true,
         injectChanges: true,
-        middleware: !options.directory && [historyApiFallback({
-            disableDotRule: true,
-            htmlAcceptHeaders: ['text/html'],
-        })],
+        middleware: !options.directory && [
+            (req, res, next) => {
+                const headers = req.headers;
+                if (req.method === 'GET' && ~headers.accept.indexOf('text/html') && !headers.origin) {
+                    let parsed = url.parse(req.url);
+                    let file = path.join(base, parsed.pathname);
+                    if (!path.extname(file) && (!fs.existsSync(file) || !fs.statSync(file).isFile())) {
+                        req.url = '/index.html';
+                    }
+                }
+                return next();
+            },
+        ],
         serveStatic: [
             {
                 route: '/node_modules',
