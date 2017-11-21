@@ -3,7 +3,6 @@ const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
 const paths = require('../../lib/paths.js');
 const optionsUtils = require('../../lib/options.js');
-const utils = require('../../lib/utils.js');
 const bundle = require('./bundlers/rollup.js');
 const sass = require('./bundlers/sass.js');
 const watcher = require('../../lib/watcher.js');
