@@ -35,7 +35,7 @@ rules:
     - always
   space-before-function-paren:
     - 1
-    - always
+    - never
   no-proto: 0
   no-param-reassign: 0
   quote-props:
