@@ -181,7 +181,11 @@ module.exports = (app, options = {}) => {
                                 'lint-sass': options['lint-sass'],
                                 'lint-js': options['lint-js'],
                                 'cache': true,
-                            }));
+                            })).catch((err) => {
+                                if (err) {
+                                    app.log(err);
+                                }
+                            });
                         });
                     });
                 }
