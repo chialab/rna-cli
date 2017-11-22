@@ -44,6 +44,7 @@ module.exports = (app, options) => {
             globDirectory: input,
             globPatterns: ['**/*'],
             globIgnores: ['service-worker.js'],
+            maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
         }).then((res) => {
             task();
             app.log(`${colors.bold(colors.green('service worker updated!'))} ${colors.grey(`(${output})`)}`);
@@ -60,6 +61,7 @@ module.exports = (app, options) => {
             swDest: output,
             globPatterns: ['**/*'],
             globIgnores: ['service-worker.js'],
+            maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
         }).then((res) => {
             task();
             app.log(`${colors.bold(colors.green('service worker generated!'))} ${colors.grey(`(${output})`)}`);
