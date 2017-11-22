@@ -40,7 +40,7 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
                 if (req.method === 'GET' && ~headers.accept.indexOf('text/html') && !headers.origin) {
                     let parsed = url.parse(req.url);
                     let file = path.join(base, parsed.pathname);
-                    if (!path.extname(file) && (!fs.existsSync(file) || !fs.statSync(file).isFile())) {
+                    if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
                         req.url = '/index.html';
                     }
                 }
