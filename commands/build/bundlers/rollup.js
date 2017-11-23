@@ -193,6 +193,11 @@ module.exports = (app, options) => {
     if (options.transpile === false) {
         app.log(colors.yellow('⚠️ skipping Babel task.'));
     }
+    if (options.production && !process.env.NODE_ENV) {
+        // Set NODE_ENV environment variable if `--production` flag is set.
+        app.log(colors.yellow('🚢 setting "production" environment.'));
+        process.env.NODE_ENV = 'production';
+    }
     let profiler = app.profiler.task('rollup');
     let task = app.log(`bundling${caches[options.input] ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
     return getConfig(app, options)
