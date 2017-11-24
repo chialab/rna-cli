@@ -186,10 +186,13 @@ module.exports = (app, options) => {
                     .process(sassResult.css.toString(), {
                         from: options.input,
                         to: options.output,
-                        map: options.map !== false ? { inline: true } : false,
+                        map: options.map !== false,
                     })
                     .then((result) => {
                         fs.writeFileSync(options.output, result.css);
+                        if (options.map !== false) {
+                            fs.writeFileSync(`${options.output}.map`, result.map);
+                        }
                         app.log(`${colors.bold(colors.green('sass done!'))} ${colors.grey(`(${options.output})`)}`);
                         app.profiler.endTask('postcss');
                         let manifest = new BundleManifest(options.input, options.output);
