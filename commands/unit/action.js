@@ -166,7 +166,7 @@ module.exports = (app, options = {}) => {
         app.log(colors.red('no project found.'));
         return global.Promise.reject();
     }
-    if (!process.env.NODE_ENV) {
+    if (!process.env.hasOwnProperty('NODE_ENV')) {
         // Set NODE_ENV environment variable.
         app.log(colors.yellow('🔍 setting "test" environment.'));
         process.env.NODE_ENV = 'test';
