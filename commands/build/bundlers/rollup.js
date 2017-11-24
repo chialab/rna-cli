@@ -84,7 +84,7 @@ function getConfig(app, options) {
         name: options.name,
         input: options.input,
         file: options.output,
-        sourcemap: options.map !== false ? 'inline' : false,
+        sourcemap: options.map !== false,
         format: 'umd',
         strict: false,
         // https://github.com/rollup/rollup/issues/1626
