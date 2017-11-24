@@ -32,6 +32,7 @@
     "colors": "^1.1.2",
     "commondir": "^1.0.1",
     "cssnano": "^3.10.0",
+    "documentation": "^5.3.3",
     "eslint": "^4.9.0",
     "eslint-plugin-mocha": "^4.11.0",
     "fs-extra": "^4.0.2",
