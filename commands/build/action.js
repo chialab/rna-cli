@@ -26,7 +26,7 @@ const ext = require('../../lib/extensions.js');
  */
 module.exports = (app, options = {}) => {
     options = Proteins.clone(options);
-    if (!paths.cwd) {
+    if (!options.arguments.length && !paths.cwd) {
         // Unable to detect project root.
         app.log(colors.red('no project found.'));
         return global.Promise.reject();
