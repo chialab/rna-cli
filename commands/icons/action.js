@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 const colors = require('colors/safe');
 const utils = require('../../lib/utils.js');
@@ -27,8 +27,8 @@ module.exports = (app, options) => {
         app.log(`${colors.red('icon file not found.')} ${colors.grey(`(${icon})`)}`);
         return global.Promise.reject();
     }
-    utils.ensureDir(output);
-    utils.emptyDir(path.join(output, iconsPath));
+    fs.ensureDirSync(output);
+    fs.emptyDirSync(path.join(output, iconsPath));
     const api = rfg.init();
     let task = app.log('generating icons...', true);
     let manifest = undefined;

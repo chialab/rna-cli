@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 const paths = require('../../../lib/paths.js');
 const colors = require('colors/safe');
@@ -6,7 +6,6 @@ const sass = require('sass');
 const resolve = require('resolve');
 const BundleManifest = require('../../../lib/bundle.js');
 const ext = require('../../../lib/extensions.js');
-const utils = require('../../../lib/utils.js');
 
 const postcss = require('postcss');
 const autoprefixer = require('autoprefixer');
@@ -166,7 +165,7 @@ module.exports = (app, options) => {
         if (options.production) {
             postCssPlugins.push(cssnano());
         }
-        utils.ensureDir(path.dirname(options.output));
+        fs.ensureDirSync(path.dirname(options.output));
         sass.render({
             file: options.input,
             outFile: options.output,

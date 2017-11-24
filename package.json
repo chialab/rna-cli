@@ -34,6 +34,7 @@
     "cssnano": "^3.10.0",
     "eslint": "^4.9.0",
     "eslint-plugin-mocha": "^4.11.0",
+    "fs-extra": "^4.0.2",
     "glob": "^7.1.2",
     "inquirer": "^3.3.0",
     "karma": "^1.7.1",

@@ -1,6 +1,5 @@
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
-const utils = require('../../../lib/utils.js');
 const paths = require('../../../lib/paths.js');
 
 /**
@@ -22,7 +21,7 @@ module.exports = () => {
     if (json.main) {
         // Ensure path specified in `package.json` "main" key is present.
         let main = path.resolve(cwd, json.main);
-        utils.ensureDir(path.dirname(main));
+        fs.ensureDirSync(path.dirname(main));
         if (!fs.existsSync(main)) {
             fs.writeFileSync(main, '');
             if (json.structure === 'webapp') {
@@ -47,7 +46,7 @@ module.exports = () => {
     if (json.module) {
         // Ensure path specified in `package.json` "module" key is present.
         let mod = path.resolve(cwd, json.module);
-        utils.ensureDir(path.dirname(mod));
+        fs.ensureDirSync(path.dirname(mod));
         if (!fs.existsSync(mod)) {
             fs.writeFileSync(mod, '');
         }
@@ -55,7 +54,7 @@ module.exports = () => {
 
     if (json.workspaces) {
         // Ensure paths listed as workspaces are present.
-        json.workspaces.forEach((ws) => utils.ensureDir(path.dirname(ws)));
+        json.workspaces.forEach((ws) => fs.ensureDirSync(path.dirname(ws)));
     }
 
     return global.Promise.resolve();
