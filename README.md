@@ -5,6 +5,8 @@
 ## Install
 ```sh
 $ npm install -g git+https://gitlab.com/chialab/rna-cli
+# or
+$ yarn global add git+https://gitlab.com/chialab/rna-cli
 ```
 
 ## Usage
@@ -24,9 +26,12 @@ $ rna
 * [x] **watch** - Watch project files.
 * [x] **serve** - Setup a server for your project.
 * [x] **unit** - Run project unit tests.
+* [ ] **e2e** - Run project e2e tests.
 * [x] **publish** - Publish to NPM.
 * [ ] **cdn** - Publish to CDN.
 * [ ] **documentation** - Generate API references.
+* [x] **icons** - Generate project icons.
+* [x] **sw** - Generate Service Worker with precached files.
 * [x] **start** - `yarn/npm start` alias
 * [x] **run** - `yarn/npm run` alias
 
@@ -61,7 +66,7 @@ Progetti semplici:
 
 * `rna [cmd]` (senza argomenti)
 
-        # Esempio: esegue la build del progetto 
+        # Esempio: esegue la build del progetto
         $ rna build
 
 * `rna [cmd] file` (file generico)
