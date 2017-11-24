@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
-const utils = require('../../lib/utils.js');
 const rfg = require('rfg-api');
 
 /**
