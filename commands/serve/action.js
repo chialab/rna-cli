@@ -20,6 +20,10 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
     let filter = optionsUtils.handleArguments(options);
     let base = filter.files.length ? commondir(filter.files) : './public';
     base = path.resolve(cwd, base);
+    if (filter.files.length > 1) {
+        // serving multi path, force directory option
+        options.directory = true;
+    }
 
     // Load configuration.
     let config = {
@@ -80,8 +84,10 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
         });
 
         if (options.watch) {
+            // Watch only requested paths, not the commondir
+            let paths = filter.files.map((p) => path.join(p, '**/*'));
             // Configure watch.
-            watcher(app, base, (event, p) => {
+            watcher(app, paths, (event, p) => {
                 if (event !== 'unlink') {
                     let toReload = p.replace(base, '').replace(/^\/*/, '');
                     // File updated: notify BrowserSync so that it can be reloaded.
