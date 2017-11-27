@@ -15,11 +15,11 @@ const runNativeScriptTest = require('./lib/ns.js');
  * @type {Object}
  */
 const ENVIRONMENTS = {
-    node: { runner: 'mocha', dependencies: ['chai'] },
-    browser: { runner: 'karma', dependencies: ['chai'] },
-    saucelabs: { runner: 'karma', dependencies: ['chai'], devDependencies: ['karma-sauce-launcher'] },
-    electron: { runner: 'karma', dependencies: ['chai'], devDependencies: ['electron karma-electron-launcher'] },
-    nativescript: { runner: 'ns', dependencies: ['chai'] },
+    node: { runner: 'mocha' },
+    browser: { runner: 'karma', devDependencies: ['karma-chrome-launcher', 'karma-firefox-launcher'] },
+    saucelabs: { runner: 'karma', devDependencies: ['karma-sauce-launcher'] },
+    electron: { runner: 'karma', devDependencies: ['electron karma-electron-launcher'] },
+    nativescript: { runner: 'ns' },
 };
 
 /**
@@ -89,17 +89,16 @@ function getConfig(app, options) {
         // Concurrency level
         // how many browser should be started simultaneous
         concurrency: Infinity,
-
-        customLaunchers: {
-            Chrome_CI: {
-                base: 'Chrome',
-                flags: ['--no-sandbox'],
-            },
-        },
     };
 
     if (options.browser) {
         // browser environment.
+        conf.customLaunchers = {
+            Chrome_CI: {
+                base: 'Chrome',
+                flags: ['--no-sandbox'],
+            },
+        };
         if (options.chrome || options.firefox) {
             if (options.chrome) {
                 // Test on Chrome.
@@ -227,7 +226,7 @@ module.exports = (app, options = {}) => {
      * Dependencies install promise.
      * @type {Promise}
      */
-    let depsPromise = global.Promise.resolve();
+    let depsPromise = manager.dev('chai');
 
     // install test dependencies
     taskEnvironments.forEach((taskEnvName) => {
@@ -257,38 +256,42 @@ module.exports = (app, options = {}) => {
                 let taskEnv = ENVIRONMENTS[taskEnvName];
                 if (taskEnv.runner === 'mocha') {
                     // Startup Mocha.
-                    const mocha = new Mocha();
-                    mocha.addFile(tempUnit);
-                    promise = promise.then(() => new global.Promise((resolve, reject) => {
-                        mocha.run((failures) => {
-                            if (failures) {
-                                reject(failures);
-                            } else {
-                                resolve();
-                            }
+                    promise = promise.then(() => {
+                        const mocha = new Mocha();
+                        mocha.addFile(tempUnit);
+                        return new global.Promise((resolve, reject) => {
+                            mocha.run((failures) => {
+                                if (failures) {
+                                    reject(failures);
+                                } else {
+                                    resolve();
+                                }
+                            });
                         });
-                    }));
+                    });
                 } else if (taskEnv.runner === 'karma') {
                     // Startup Karma.
-                    let karmaOptions = getConfig(app, {
-                        ci: options.ci,
-                        server: options.ci,
-                        coverage: options.coverage,
-                        [taskEnvName]: true,
-                        chrome: options.chrome,
-                        firefox: options.firefox,
-                    });
-                    karmaOptions.files = [tempUnit];
-                    promise = promise.then(() => new global.Promise((resolve, reject) => {
-                        let server = new karma.Server(karmaOptions, (exitCode) => {
-                            if (exitCode && !options.server) {
-                                reject(exitCode);
-                            } else {
-                                resolve();
-                            }
+                    promise = promise.then(() => {
+                        let karmaOptions = getConfig(app, {
+                            ci: options.ci,
+                            server: options.ci,
+                            coverage: options.coverage,
+                            [taskEnvName]: true,
+                            chrome: options.chrome,
+                            firefox: options.firefox,
                         });
-                        server.start();
-                    }));
+                        karmaOptions.files = [tempUnit];
+                        return new global.Promise((resolve, reject) => {
+                            let server = new karma.Server(karmaOptions, (exitCode) => {
+                                if (exitCode && !options.server) {
+                                    reject(exitCode);
+                                } else {
+                                    resolve();
+                                }
+                            });
+                            server.start();
+                        });
+                    });
                 } else if (taskEnv.runner === 'ns') {
                     // Create fake NS application.
                     let platform = (options.ios && 'ios') || (options.android && 'android');
