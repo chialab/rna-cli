@@ -101,19 +101,16 @@ function getConfig(app, options) {
                 flags: ['--no-sandbox'],
             },
         };
-        if (options.chrome || options.firefox) {
-            if (options.chrome) {
-                // Test on Chrome.
-                conf.browsers.push('Chrome_CI');
-            }
-
-            if (options.firefox) {
-                // Test on Firefox.
-                conf.browsers.push('Firefox');
-            }
-        } else {
-            // test both.
-            conf.browsers.push('Chrome_CI', 'Firefox');
+        let useAll = !options.chrome && !options.firefox;
+        if (options.chrome || useAll) {
+            // Test on Chrome.
+            conf.browsers.push('Chrome_CI');
+            conf.plugins.push(require('karma-chrome-launcher'));
+        }
+        if (options.firefox || useAll) {
+            // Test on Firefox.
+            conf.browsers.push('Firefox');
+            conf.plugins.push(require('karma-firefox-launcher'));
         }
     }
 
@@ -142,6 +139,7 @@ function getConfig(app, options) {
         let saucelabsBrowsers = getSauceBrowsers();
         conf.customLaunchers = saucelabsBrowsers;
         conf.browsers = Object.keys(saucelabsBrowsers);
+        conf.plugins.push(require('karma-sauce-launcher'));
     }
 
     if (options.electron) {
@@ -149,6 +147,7 @@ function getConfig(app, options) {
         conf.browsers = ['Electron'];
         conf.client = conf.client || {};
         conf.client.useIframe = false;
+        conf.plugins.push(require('karma-electron-launcher'));
     }
 
     if (options.ci) {
@@ -237,10 +236,6 @@ module.exports = (app, options = {}) => {
             // setup task dependencies
             depsPromise = depsPromise.then(() => manager.dev(taskEnv.dependencies.join(' ')));
         }
-        if (taskEnv.devDependencies) {
-            // setup task devDependencies
-            depsPromise = depsPromise.then(() => manager.addToCli(taskEnv.devDependencies.join(' ')));
-        }
     });
 
     return depsPromise.then(() => {
@@ -256,6 +251,10 @@ module.exports = (app, options = {}) => {
             let promise = global.Promise.resolve();
             taskEnvironments.forEach((taskEnvName) => {
                 let taskEnv = ENVIRONMENTS[taskEnvName];
+                if (taskEnv.devDependencies) {
+                    // setup task devDependencies
+                    promise = promise.then(() => manager.addToCli(taskEnv.devDependencies.join(' ')));
+                }
                 if (taskEnv.runner === 'mocha') {
                     // Startup Mocha.
                     promise = promise.then(() => {
