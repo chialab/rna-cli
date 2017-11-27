@@ -4,9 +4,23 @@ const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
 const glob = require('glob');
 const karma = require('karma');
+const Mocha = require('mocha');
 const paths = require('../../lib/paths.js');
 const optionsUtils = require('../../lib/options.js');
 const manager = require('../../lib/package-manager.js');
+const runNativeScriptTest = require('./lib/ns.js');
+
+/**
+ * A list of available environments.
+ * @type {Object}
+ */
+const ENVIRONMENTS = {
+    node: { runner: 'mocha', dependencies: ['chai'] },
+    browser: { runner: 'karma', dependencies: ['chai'] },
+    saucelabs: { runner: 'karma', dependencies: ['chai'], devDependencies: ['karma-sauce-launcher'] },
+    electron: { runner: 'karma', dependencies: ['chai'], devDependencies: ['electron karma-electron-launcher'] },
+    nativescript: { runner: 'ns', dependencies: ['chai'] },
+};
 
 /**
  * Get SauceLabs browsers configuration.
@@ -41,7 +55,7 @@ function getConfig(app, options) {
 
         // frameworks to use
         // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-        frameworks: ['mocha', 'chai'],
+        frameworks: ['mocha'],
 
         // test results reporter to use
         // possible values: 'dots', 'progress'
@@ -84,22 +98,22 @@ function getConfig(app, options) {
         },
     };
 
-    if (options.chrome !== false) {
-        // Test on Chrome.
-        conf.browsers.push('Chrome_CI');
-    }
+    if (options.browser) {
+        // browser environment.
+        if (options.chrome || options.firefox) {
+            if (options.chrome) {
+                // Test on Chrome.
+                conf.browsers.push('Chrome_CI');
+            }
 
-    if (options.firefox !== false) {
-        // Test on Firefox.
-        conf.browsers.push('Firefox');
-    }
-
-    if (options.ci) {
-        // Optimal configuration for CI environment.
-        conf.client = conf.client || {};
-        conf.client.captureConsole = false;
-        conf.autoWatch = false;
-        conf.logLevel = 'ERROR';
+            if (options.firefox) {
+                // Test on Firefox.
+                conf.browsers.push('Firefox');
+            }
+        } else {
+            // test both.
+            conf.browsers.push('Chrome_CI', 'Firefox');
+        }
     }
 
     if (options.saucelabs) {
@@ -134,6 +148,14 @@ function getConfig(app, options) {
         conf.browsers = ['Electron'];
         conf.client = conf.client || {};
         conf.client.useIframe = false;
+    }
+
+    if (options.ci) {
+        // Optimal configuration for CI environment.
+        conf.client = conf.client || {};
+        conf.client.captureConsole = false;
+        conf.autoWatch = false;
+        conf.logLevel = 'ERROR';
     }
 
     if (options.coverage !== false) {
@@ -175,7 +197,6 @@ module.exports = (app, options = {}) => {
     // Load options.
     options = Proteins.clone(options);
     options.ci = options.hasOwnProperty('ci') ? options.ci : process.env.CI; // Is this CI environment?
-    let config = getConfig(app, options);
 
     // Load list of files to be tested.
     let files = [];
@@ -196,37 +217,75 @@ module.exports = (app, options = {}) => {
         return global.Promise.resolve();
     }
 
-    let dependencies = [global.Promise.resolve()];
-    if (options.saucelabs) {
-        dependencies.push(manager.addToCli('karma-sauce-launcher'));
-    }
-    if (options.electron) {
-        dependencies.push(manager.addToCli('electron karma-electron-launcher'));
+    let taskEnvironments = Object.keys(options).filter((optName) => options[optName] && optName in ENVIRONMENTS);
+    if (!taskEnvironments.length) {
+        // If test environment is not provide, use `browser` as default.
+        taskEnvironments.push('browser');
     }
 
-    return global.Promise.all(dependencies).then(() => {
-        let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
-        let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
-        fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
-        return app.exec('build', { // Build sources.
-            arguments: [tempSource],
-            output: tempUnit,
-            map: false,
-        }).then(() => { // Test built sources.
-            let karmaOptions = typeof config === 'string' ?
-                { configFile: config } :
-                config;
-            karmaOptions.files = [tempUnit];
-            return new global.Promise((resolve, reject) => {
-                let server = new karma.Server(karmaOptions, (exitCode) => {
-                    if (exitCode && !options.server) {
-                        reject(exitCode);
-                    } else {
-                        resolve();
-                    }
+    // build tests
+    let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
+    let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
+    fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
+
+    return app.exec('build', { // Build sources.
+        arguments: [tempSource],
+        output: tempUnit,
+        map: false,
+    }).then(() => { // Test built sources.
+        let promise = global.Promise.resolve();
+
+        taskEnvironments.forEach((taskEnvName) => {
+            let taskEnv = ENVIRONMENTS[taskEnvName];
+            if (taskEnv.dependencies) {
+                // setup task dependencies
+                promise = promise.then(() => manager.dev(taskEnv.dependencies.join(' ')));
+            }
+            if (taskEnv.devDependencies) {
+                // setup task devDependencies
+                promise = promise.then(() => manager.addToCli(taskEnv.devDependencies.join(' ')));
+            }
+            if (taskEnv.runner === 'mocha') {
+                // Startup Mocha.
+                const mocha = new Mocha();
+                mocha.addFile(tempUnit);
+                promise = promise.then(() => new global.Promise((resolve, reject) => {
+                    mocha.run((failures) => {
+                        if (failures) {
+                            reject(failures);
+                        } else {
+                            resolve();
+                        }
+                    });
+                }));
+            } else if (taskEnv.runner === 'karma') {
+                // Startup Karma.
+                let karmaOptions = getConfig(app, {
+                    ci: options.ci,
+                    server: options.ci,
+                    coverage: options.coverage,
+                    [taskEnvName]: true,
+                    chrome: options.chrome,
+                    firefox: options.firefox,
                 });
-                server.start();
-            });
+                karmaOptions.files = [tempUnit];
+                promise = promise.then(() => new global.Promise((resolve, reject) => {
+                    let server = new karma.Server(karmaOptions, (exitCode) => {
+                        if (exitCode && !options.server) {
+                            reject(exitCode);
+                        } else {
+                            resolve();
+                        }
+                    });
+                    server.start();
+                }));
+            } else {
+                // Create fake NS application.
+                let platform = (options.ios && 'ios') || (options.android && 'android');
+                promise = promise.then(() => runNativeScriptTest(platform, tempUnit));
+            }
         });
+
+        return promise;
     });
 };
