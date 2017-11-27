@@ -61,7 +61,7 @@ function getConfig(app, options) {
         // possible values: 'dots', 'progress'
         // available reporters: https://npmjs.org/browse/keyword/karma-reporter
         reporters: [
-            options.ci ? 'dots' : 'progress',
+            options.ci ? 'dots' : 'mocha',
             'coverage',
         ],
 
@@ -81,6 +81,8 @@ function getConfig(app, options) {
         // start these browsers
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
         browsers: [],
+
+        plugins: ['karma-mocha', 'karma-mocha-reporter', 'karma-coverage'],
 
         // Continuous Integration mode
         // if true, Karma captures browsers, runs the tests and exits
