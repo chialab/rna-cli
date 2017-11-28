@@ -82,7 +82,11 @@ function getConfig(app, options) {
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
         browsers: [],
 
-        plugins: ['karma-mocha', 'karma-mocha-reporter', 'karma-coverage'],
+        plugins: [
+            require('karma-mocha'),
+            require('karma-mocha-reporter'),
+            require('karma-coverage'),
+        ],
 
         // Continuous Integration mode
         // if true, Karma captures browsers, runs the tests and exits
