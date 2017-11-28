@@ -190,7 +190,7 @@ module.exports = (app, options) => {
                     })
                     .then((result) => {
                         fs.writeFileSync(options.output, result.css);
-                        if (options.map !== false) {
+                        if (options.map !== false && result.map) {
                             fs.writeFileSync(`${options.output}.map`, result.map);
                         }
                         app.log(`${colors.bold(colors.green('sass done!'))} ${colors.grey(`(${options.output})`)}`);
