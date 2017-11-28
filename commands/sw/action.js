@@ -49,7 +49,7 @@ module.exports = (app, options) => {
             swDest: output,
             globDirectory: input,
             globPatterns: ['**/*'],
-            globIgnores: ['service-worker.js'],
+            globIgnores: ['service-worker.js', '*.map'],
             maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
         });
     } else {
@@ -57,7 +57,7 @@ module.exports = (app, options) => {
             globDirectory: input,
             swDest: output,
             globPatterns: ['**/*'],
-            globIgnores: ['service-worker.js'],
+            globIgnores: ['service-worker.js', '*.map'],
             maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
         });
     }
