@@ -13,10 +13,15 @@ module.exports = (program) => {
 A default configuration is also provided.
 Anyway, the developer can use a custom configuration if the \`karma.conf.js\` file exists in the root of the project.`)
         .option('[--ci]', 'Run in continuous integration mode.')
+        .option('[--node]', 'Run tests in node context.')
+        .option('[--browser]', 'Run tests in browser context.')
+        .option('[--chrome]', 'Do not start Chrome browser.')
+        .option('[--firefox]', 'Do not start Firefox browser.')
         .option('[--saucelabs]', 'Use saucelabs as browsers provider.')
         .option('[--electron]', 'Use electron.')
+        .option('[--nativescript]', 'Use nativescript.')
+        .option('[--ios]', 'Run test in iOS emulator.')
+        .option('[--android]', 'Run test in Android emulator.')
         .option('[--no-coverage]', 'Disable code coverage.')
-        .option('[--no-chrome]', 'Do not start Chrome browser.')
-        .option('[--no-firefox]', 'Do not start Firefox browser.')
         .action((app, options = {}) => require('./action')(app, options));
 };
