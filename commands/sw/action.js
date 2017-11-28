@@ -75,7 +75,7 @@ module.exports = (app, options) => {
                         return;
                     }
                 }
-                app.exec('sw', Object.assign({}, options, { remember: false }))
+                app.exec('sw', Object.assign({}, options, { remember: false, watch: false }))
                     .then(() => {
                         lastContent = fs.readFileSync(output, 'utf8');
                     });
