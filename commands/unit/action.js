@@ -16,9 +16,9 @@ const runNativeScriptTest = require('./lib/ns.js');
  */
 const ENVIRONMENTS = {
     node: { runner: 'mocha' },
-    browser: { runner: 'karma', devDependencies: ['karma-chrome-launcher', 'karma-firefox-launcher'] },
-    saucelabs: { runner: 'karma', devDependencies: ['karma-sauce-launcher'] },
-    electron: { runner: 'karma', devDependencies: ['electron karma-electron-launcher'] },
+    browser: { runner: 'karma' },
+    saucelabs: { runner: 'karma' },
+    electron: { runner: 'karma' },
     nativescript: { runner: 'ns' },
 };
 
@@ -76,7 +76,7 @@ function getConfig(app, options) {
         logLevel: 'INFO',
 
         // enable / disable watching file and executing tests whenever any file changes
-        autoWatch: true,
+        autoWatch: !!options.server,
 
         // start these browsers
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
@@ -145,16 +145,13 @@ function getConfig(app, options) {
     if (options.electron) {
         // Test on Electron.
         conf.browsers = ['Electron'];
-        conf.client = conf.client || {};
-        conf.client.useIframe = false;
-        conf.plugins.push(require('karma-electron-launcher'));
+        conf.plugins.push(require('./plugins/karma-electron-launcher/index.js'));
     }
 
     if (options.ci) {
         // Optimal configuration for CI environment.
         conf.client = conf.client || {};
         conf.client.captureConsole = false;
-        conf.autoWatch = false;
         conf.logLevel = 'ERROR';
     }
 
@@ -251,10 +248,6 @@ module.exports = (app, options = {}) => {
             let promise = global.Promise.resolve();
             taskEnvironments.forEach((taskEnvName) => {
                 let taskEnv = ENVIRONMENTS[taskEnvName];
-                if (taskEnv.devDependencies) {
-                    // setup task devDependencies
-                    promise = promise.then(() => manager.addToCli(taskEnv.devDependencies.join(' ')));
-                }
                 if (taskEnv.runner === 'mocha') {
                     // Startup Mocha.
                     promise = promise.then(() => {
