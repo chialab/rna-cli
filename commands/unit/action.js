@@ -3,6 +3,7 @@ const path = require('path');
 const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
 const glob = require('glob');
+const nodeResolve = require('resolve');
 const karma = require('karma');
 const Mocha = require('mocha');
 const paths = require('../../lib/paths.js');
@@ -228,14 +229,14 @@ module.exports = (app, options = {}) => {
      * Dependencies install promise.
      * @type {Promise}
      */
-    let depsPromise = manager.dev('chai');
-
-    // install test dependencies
-    taskEnvironments.forEach((taskEnvName) => {
-        let taskEnv = ENVIRONMENTS[taskEnvName];
-        if (taskEnv.dependencies) {
-            // setup task dependencies
-            depsPromise = depsPromise.then(() => manager.dev(taskEnv.dependencies.join(' ')));
+    let depsPromise = new global.Promise((resolve, reject) => {
+        try {
+            nodeResolve.sync('chai', { basedir: paths.cwd });
+            resolve();
+        } catch (err) {
+            manager.dev('chai')
+                .then(resolve)
+                .catch(reject);
         }
     });
 
