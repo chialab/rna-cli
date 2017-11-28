@@ -273,7 +273,7 @@ module.exports = (app, options = {}) => {
                     promise = promise.then(() => {
                         let karmaOptions = getConfig(app, {
                             ci: options.ci,
-                            server: options.ci,
+                            server: options.server,
                             coverage: options.coverage,
                             [taskEnvName]: true,
                             chrome: options.chrome,
