@@ -42,6 +42,7 @@ function getBabelConfig(options) {
     return {
         include: '**/*.{mjs,js,jsx}',
         exclude: [],
+        babelrc: false,
         compact: false,
         presets: options.transpile !== false ? [
             [require('@babel/preset-env'), {
