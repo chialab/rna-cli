@@ -160,7 +160,7 @@ function getConfig(app, options) {
         conf.logLevel = 'ERROR';
     }
 
-    if (options.coverage !== false) {
+    if (options.coverage) {
         // Collect code coverage.
         conf.coverageReporter = {
             dir: 'coverage',
@@ -168,6 +168,9 @@ function getConfig(app, options) {
                 {
                     type: 'lcov',
                     subdir: (browserName) => path.join('report-lcov', browserName),
+                },
+                {
+                    type: 'text-summary',
                 },
             ],
         };
@@ -249,6 +252,7 @@ module.exports = (app, options = {}) => {
             arguments: [tempSource],
             output: tempUnit,
             map: false,
+            coverage: options.coverage,
         }).then(() => { // Test built sources.
             let promise = global.Promise.resolve();
             taskEnvironments.forEach((taskEnvName) => {

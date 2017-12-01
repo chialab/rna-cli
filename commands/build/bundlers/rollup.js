@@ -39,6 +39,22 @@ function getBabelConfig(options) {
     if (fs.existsSync(localConf)) {
         return JSON.parse(fs.readFileSync(localConf), 'utf8');
     }
+
+    let plugins = [
+        [require('@babel/plugin-transform-template-literals'), {
+            loose: true,
+        }],
+        [require('@babel/plugin-transform-react-jsx'), {
+            pragma: 'IDOM.h',
+        }],
+        require('babel-plugin-transform-inline-environment-variables'),
+    ];
+    if (options.coverage) {
+        plugins.push([require('babel-plugin-istanbul'), {
+            exclude: ['**.jsx'],
+        }]);
+    }
+
     return {
         include: '**/*.{mjs,js,jsx}',
         exclude: [],
@@ -52,15 +68,7 @@ function getBabelConfig(options) {
                 modules: false,
             }],
         ] : undefined,
-        plugins: [
-            [require('@babel/plugin-transform-template-literals'), {
-                loose: true,
-            }],
-            [require('@babel/plugin-transform-react-jsx'), {
-                pragma: 'IDOM.h',
-            }],
-            require('babel-plugin-transform-inline-environment-variables'),
-        ],
+        plugins,
     };
 }
 
@@ -92,6 +100,7 @@ function getConfig(app, options) {
         cache: options.cache ? caches[options.input] : undefined,
         indent: false,
         plugins: [
+            /** PLUGINS THAT HAVE EFFECTS ON IMPORT HANDLING */
             resolve(),
             json(),
             string({
@@ -132,6 +141,8 @@ function getConfig(app, options) {
                 // import header
                 header: 'import { IDOM } from \'@dnajs/idom\';',
             }),
+
+            /** PLUGINS THAT HAVE EFFECTS ON TRANSPILING AND CODE IN GENERAL */
             babel(babelConfig),
             common({
                 ignore: (id) => isCore(id),
