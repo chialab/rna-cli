@@ -110,6 +110,8 @@ function resolver() {
             }
         }
         if (resolved.indexOf(url) !== -1) {
+            // This file has been resolved already.
+            // Skip it in order to avoid duplications.
             return {
                 contents: '',
             };
