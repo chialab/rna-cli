@@ -1,6 +1,6 @@
 {
   "name": "rna-cli",
-  "version": "0.21.2",
+  "version": "0.21.3",
   "description": "A CLI to rule them all.",
   "main": "index.js",
   "repository": {
