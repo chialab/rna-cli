@@ -4,14 +4,24 @@ const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
 const glob = require('glob');
 const paths = require('../../lib/paths.js');
+const testcafe_manager = require('../../lib/testcafe_manager.js');
 const optionsUtils = require('../../lib/options.js');
+
+const SLOW_TESTCAFE_DEFAULT_SPEED = 0.5;
 
 /**
  * Returns testcafe options from input parameters.
  * @returns {Array} options for testcafe.
  */
 let getConfig = (options) => {
-    console.log(options);
+    let testcafe_conf = '';
+    if (options.slow) {
+        testcafe_conf += ` ${SLOW_TESTCAFE_DEFAULT_SPEED}`;
+    }
+    if (options.debug) {
+        testcafe_conf += ' --debug';
+    }
+    return testcafe_conf;
 }
 
 
@@ -51,31 +61,16 @@ module.exports = (app, options = {}) => {
     }
 
     let dependencies = [];
-    console.log(dependencies, config);
+    let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
+    let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
+    return global.Promise.all(dependencies).then(() => {
+        return app.exec('build', { // Build sources.
+            arguments: [tempSource],
+            output: tempUnit,
+            map: false,
+        }).then(() => { // Test built sources.
+            return testcafe_manager.testcafe(config);
+        });
 
-    // return global.Promise.all(dependencies).then(() => {
-    //     let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
-    //     let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
-    //     fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
-    //     return app.exec('build', { // Build sources.
-    //         arguments: [tempSource],
-    //         output: tempUnit,
-    //         map: false,
-    //     }).then(() => { // Test built sources.
-    //         let karmaOptions = typeof config === 'string' ?
-    //             { configFile: config } :
-    //             config;
-    //         karmaOptions.files = [tempUnit];
-    //         return new global.Promise((resolve, reject) => {
-    //             let server = new karma.Server(karmaOptions, (exitCode) => {
-    //                 if (exitCode && !options.server) {
-    //                     reject(exitCode);
-    //                 } else {
-    //                     resolve();
-    //                 }
-    //             });
-    //             server.start();
-    //         });
-    //     });
-    // });
+    });
 };
