@@ -48,7 +48,7 @@ function alternatives(url) {
  * Create a scoped SASS resolver.
  */
 function resolver() {
-    const resolved = [];
+    const alreadyResolved = [];
     /**
      * Resolve the file path of an imported style.
      * @param {string} url The url to import.
@@ -109,14 +109,14 @@ function resolver() {
                 }
             }
         }
-        if (resolved.indexOf(url) !== -1) {
+        if (alreadyResolved.indexOf(url) !== -1) {
             // This file has been resolved already.
             // Skip it in order to avoid duplications.
             return {
                 contents: '',
             };
         }
-        resolved.push(url);
+        alreadyResolved.push(url);
         if (path.extname(url) === '.css') {
             // if the file has css extension, return its contents.
             // (sass does not include css file using plain css import, so we have to pass the content).
