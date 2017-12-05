@@ -1,10 +1,9 @@
-const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
 const glob = require('glob');
 const paths = require('../../lib/paths.js');
-const testcafe_manager = require('../../lib/testcafe_manager.js');
+const testcafe_manager = require('../../lib/testcafe-manager.js');
 const optionsUtils = require('../../lib/options.js');
 
 const SLOW_TESTCAFE_DEFAULT_SPEED = 0.5;
@@ -14,15 +13,30 @@ const SLOW_TESTCAFE_DEFAULT_SPEED = 0.5;
  * @returns {Array} options for testcafe.
  */
 let getConfig = (options) => {
+    if (options.browserslist) {
+        return '--list-browsers';
+    }
     let testcafe_conf = '';
+    if (options.browser && options.browser != true) {
+        testcafe_conf = options.browser;
+    } else {
+        testcafe_conf = 'chrome'; // default browser: chrome
+    }
     if (options.slow) {
-        testcafe_conf += ` ${SLOW_TESTCAFE_DEFAULT_SPEED}`;
+        if (options.slow > 0 && options.slow < 1) {
+            testcafe_conf += ` --speed ${options.slow}`;
+        } else {
+            testcafe_conf += ` --speed ${SLOW_TESTCAFE_DEFAULT_SPEED}`;
+        }
     }
     if (options.debug) {
-        testcafe_conf += ' --debug';
+        testcafe_conf += ' --debug-mode';
+    }
+    if (options.proxy) {
+        testcafe_conf += ` --proxy ${options.proxy}`;
     }
     return testcafe_conf;
-}
+};
 
 
 /**
@@ -41,7 +55,6 @@ module.exports = (app, options = {}) => {
 
     // Load options.
     options = Proteins.clone(options);
-    // options.ci = options.hasOwnProperty('ci') ? options.ci : process.env.CI; // Is this CI environment?
     let config = getConfig(options);
 
     // Load list of files to be tested.
@@ -61,16 +74,5 @@ module.exports = (app, options = {}) => {
     }
 
     let dependencies = [];
-    let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
-    let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
-    return global.Promise.all(dependencies).then(() => {
-        return app.exec('build', { // Build sources.
-            arguments: [tempSource],
-            output: tempUnit,
-            map: false,
-        }).then(() => { // Test built sources.
-            return testcafe_manager.testcafe(config);
-        });
-
-    });
+    return global.Promise.all(dependencies).then(() => global.Promise.resolve(testcafe_manager.testcafe(config)));
 };
