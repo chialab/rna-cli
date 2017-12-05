@@ -42,6 +42,7 @@ function getBabelConfig(options) {
     return {
         include: '**/*.{mjs,js,jsx}',
         exclude: [],
+        babelrc: false,
         compact: false,
         presets: options.transpile !== false ? [
             [require('@babel/preset-env'), {
@@ -84,7 +85,7 @@ function getConfig(app, options) {
         name: options.name,
         input: options.input,
         file: options.output,
-        sourcemap: options.map !== false ? 'inline' : false,
+        sourcemap: options.map !== false,
         format: 'umd',
         strict: false,
         // https://github.com/rollup/rollup/issues/1626
@@ -192,6 +193,11 @@ module.exports = (app, options) => {
     }
     if (options.transpile === false) {
         app.log(colors.yellow('⚠️ skipping Babel task.'));
+    }
+    if (options.production && !process.env.hasOwnProperty('NODE_ENV')) {
+        // Set NODE_ENV environment variable if `--production` flag is set.
+        app.log(colors.yellow('🚢 setting "production" environment.'));
+        process.env.NODE_ENV = 'production';
     }
     let profiler = app.profiler.task('rollup');
     let task = app.log(`bundling${caches[options.input] ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);

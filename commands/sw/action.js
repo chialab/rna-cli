@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const workbox = require('workbox-build');
+const watcher = require('../../lib/watcher.js');
 
 function remember(app, output) {
     app.log(colors.yellow('remember to include'));
@@ -37,38 +38,57 @@ module.exports = (app, options) => {
     const input = path.resolve(process.cwd(), options.arguments[0]);
     const output = path.resolve(process.cwd(), options.output);
     let task = app.log('generating service worker...', true);
+    let returnPromise;
     if (fs.existsSync(output)) {
-        return workbox.injectManifest({
+        fs.writeFileSync(
+            output,
+            fs.readFileSync(output, 'utf8').replace(/\.precache\s*\(\s*\[([^\]]*)\]\)/gi, '.precache([])')
+        );
+        returnPromise = workbox.injectManifest({
             swSrc: output,
             swDest: output,
             globDirectory: input,
             globPatterns: ['**/*'],
-            globIgnores: ['service-worker.js'],
-        }).then((res) => {
-            task();
-            app.log(`${colors.bold(colors.green('service worker updated!'))} ${colors.grey(`(${output})`)}`);
-            remember(app, path.relative(input, output));
-            return global.Promise.resolve(res);
-        }).catch((err) => {
-            task();
-            app.log(colors.green('failed to update service worker'));
-            return global.Promise.reject(err);
+            globIgnores: ['service-worker.js', '*.map'],
+            maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
         });
     } else {
-        return workbox.generateSW({
+        returnPromise = workbox.generateSW({
             globDirectory: input,
             swDest: output,
             globPatterns: ['**/*'],
-            globIgnores: ['service-worker.js'],
-        }).then((res) => {
-            task();
-            app.log(`${colors.bold(colors.green('service worker generated!'))} ${colors.grey(`(${output})`)}`);
-            remember(app, path.relative(input, output));
-            return global.Promise.resolve(res);
-        }).catch((err) => {
-            task();
-            app.log(colors.green('failed to generate service worker'));
-            return global.Promise.reject(err);
+            globIgnores: ['service-worker.js', '*.map'],
+            maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
         });
     }
+    return returnPromise.then((res) => {
+        task();
+        app.log(`${colors.bold(colors.green('service worker generated!'))} ${colors.grey(`(${output})`)}`);
+        if (options.remember !== false) {
+            remember(app, path.relative(input, output));
+        }
+        if (options.watch) {
+            let lastContent = fs.readFileSync(output, 'utf8');
+            watcher(app, path.join(input, '**/*'), (event, file) => {
+                if (file === output) {
+                    if (fs.readFileSync(output, 'utf8') === lastContent) {
+                        return;
+                    }
+                }
+                app.exec('sw', Object.assign({}, options, { remember: false, watch: false }))
+                    .then(() => {
+                        lastContent = fs.readFileSync(output, 'utf8');
+                    });
+            }, {
+                log: false,
+                debounce: 200,
+                ignored: '**/*.map',
+            });
+        }
+        return global.Promise.resolve(res);
+    }).catch((err) => {
+        task();
+        app.log(colors.red('failed to generate service worker'));
+        return global.Promise.reject(err);
+    });
 };

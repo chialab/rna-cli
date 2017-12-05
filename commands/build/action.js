@@ -3,7 +3,6 @@ const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
 const paths = require('../../lib/paths.js');
 const optionsUtils = require('../../lib/options.js');
-const utils = require('../../lib/utils.js');
 const bundle = require('./bundlers/rollup.js');
 const sass = require('./bundlers/sass.js');
 const watcher = require('../../lib/watcher.js');
@@ -27,7 +26,7 @@ const ext = require('../../lib/extensions.js');
  */
 module.exports = (app, options = {}) => {
     options = Proteins.clone(options);
-    if (!paths.cwd) {
+    if (!options.arguments.length && !paths.cwd) {
         // Unable to detect project root.
         app.log(colors.red('no project found.'));
         return global.Promise.reject();
@@ -182,7 +181,11 @@ module.exports = (app, options = {}) => {
                                 'lint-sass': options['lint-sass'],
                                 'lint-js': options['lint-js'],
                                 'cache': true,
-                            }));
+                            })).catch((err) => {
+                                if (err) {
+                                    app.log(err);
+                                }
+                            });
                         });
                     });
                 }
