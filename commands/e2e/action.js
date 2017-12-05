@@ -9,7 +9,7 @@ const optionsUtils = require('../../lib/options.js');
 const SLOW_TESTCAFE_DEFAULT_SPEED = 0.5;
 
 /**
- * Returns testcafe options from input parameters.
+ * Returns testcafe options based on input parameters.
  * @returns {Array} options for testcafe.
  */
 let getConfig = (options) => {
@@ -64,15 +64,14 @@ module.exports = (app, options = {}) => {
     Object.values(filter.packages)
         .forEach((pkg) =>
             files.push(...glob.sync(
-                path.join(pkg.path, '**/e2e/**/*.js'))
+                path.join(pkg.path, 'tests/e2e/**/*.js'))
             )
         );
-
     if (!files.length) {
         app.log(colors.yellow('no e2e tests found.'));
         return global.Promise.resolve();
     }
 
-    let dependencies = [];
+    let dependencies = []; //TODO need dependencies?
     return global.Promise.all(dependencies).then(() => global.Promise.resolve(testcafe_manager.testcafe(config)));
 };
