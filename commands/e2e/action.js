@@ -64,7 +64,7 @@ module.exports = (app, options = {}) => {
     Object.values(filter.packages)
         .forEach((pkg) =>
             files.push(...glob.sync(
-                path.join(pkg.path, 'tests/e2e/**/*.js'))
+                path.join(pkg.path, '{test,tests}/e2e/**/*.js'))
             )
         );
     if (!files.length) {
@@ -73,5 +73,8 @@ module.exports = (app, options = {}) => {
     }
 
     let dependencies = []; //TODO need dependencies?
-    return global.Promise.all(dependencies).then(() => global.Promise.resolve(testcafe_manager.testcafe(config)));
+    return global.Promise.all(dependencies)
+        .then(() => app.exec('build'))
+        .then(() => app.exec('serve'))
+        .then((res) => testcafe_manager.testcafe(config).then(() => res.bs.exit()));
 };

@@ -209,7 +209,7 @@ module.exports = (app, options = {}) => {
     Object.values(filter.packages)
         .forEach((pkg) =>
             files.push(...glob.sync(
-                path.join(pkg.path, '**/unit/**/*.js'), {
+                path.join(pkg.path, '{test,tests}/unit/**/*.js'), {
                     ignore: '**/node_modules/**/*',
                 })
             )
