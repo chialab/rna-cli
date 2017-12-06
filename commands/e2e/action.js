@@ -67,14 +67,27 @@ module.exports = (app, options = {}) => {
                 path.join(pkg.path, '{test,tests}/e2e/**/*.js'))
             )
         );
+
+    let dependencies = []; //TODO need dependencies?
+    if (options.browserslist) {
+        return global.Promise.all(dependencies)
+            .then((res) => testcafe_manager.testcafe(config).then(() => res.bs.exit()))
+            .catch(global.Promise.all().on('unhandledRejection', (err) => err));
+    }
+
     if (!files.length) {
         app.log(colors.yellow('no e2e tests found.'));
         return global.Promise.resolve();
     }
 
-    let dependencies = []; //TODO need dependencies?
-    return global.Promise.all(dependencies)
-        .then(() => app.exec('build'))
-        .then(() => app.exec('serve'))
-        .then((res) => testcafe_manager.testcafe(config).then(() => res.bs.exit()));
+    if (options.browserslist) {
+        return global.Promise.all(dependencies)
+            .then((res) => testcafe_manager.testcafe(config).then(() => res.bs.exit()))
+            .catch(global.Promise.all().on('unhandledRejection', (err) => err));
+    } else {
+        return global.Promise.all(dependencies)
+            .then(() => app.exec('build'))
+            .then(() => app.exec('serve'))
+            .then((res) => testcafe_manager.testcafe(config).then(() => res.bs.exit())).catch();
+    }
 };
