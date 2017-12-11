@@ -292,7 +292,7 @@ module.exports = function(app, options = {}) {
                         preserve_newlines: false,
                     }
                 );
-                fs.writeFileSync(indexPath, html);
+                fs.writeFileSync(indexPath, `<!DOCTYPE html>\n${html}`);
                 app.log(`${colors.bold(colors.green('index updated.'))} ${colors.grey(`(${indexPath})`)}`);
             }
             return global.Promise.resolve();
