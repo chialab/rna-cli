@@ -242,15 +242,6 @@ module.exports = function(app, options = {}) {
 
     return fillManifest
         .then(() => {
-            if (options.scope) {
-                manifest.scope = options.scope;
-            }
-            if (manifest.scope && index) {
-                // update index <base> using manifest.scope
-                let base = index.querySelector('base') || index.createElement('base');
-                base.setAttribute('href', manifest.scope);
-                index.head.appendChild(base);
-            }
             let generatingIcons = global.Promise.resolve();
             if (options.icon) {
                 // generate icons.
@@ -280,6 +271,15 @@ module.exports = function(app, options = {}) {
             return generatingIcons;
         })
         .then(() => {
+            if (options.scope) {
+                manifest.scope = options.scope;
+            }
+            if (manifest.scope && index) {
+                // update index <base> using manifest.scope
+                let base = index.querySelector('base') || index.createElement('base');
+                base.setAttribute('href', manifest.scope);
+                index.head.appendChild(base);
+            }
             // write the new manifest file.
             fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
             app.log(`${colors.bold(colors.green('manifest generated.'))} ${colors.grey(`(${manifestPath})`)}`);
