@@ -99,7 +99,9 @@ function generateIcons(manifest, index, icon, output) {
                 }
                 // `res.favicon.html_code` contains new html code for icons references
                 if (res.favicon.html_code) {
-                    index.head.innerHTML += res.favicon.html_code;
+                    index.head.innerHTML += res.favicon.html_code
+                        // change manifest reference
+                        .replace('href="icons/manifest.json"', 'href="manifest.json"');
                 }
             }
             return resolve();
