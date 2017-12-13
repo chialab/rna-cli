@@ -12,7 +12,7 @@ require('./commands/remove/index.js')(program);
 require('./commands/bootstrap/index.js')(program);
 require('./commands/lint/index.js')(program);
 require('./commands/build/index.js')(program);
-require('./commands/icons/index.js')(program);
+require('./commands/manifest/index.js')(program);
 require('./commands/sw/index.js')(program);
 require('./commands/serve/index.js')(program);
 require('./commands/unit/index.js')(program);
@@ -21,6 +21,7 @@ require('./commands/start/index.js')(program);
 require('./commands/run/index.js')(program);
 
 /** DEPRECATED COMMANDS */
+require('./commands/__deprecated/icons/index.js')(program);
 require('./commands/__deprecated/watch/index.js')(program);
 
 program.start();
