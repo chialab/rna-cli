@@ -9,7 +9,7 @@ module.exports = (program) => {
         .command('manifest')
         .description('Generate webapp Manifest.')
         .option('<path>', 'The webapp path.')
-        .option('--output', 'Where to save the generated icons.')
+        .option('--output', 'Where to save the generated manifest.')
         .option('[--manifest]', 'Original webapp manifest.')
         .option('[--icon]', 'The path of the main icon to generate.')
         .option('[--index]', 'Path to the index.html to update.')
