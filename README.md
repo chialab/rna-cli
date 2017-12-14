@@ -6,7 +6,7 @@
 ```sh
 $ npm install -g git+https://gitlab.com/chialab/rna-cli
 # or
-$ yarn global add git+https://gitlab.com/chialab/rna-cli
+$ yarn global add https://gitlab.com/chialab/rna-cli.git
 ```
 
 ## Usage
