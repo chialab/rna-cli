@@ -2,7 +2,6 @@ extends:
   - eslint:recommended
 
 globals:
-  assert: true
   process: true
 
 env:
