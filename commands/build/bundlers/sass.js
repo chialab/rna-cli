@@ -178,6 +178,7 @@ module.exports = (app, options) => {
         ];
         if (options.production) {
             postCssPlugins.push(cssnano({
+                discardUnused: false,
                 reduceIdents: false,
             }));
         }
