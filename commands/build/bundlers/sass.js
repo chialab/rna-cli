@@ -177,7 +177,9 @@ module.exports = (app, options) => {
             autoprefixer(getPostCssConfig()),
         ];
         if (options.production) {
-            postCssPlugins.push(cssnano());
+            postCssPlugins.push(cssnano({
+                reduceIdents: false,
+            }));
         }
         fs.ensureDirSync(path.dirname(options.output));
         sass.render({
