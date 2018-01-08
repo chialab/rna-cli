@@ -90,11 +90,13 @@ function getConfig(app, options) {
     }
     const babelConfig = getBabelConfig(options);
     return global.Promise.resolve({
-        name: options.name,
         input: options.input,
         file: options.output,
+        output: {
+            name: options.name,
+            format: 'umd',
+        },
         sourcemap: options.map !== false,
-        format: 'umd',
         strict: false,
         // https://github.com/rollup/rollup/issues/1626
         cache: options.cache ? caches[options.input] : undefined,
@@ -153,7 +155,8 @@ function getConfig(app, options) {
                 },
             }) : {},
         ],
-        onwarn(message) {
+        onwarn(warning) {
+            let message = warning && warning.message || warning;
             const whitelisted = () => {
                 message = message.toString();
                 if (message.indexOf('The \'this\' keyword') !== -1) {
