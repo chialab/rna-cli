@@ -174,14 +174,13 @@ module.exports = (app, options = {}) => {
                         let rebuildPromise = global.Promise.resolve();
                         bundles.forEach((bundle) => {
                             // exec build again using cache.
-                            rebuildPromise = rebuildPromise.then(() => app.exec('build', {
-                                'arguments': [bundle.input],
-                                'output': bundle.output,
-                                'lint': fp,
-                                'lint-sass': options['lint-sass'],
-                                'lint-js': options['lint-js'],
-                                'cache': true,
-                            })).catch((err) => {
+                            rebuildPromise = rebuildPromise.then(() => app.exec('build', Object.assign(options, {
+                                arguments: [bundle.input],
+                                output: bundle.output,
+                                lint: fp,
+                                cache: true,
+                                watch: false,
+                            }))).catch((err) => {
                                 if (err) {
                                     app.log(err);
                                 }
