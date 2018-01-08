@@ -5,7 +5,6 @@ function pattern(file) {
 }
 
 function framework(files) {
-    console.log('-------------------------->');
     files.unshift(pattern(path.join(__dirname, 'adapter.js')));
     files.unshift(pattern(path.resolve(require.resolve('chai'), '../chai.js')));
 }

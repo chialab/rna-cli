@@ -83,11 +83,7 @@ function getConfig(app, options) {
         plugins: [
             require('karma-mocha'),
             require('karma-mocha-reporter'),
-<<<<<<< HEAD
-=======
             require('./plugins/karma-chai/index.js'),
-            require('karma-coverage'),
->>>>>>> issue/34-auto-import-chai
         ],
 
         // Continuous Integration mode
@@ -168,11 +164,11 @@ function getConfig(app, options) {
             dir: 'coverage',
             reporters: [
                 {
-                    type: 'lcov',
-                    subdir: (browserName) => path.join('report-lcov', browserName),
+                    type: 'in-memory',
                 },
                 {
-                    type: 'text-summary',
+                    type: 'lcov',
+                    subdir: (browserName) => path.join('report-lcov', browserName),
                 },
             ],
         };
@@ -236,6 +232,7 @@ module.exports = (app, options = {}) => {
     fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
     return app.exec('build', { // Build sources.
         arguments: [tempSource],
+        coverage: options.coverage,
         output: tempUnit,
         map: false,
     }).then(() => { // Test built sources.
@@ -277,6 +274,31 @@ module.exports = (app, options = {}) => {
                                 resolve();
                             }
                         });
+                        if (options.coverage) {
+                            let reportMap;
+                            server.on('run_start', () => {
+                                reportMap = require('istanbul-lib-coverage').createCoverageMap({});
+                            });
+                            server.on('coverage_complete', (browser, coverageReport) => {
+                                reportMap.merge(coverageReport);
+                            });
+                            server.on('run_complete', () => {
+                                setTimeout(() => {
+                                    reportMap = reportMap.toJSON();
+                                    let coverageFiles = Object.keys(reportMap);
+                                    if (coverageFiles.length) {
+                                        const utils = require('istanbul/lib/object-utils');
+                                        let summaries = coverageFiles.map((coverageFile) => utils.summarizeFileCoverage(reportMap[coverageFile]));
+                                        let finalSummary = utils.mergeSummaryObjects.apply(null, summaries);
+                                        app.log(colors.bold(colors.underline('COVERAGE SUMMARY:')));
+                                        app.log(formatCoverageReport(finalSummary, 'statements'));
+                                        app.log(formatCoverageReport(finalSummary, 'branches'));
+                                        app.log(formatCoverageReport(finalSummary, 'functions'));
+                                        app.log(formatCoverageReport(finalSummary, 'lines'));
+                                    }
+                                });
+                            });
+                        }
                         server.start();
                     });
                 });
@@ -290,3 +312,30 @@ module.exports = (app, options = {}) => {
         return promise;
     });
 };
+
+/**
+ * Format coverage report metrics.
+ * @param {Object} summary The full file coverage report.
+ * @param {String} key The metric name.
+ * @return {String}
+ */
+function formatCoverageReport(summary, key) {
+    let metrics = summary[key];
+    let skipped;
+    let result;
+    // Capitalize the field name
+    let field = key.substring(0, 1).toUpperCase() + key.substring(1);
+    if (field.length < 12) {
+        // add extra spaces after the field name
+        field += '                   '.substring(0, 12 - field.length);
+    }
+    result = `${field} : ${metrics.pct}% (${metrics.covered}/${metrics.total})`;
+    skipped = metrics.skipped;
+    if (skipped > 0) {
+        result += `, ${skipped} ignored`;
+    }
+    let color = (metrics.pct >= 80 && 'green') ||
+        (metrics.pct >= 50 && 'yellow') ||
+        'red';
+    return colors[color](result);
+}
