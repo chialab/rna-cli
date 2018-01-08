@@ -87,8 +87,8 @@ function getConfig(app, options) {
         output: {
             name: options.name,
             format: 'umd',
+            sourcemap: options.map !== false,
         },
-        sourcemap: options.map !== false,
         strict: false,
         // https://github.com/rollup/rollup/issues/1626
         cache: options.cache ? caches[options.input] : undefined,
@@ -166,19 +166,19 @@ function getConfig(app, options) {
     });
 }
 
-function timeReport(profiler, timer) {
+function timeReport(profile, timer) {
     let timings = timer._timings || {};
     for (let k in timings) {
         let data = timings[k];
         if (data.length) {
             let sum = 0;
             data.forEach((t) => sum += t);
-            profiler.task(k, false).set(sum);
+            profile.task(k, false).set(sum);
         }
     }
 }
 
-module.exports = (app, options) => {
+module.exports = (app, options, profiler) => {
     if (options.output) {
         options.output = path.resolve(paths.cwd, options.output);
         let final = options.output.split(path.sep).pop();
@@ -202,7 +202,7 @@ module.exports = (app, options) => {
         app.log(colors.yellow('🚢 setting "production" environment.'));
         process.env.NODE_ENV = 'production';
     }
-    let profiler = app.profiler.task('rollup');
+    let profile = profiler.task('rollup');
     let task = app.log(`bundling${caches[options.input] ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
     return getConfig(app, options)
         .then((config) => {
@@ -216,8 +216,8 @@ module.exports = (app, options) => {
                     caches[options.input] = bundler;
                     return bundler.write(config)
                         .then(() => {
-                            timeReport(profiler, timer);
-                            app.profiler.endTask('rollup');
+                            timeReport(profile, timer);
+                            profile.end();
                             task();
                             app.log(`${colors.bold(colors.green('bundle ready!'))} ${colors.grey(`(${options.output})`)}`);
                             let manifest = new BundleManifest(options.input, options.output);

@@ -15,5 +15,5 @@ Everytime a change has been triggered, it runs the \`lint\` and \`build\` comman
         .option('[--no-lint]', 'Disable lint on changes.')
         .option('[--no-build]', 'Disable build on changes.')
         .deprecate('v0.20.0')
-        .action((app, options = {}) => require('./action')(app, options));
+        .action(require('path').resolve(__dirname, './action.js'));
 };

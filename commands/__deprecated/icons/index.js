@@ -16,5 +16,5 @@ module.exports = (program) => {
         .option('[--no-android]', 'Do not generate android icons.')
         .option('[--no-favicons]', 'Do not generate favicons.')
         .deprecate('v0.22.0')
-        .action((app, options = {}) => require('./action')(app, options));
+        .action(require('path').resolve(__dirname, './action.js'));
 };

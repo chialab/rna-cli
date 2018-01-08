@@ -14,9 +14,9 @@ const SassLinter = require('sass-lint');
  * @namespace options
  * @property {Boolean} warnings Should include warnings in the response.
  */
-module.exports = function sasslintTask(app, options, files) {
+module.exports = function sasslintTask(app, options, profiler) {
     let sassFiles = [];
-    files
+    options.files
         .filter((src) => fs.existsSync(src))
         .filter((src) => !fs.statSync(src).isFile() || src.match(/\.(css|sass|scss)$/i))
         .forEach((src) => {
@@ -31,7 +31,7 @@ module.exports = function sasslintTask(app, options, files) {
             }
         });
     if (sassFiles.length) {
-        app.profiler.task('sass-lint');
+        let profile = profiler.task('sass-lint');
         let task = app.log('running SassLint...', true);
         try {
             let reports = [];
@@ -45,7 +45,7 @@ module.exports = function sasslintTask(app, options, files) {
                     }
                 });
             });
-            app.profiler.endTask('sass-lint');
+            profile.end();
             task(); // Stop loader.
             if (reports.length) {
                 SassLinter.outputResults(reports);

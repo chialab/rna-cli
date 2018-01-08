@@ -13,6 +13,7 @@ const ext = require('../../lib/extensions.js');
  *
  * @param {CLI} app CLI instance.
  * @param {Object} options Options.
+ * @param {Profiler} profiler The command profiler instance.
  * @returns {Promise}
  *
  * @namespace options
@@ -24,7 +25,7 @@ const ext = require('../../lib/extensions.js');
  * @property {Boolean} watch Should watch files.
  * @property {Boolean} cache Use cache if available.
  */
-module.exports = (app, options = {}) => {
+module.exports = (app, options = {}, profiler) => {
     options = Proteins.clone(options);
     if (!options.arguments.length && !paths.cwd) {
         // Unable to detect project root.
@@ -78,7 +79,7 @@ module.exports = (app, options = {}) => {
                 if (jsOptions.input) {
                     // a javascript source has been detected.
                     packageBundlePromise = packageBundlePromise.then(() =>
-                        bundle(app, jsOptions)
+                        bundle(app, jsOptions, profiler)
                             .then((manifest) => {
                                 bundleManifests.push(manifest);
                                 return global.Promise.resolve(manifest);
@@ -109,7 +110,7 @@ module.exports = (app, options = {}) => {
                 if (styleOptions.input) {
                     // a style source has been detected.
                     packageBundlePromise = packageBundlePromise.then(() =>
-                        sass(app, styleOptions)
+                        sass(app, styleOptions, profiler)
                             .then((manifest) => {
                                 // collect the generated BundleManifest
                                 bundleManifests.push(manifest);
@@ -134,7 +135,7 @@ module.exports = (app, options = {}) => {
                 }
                 if (['.scss', '.sass'].indexOf(path.extname(file)) !== -1) {
                     // Style file
-                    return sass(app, opts)
+                    return sass(app, opts, profiler)
                         .then((manifest) => {
                             // collect the generated BundleManifest
                             bundleManifests.push(manifest);
@@ -142,7 +143,7 @@ module.exports = (app, options = {}) => {
                         });
                 }
                 // Javascript file
-                return bundle(app, opts)
+                return bundle(app, opts, profiler)
                     .then((manifest) => {
                         // collect the generated BundleManifest
                         bundleManifests.push(manifest);
@@ -174,14 +175,13 @@ module.exports = (app, options = {}) => {
                         let rebuildPromise = global.Promise.resolve();
                         bundles.forEach((bundle) => {
                             // exec build again using cache.
-                            rebuildPromise = rebuildPromise.then(() => app.exec('build', {
-                                'arguments': [bundle.input],
-                                'output': bundle.output,
-                                'lint': fp,
-                                'lint-sass': options['lint-sass'],
-                                'lint-js': options['lint-js'],
-                                'cache': true,
-                            })).catch((err) => {
+                            rebuildPromise = rebuildPromise.then(() => app.exec('build', Object.assign(options, {
+                                arguments: [bundle.input],
+                                output: bundle.output,
+                                lint: fp,
+                                cache: true,
+                                watch: false,
+                            }))).catch((err) => {
                                 if (err) {
                                     app.log(err);
                                 }

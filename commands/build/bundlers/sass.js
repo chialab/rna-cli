@@ -159,7 +159,7 @@ function getPostCssConfig() {
  * @property {Boolean} map Should generate sourcemaps.
  * @property {Boolean} production Should generate files in production mode.
  */
-module.exports = (app, options) => {
+module.exports = (app, options, profiler) => {
     if (options.output) {
         options.output = path.resolve(paths.cwd, options.output);
         let final = options.output.split(path.sep).pop();
@@ -171,7 +171,7 @@ module.exports = (app, options) => {
         }
     }
     return new global.Promise((resolve, reject) => {
-        app.profiler.task('sass');
+        let profile = profiler.task('sass');
         let task = app.log(`sass... ${colors.grey(`(${options.input})`)}`, true);
         let postCssPlugins = [
             autoprefixer(getPostCssConfig()),
@@ -196,8 +196,8 @@ module.exports = (app, options) => {
                 app.log(colors.red(`sass error ${options.name}`));
                 reject();
             } else {
-                app.profiler.endTask('sass');
-                app.profiler.task('postcss');
+                profile.end();
+                profile = profiler.task('postcss');
                 postcss(postCssPlugins)
                     .process(sassResult.css.toString(), {
                         from: options.input,
@@ -210,7 +210,7 @@ module.exports = (app, options) => {
                             fs.writeFileSync(`${options.output}.map`, result.map);
                         }
                         app.log(`${colors.bold(colors.green('sass done!'))} ${colors.grey(`(${options.output})`)}`);
-                        app.profiler.endTask('postcss');
+                        profile.end();
                         let manifest = new BundleManifest(options.input, options.output);
                         if (sassResult.stats && sassResult.stats.includedFiles) {
                             manifest.addFile(...sassResult.stats.includedFiles);
