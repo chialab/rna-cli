@@ -10,5 +10,5 @@ module.exports = (program) => {
         .description('Remove project dependencies.')
         .help('A simple alias to `yarn add` command.')
         .option('<module1> <module2> <module3>', 'The modules to remove')
-        .action((app, options = {}) => require('./action')(app, options));
+        .action(require('path').resolve(__dirname, './action.js'));
 };

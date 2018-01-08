@@ -35,5 +35,5 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
         .option('[--cache]', 'Use cache if available.')
         .option('[--no-transpile]', 'Skip Babel task. [⚠️  experimental]')
         .option('[--external-css]', 'Split out css files from bundle. [⛔️  deprecated]')
-        .action((app, options = {}) => require('./action')(app, options));
+        .action(require('path').resolve(__dirname, './action.js'));
 };

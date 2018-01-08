@@ -9,5 +9,5 @@ module.exports = (program) => {
         .command('documentation')
         .description('Generate API references.')
         .option('--output', 'The markdown file to create.')
-        .action((app, options = {}) => require('./action')(app, options));
+        .action(require('path').resolve(__dirname, './action.js'));
 };
