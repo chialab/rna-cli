@@ -51,7 +51,7 @@ module.exports = function sasslintTask(app, options, files) {
                 SassLinter.outputResults(reports);
                 return global.Promise.resolve(reports);
             }
-            app.log(colors.bold('everything is fine with SassLint.'));
+            app.log('everything is fine with SassLint.');
         } catch (err) {
             task();
             app.log(colors.red('failed to execute SassLint.'));

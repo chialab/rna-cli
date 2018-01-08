@@ -1,5 +1,5 @@
+const fs = require('fs-extra');
 const path = require('path');
-const utils = require('../../lib/utils.js');
 const paths = require('../../lib/paths.js');
 
 /**
@@ -12,7 +12,7 @@ const paths = require('../../lib/paths.js');
 module.exports = (app, options) => {
     // Detect directory to use as project root, and ensure it is present.
     paths.cwd = options.arguments.length ? path.resolve(process.cwd(), options.arguments[0]) : (paths.cwd || process.cwd());
-    utils.ensureDir(paths.cwd);
+    fs.ensureDirSync(paths.cwd);
 
     return require('./tasks/git.js')(app, options)
         .then(() => require('./tasks/npm.js')(app, options))

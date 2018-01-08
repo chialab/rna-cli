@@ -64,7 +64,7 @@ module.exports = function eslint(app, options, files) {
                     (options.warnings !== false || report.errorCount) ? report : undefined
                 );
             }
-            app.log(colors.bold('everything is fine with ESLint.'));
+            app.log('everything is fine with ESLint.');
         } catch (err) {
             task();
             app.log(colors.red('failed to execute ESLint.'));

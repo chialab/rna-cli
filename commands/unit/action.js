@@ -63,7 +63,6 @@ function getConfig(app, options) {
         // available reporters: https://npmjs.org/browse/keyword/karma-reporter
         reporters: [
             options.ci ? 'dots' : 'mocha',
-            'coverage',
         ],
 
         // web server port
@@ -126,7 +125,7 @@ function getConfig(app, options) {
         conf.browserDisconnectTolerance = 1;
         conf.browserNoActivityTimeout = 4 * 60 * 1000;
         conf.captureTimeout = 4 * 60 * 1000;
-        conf.reporters = ['dots', 'saucelabs'];
+        conf.reporters.push('saucelabs');
         conf.sauceLabs = {
             startConnect: true,
             connectOptions: {

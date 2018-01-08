@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 const paths = require('../../../lib/paths.js');
 const colors = require('colors/safe');
@@ -6,7 +6,6 @@ const sass = require('sass');
 const resolve = require('resolve');
 const BundleManifest = require('../../../lib/bundle.js');
 const ext = require('../../../lib/extensions.js');
-const utils = require('../../../lib/utils.js');
 
 const postcss = require('postcss');
 const autoprefixer = require('autoprefixer');
@@ -45,75 +44,89 @@ function alternatives(url) {
  */
 
 /**
- * Resolve the file path of an imported style.
- * @param {string} url The url to import.
- * @param {string} prev The url of the parent file.
- * @return {ImporterResult} The result of the import.
+ * Create a scoped SASS resolver.
  */
-function nodeResolver(url, prev) {
-    let mod;
-    if (url[0] === '~') {
-        // some modules use ~ for node_modules import
-        mod = url.substring(1);
-    } else {
-        // generate file alternatives starting from the previous path
-        let toCheck = alternatives(path.join(path.dirname(prev), url));
-        // find out existing file
-        let resolved = toCheck.find((f) => fs.existsSync(f));
-        if (resolved) {
-            // the local file exists, node resolution is not required
-            url = resolved;
+function resolver() {
+    const alreadyResolved = [];
+    /**
+     * Resolve the file path of an imported style.
+     * @param {string} url The url to import.
+     * @param {string} prev The url of the parent file.
+     * @return {ImporterResult} The result of the import.
+     */
+    return function nodeResolver(url, prev) {
+        let mod;
+        if (url[0] === '~') {
+            // some modules use ~ for node_modules import
+            mod = url.substring(1);
         } else {
-            // if file is a module
-            mod = url;
-        }
-    }
-    if (mod) {
-        // generate alternatives for style starting from the module path
-        // add package json check for `style` field.
-        let toCheck = alternatives(mod).concat([path.join(mod, 'package.json')]);
-        for (let i = 0, len = toCheck.length; i < len; i++) {
-            let modCheck = toCheck[i];
-            try {
-                // use node resolution to get the full file path
-                // it throws if the file does not exist.
-                let checked = resolve.sync(modCheck, {
-                    basedir: path.dirname(prev) || process.cwd(),
-                });
-                if (path.extname(checked) === '.json') {
-                    // package.json found
-                    checked = fs.realpathSync(checked);
-                    let json = require(checked);
-                    if (json.style) {
-                        // style field found.
-                        url = path.join(path.dirname(checked), json.style);
-                    } else if (json.main && ext.isStyleFile(json.main)) {
-                        // try to use the main field if it is a css file.
-                        url = path.join(path.dirname(checked), json.main);
-                    }
-                } else {
-                    // url found
-                    url = checked;
-                }
-                if (url) {
-                    // file found, stop the search.
-                    break;
-                }
-            } catch (ex) {
-                //
+            // generate file alternatives starting from the previous path
+            let toCheck = alternatives(path.join(path.dirname(prev), url));
+            // find out existing file
+            let resolved = toCheck.find((f) => fs.existsSync(f));
+            if (resolved) {
+                // the local file exists, node resolution is not required
+                url = resolved;
+            } else {
+                // if file is a module
+                mod = url;
             }
         }
-    }
-    if (path.extname(url) === '.css') {
-        // if the file has css extension, return its contents.
-        // (sass does not include css file using plain css import, so we have to pass the content).
+        if (mod) {
+            // generate alternatives for style starting from the module path
+            // add package json check for `style` field.
+            let toCheck = alternatives(mod).concat([path.join(mod, 'package.json')]);
+            for (let i = 0, len = toCheck.length; i < len; i++) {
+                let modCheck = toCheck[i];
+                try {
+                    // use node resolution to get the full file path
+                    // it throws if the file does not exist.
+                    let checked = resolve.sync(modCheck, {
+                        basedir: path.dirname(prev) || process.cwd(),
+                    });
+                    if (path.extname(checked) === '.json') {
+                        // package.json found
+                        checked = fs.realpathSync(checked);
+                        let json = require(checked);
+                        if (json.style) {
+                            // style field found.
+                            url = path.join(path.dirname(checked), json.style);
+                        } else if (json.main && ext.isStyleFile(json.main)) {
+                            // try to use the main field if it is a css file.
+                            url = path.join(path.dirname(checked), json.main);
+                        }
+                    } else {
+                        // url found
+                        url = checked;
+                    }
+                    if (url) {
+                        // file found, stop the search.
+                        break;
+                    }
+                } catch (ex) {
+                    //
+                }
+            }
+        }
+        if (alreadyResolved.indexOf(url) !== -1) {
+            // This file has been resolved already.
+            // Skip it in order to avoid duplications.
+            return {
+                contents: '',
+            };
+        }
+        alreadyResolved.push(url);
+        if (path.extname(url) === '.css') {
+            // if the file has css extension, return its contents.
+            // (sass does not include css file using plain css import, so we have to pass the content).
+            return {
+                contents: fs.readFileSync(url, 'utf8'),
+            };
+        }
+        // return the found url.
         return {
-            contents: fs.readFileSync(url, 'utf8'),
+            file: url,
         };
-    }
-    // return the found url.
-    return {
-        file: url,
     };
 }
 
@@ -164,15 +177,18 @@ module.exports = (app, options) => {
             autoprefixer(getPostCssConfig()),
         ];
         if (options.production) {
-            postCssPlugins.push(cssnano());
+            postCssPlugins.push(cssnano({
+                discardUnused: false,
+                reduceIdents: false,
+            }));
         }
-        utils.ensureDir(path.dirname(options.output));
+        fs.ensureDirSync(path.dirname(options.output));
         sass.render({
             file: options.input,
             outFile: options.output,
             sourceMap: options.map !== false,
             sourceMapEmbed: options.map !== false,
-            importer: (url, prev) => nodeResolver(url, prev),
+            importer: resolver(),
         }, (err, sassResult) => {
             task();
             if (err) {

@@ -45,7 +45,7 @@ module.exports = function(options = {}) {
             if (!filter(id)) return null;
             if (id === HELPERS) return null;
             try {
-                if (~code.indexOf('process')) {
+                if (~code.indexOf('process.env')) {
                     throw new Error();
                 }
                 acorn.parse(code, {
