@@ -85,7 +85,6 @@ function getConfig(app, options) {
         plugins: [
             require('karma-mocha'),
             require('karma-mocha-reporter'),
-            require('karma-coverage'),
         ],
 
         // Continuous Integration mode
@@ -161,6 +160,7 @@ function getConfig(app, options) {
 
     if (options.coverage) {
         // Collect code coverage.
+        conf.plugins.push('karma-coverage');
         conf.coverageReporter = {
             dir: 'coverage',
             reporters: [
