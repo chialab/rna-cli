@@ -3,12 +3,10 @@ const path = require('path');
 const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
 const glob = require('glob');
-const nodeResolve = require('resolve');
 const karma = require('karma');
 const Mocha = require('mocha');
 const paths = require('../../lib/paths.js');
 const optionsUtils = require('../../lib/options.js');
-const manager = require('../../lib/package-manager.js');
 const runNativeScriptTest = require('./lib/ns.js');
 
 /**
@@ -56,7 +54,7 @@ function getConfig(app, options) {
 
         // frameworks to use
         // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-        frameworks: ['mocha'],
+        frameworks: ['mocha', 'chai'],
 
         // test results reporter to use
         // possible values: 'dots', 'progress'
@@ -85,6 +83,11 @@ function getConfig(app, options) {
         plugins: [
             require('karma-mocha'),
             require('karma-mocha-reporter'),
+<<<<<<< HEAD
+=======
+            require('./plugins/karma-chai/index.js'),
+            require('karma-coverage'),
+>>>>>>> issue/34-auto-import-chai
         ],
 
         // Continuous Integration mode
@@ -227,81 +230,63 @@ module.exports = (app, options = {}) => {
         taskEnvironments.push('browser');
     }
 
-    /**
-     * Dependencies install promise.
-     * @type {Promise}
-     */
-    let depsPromise = new global.Promise((resolve, reject) => {
-        try {
-            nodeResolve.sync('chai', { basedir: paths.cwd });
-            resolve();
-        } catch (err) {
-            manager.dev('chai')
-                .then(resolve)
-                .catch(reject);
-        }
-    });
-
-    return depsPromise.then(() => {
-        // build tests
-        let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
-        let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
-        fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
-        return app.exec('build', { // Build sources.
-            arguments: [tempSource],
-            output: tempUnit,
-            map: false,
-            coverage: options.coverage,
-        }).then(() => { // Test built sources.
-            let promise = global.Promise.resolve();
-            taskEnvironments.forEach((taskEnvName) => {
-                let taskEnv = ENVIRONMENTS[taskEnvName];
-                if (taskEnv.runner === 'mocha') {
-                    // Startup Mocha.
-                    promise = promise.then(() => {
-                        const mocha = new Mocha();
-                        mocha.addFile(tempUnit);
-                        return new global.Promise((resolve, reject) => {
-                            mocha.run((failures) => {
-                                if (failures) {
-                                    reject(failures);
-                                } else {
-                                    resolve();
-                                }
-                            });
+    // build tests
+    let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
+    let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
+    fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
+    return app.exec('build', { // Build sources.
+        arguments: [tempSource],
+        output: tempUnit,
+        map: false,
+    }).then(() => { // Test built sources.
+        let promise = global.Promise.resolve();
+        taskEnvironments.forEach((taskEnvName) => {
+            let taskEnv = ENVIRONMENTS[taskEnvName];
+            if (taskEnv.runner === 'mocha') {
+                // Startup Mocha.
+                promise = promise.then(() => {
+                    const mocha = new Mocha();
+                    mocha.addFile(tempUnit);
+                    return new global.Promise((resolve, reject) => {
+                        mocha.run((failures) => {
+                            if (failures) {
+                                reject(failures);
+                            } else {
+                                resolve();
+                            }
                         });
                     });
-                } else if (taskEnv.runner === 'karma') {
-                    // Startup Karma.
-                    promise = promise.then(() => {
-                        let karmaOptions = getConfig(app, {
-                            ci: options.ci,
-                            server: options.server,
-                            coverage: options.coverage,
-                            [taskEnvName]: true,
-                            chrome: options.chrome,
-                            firefox: options.firefox,
-                        });
-                        karmaOptions.files = [tempUnit];
-                        return new global.Promise((resolve, reject) => {
-                            let server = new karma.Server(karmaOptions, (exitCode) => {
-                                if (exitCode && !options.server) {
-                                    reject(exitCode);
-                                } else {
-                                    resolve();
-                                }
-                            });
-                            server.start();
-                        });
+                });
+            } else if (taskEnv.runner === 'karma') {
+                // Startup Karma.
+                promise = promise.then(() => {
+                    let karmaOptions = getConfig(app, {
+                        ci: options.ci,
+                        server: options.server,
+                        coverage: options.coverage,
+                        [taskEnvName]: true,
+                        chrome: options.chrome,
+                        firefox: options.firefox,
                     });
-                } else if (taskEnv.runner === 'ns') {
-                    // Create fake NS application.
-                    let platform = (options.ios && 'ios') || (options.android && 'android');
-                    promise = promise.then(() => runNativeScriptTest(platform, tempUnit));
-                }
-            });
-
-            return promise;
+                    karmaOptions.files = [tempUnit];
+                    return new global.Promise((resolve, reject) => {
+                        let server = new karma.Server(karmaOptions, (exitCode) => {
+                            if (exitCode && !options.server) {
+                                reject(exitCode);
+                            } else {
+                                resolve();
+                            }
+                        });
+                        server.start();
+                    });
+                });
+            } else if (taskEnv.runner === 'ns') {
+                // Create fake NS application.
+                let platform = (options.ios && 'ios') || (options.android && 'android');
+                promise = promise.then(() => runNativeScriptTest(platform, tempUnit));
+            }
         });
+
+        return promise;
     });
 };
