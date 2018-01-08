@@ -8,6 +8,7 @@ const watcher = require('../../lib/watcher.js');
  *
  * @param {CLI} app CLI instance.
  * @param {Object} options Options.
+ * @param {Profiler} profiler The command profiler instance.
  * @returns {Promise}
  *
  * @namespace options
@@ -16,7 +17,7 @@ const watcher = require('../../lib/watcher.js');
  * @property {Boolean} styles Should run linter for Sass files.
  * @property {Boolean} watch Should watch files.
  */
-module.exports = (app, options) => {
+module.exports = (app, options, profiler) => {
     if (!paths.cwd) {
         // Unable to detect project root.
         app.log(colors.red('no project found.'));
@@ -25,16 +26,15 @@ module.exports = (app, options) => {
     let res = [];
     let filter = optionsUtils.handleArguments(options);
     let lintFiles = filter.files.concat(Object.values(filter.packages).map((pkg) => pkg.path));
-    let linterOptions = { warnings: options.warnings };
-
-    let eslintTask = options.js !== false ? require('./linters/eslint.js') : () => global.Promise.resolve();
-    let response = eslintTask(app, linterOptions, lintFiles)
+    let linterOptions = { warnings: options.warnings, files: lintFiles };
+    const eslintTask = options.js !== false ? require('./linters/eslint.js') : () => global.Promise.resolve();
+    let response = eslintTask(app, linterOptions, profiler)
         .then((eslintRes) => {
             if (eslintRes) {
                 res.push(eslintRes);
             }
-            let sasslintTask = options.styles !== false ? require('./linters/sass-lint.js') : () => global.Promise.resolve();
-            return sasslintTask(app, linterOptions, lintFiles)
+            const sasslintTask = options.styles !== false ? require('./linters/sass-lint.js') : () => global.Promise.resolve();
+            return sasslintTask(app, linterOptions)
                 .then((sassRes) => {
                     if (sassRes) {
                         res.push(sassRes);

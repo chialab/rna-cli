@@ -27,10 +27,10 @@ function getConfig() {
  * @namespace options
  * @property {Boolean} warnings Should include warnings in the response.
  */
-module.exports = function eslint(app, options, files) {
+module.exports = function eslint(app, options, profiler) {
     let configFile = getConfig();
     let jsFiles = [];
-    files
+    options.files
         .filter((src) => fs.existsSync(src))
         .filter((src) => !fs.statSync(src).isFile() || src.match(/\.m?jsx?$/i))
         .forEach((src) => {
@@ -45,7 +45,7 @@ module.exports = function eslint(app, options, files) {
             }
         });
     if (jsFiles.length) {
-        app.profiler.task('eslint');
+        let profile = profiler.task('eslint');
         let task = app.log('running ESLint...', true);
         try {
             const linter = new Linter({
@@ -53,7 +53,7 @@ module.exports = function eslint(app, options, files) {
                 cwd: paths.cwd,
             });
             const report = linter.executeOnFiles(jsFiles);
-            app.profiler.endTask('eslint');
+            profile.end();
             task(); // Stop loader.
             if (report.errorCount || report.warningCount) {
                 if (options.warnings !== false || report.errorCount) {

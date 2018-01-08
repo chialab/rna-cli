@@ -23,5 +23,5 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
         .option('[--ios]', 'Run test in iOS emulator.')
         .option('[--android]', 'Run test in Android emulator.')
         .option('[--coverage]', 'Enable code coverage.')
-        .action((app, options = {}) => require('./action')(app, options));
+        .action(require('path').resolve(__dirname, './action.js'));
 };

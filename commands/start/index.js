@@ -9,5 +9,5 @@ module.exports = (program) => {
         .command('start')
         .description('Trigger project `start` script.')
         .help('A simple alias to `yarn start` command.')
-        .action((app, options = {}) => require('./action')(app, options));
+        .action(require('path').resolve(__dirname, './action.js'));
 };
