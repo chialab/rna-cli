@@ -87,8 +87,8 @@ function getConfig(app, options) {
         output: {
             name: options.name,
             format: 'umd',
+            sourcemap: options.map !== false,
         },
-        sourcemap: options.map !== false,
         strict: false,
         // https://github.com/rollup/rollup/issues/1626
         cache: options.cache ? caches[options.input] : undefined,
