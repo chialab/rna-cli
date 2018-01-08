@@ -9,5 +9,6 @@ module.exports = (program) => {
         .command('bootstrap')
         .description('Sync project dependencies after a project update or a git pull.')
         .help('A simple alias to `yarn install` command.')
-        .action(require('path').resolve(__dirname, './action.js'));
+        .deprecate('v0.23.0')
+        .action(require('path').resolve(__dirname, '../../install/action.js'));
 };
