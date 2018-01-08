@@ -10,5 +10,5 @@ module.exports = (program) => {
         .description('Sync project dependencies after a project update or a git pull.')
         .help('A simple alias to `yarn install` command.')
         .deprecate('v0.23.0')
-        .action((app, options = {}) => require('../../install/action')(app, options));
+        .action(require('path').resolve(__dirname, '../../install/action.js'));
 };
