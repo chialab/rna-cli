@@ -15,11 +15,5 @@ module.exports = (program) => {
         .option('[--index]', 'Path to the index.html to update.')
         .option('[--scope]', 'Force manifest scope.')
         .option('[--ci]', 'Enable CI mode.')
-        .action((app, options = {}) => {
-            try {
-                return require('./action')(app, options);
-            } catch (err) {
-                return global.Promise.reject(err);
-            }
-        });
+        .action(require('path').resolve(__dirname, './action.js'));
 };

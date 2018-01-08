@@ -11,5 +11,5 @@ module.exports = (program) => {
         .help('A simple alias to `yarn add` command.')
         .option('<module1> <module2> <module3>', 'The modules to add')
         .option('[--dev]', 'Add to dev dependencies.')
-        .action((app, options = {}) => require('./action')(app, options));
+        .action(require('path').resolve(__dirname, './action.js'));
 };
