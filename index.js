@@ -1,9 +1,8 @@
 #! /usr/bin/env node
 
 const CLI = require('./lib/cli.js');
-const program = new CLI();
 
-program.version('0.23.1');
+const program = new CLI('@chialab/rna-cli').version(require('./package.json').version)
 
 require('./commands/help/index.js')(program);
 require('./commands/setup/index.js')(program);
@@ -20,6 +19,7 @@ require('./commands/publish/index.js')(program);
 require('./commands/start/index.js')(program);
 require('./commands/documentation/index.js')(program);
 require('./commands/run/index.js')(program);
+require('./commands/upgrade/index.js')(program);
 
 /** DEPRECATED COMMANDS */
 require('./commands/__deprecated/watch/index.js')(program);

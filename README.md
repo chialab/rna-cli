@@ -33,8 +33,9 @@ $ rna --help
 * [ ] **cdn** - Publish to CDN.
 * [x] **documentation** - Generate API references.
 * [ ] **website** - Generate project websie.
-* [x] **start** - `yarn/npm start` alias
-* [x] **run** - `yarn/npm run` alias
+* [x] **start** - `yarn/npm start` alias.
+* [x] **run** - `yarn/npm run` alias.
+* [ ] **upgrade** - Update the CLI.
 
 ## Principles
 
