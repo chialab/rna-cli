@@ -101,8 +101,8 @@ function getConfig(app, bundler, options) {
         const babelConfig = getBabelConfig(options);
         config = {
             input: options.input,
-            file: options.output,
             output: {
+                file: options.output,
                 name: options.name,
                 format: 'umd',
                 sourcemap: options.map !== false,
@@ -239,7 +239,7 @@ module.exports = (app, options, profiler) => {
                     options.output = options.output || config.output;
                     bundler.config = config;
                     caches[options.input] = bundler;
-                    return bundler.write(config)
+                    return bundler.write(config.output)
                         .then(() => {
                             timeReport(profile, timer);
                             profile.end();
