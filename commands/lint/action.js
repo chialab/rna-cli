@@ -34,7 +34,7 @@ module.exports = (app, options, profiler) => {
                 res.push(eslintRes);
             }
             const sasslintTask = options.styles !== false ? require('./linters/sass-lint.js') : () => global.Promise.resolve();
-            return sasslintTask(app, linterOptions)
+            return sasslintTask(app, linterOptions, profiler)
                 .then((sassRes) => {
                     if (sassRes) {
                         res.push(sassRes);

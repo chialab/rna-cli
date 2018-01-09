@@ -72,109 +72,120 @@ function getBabelConfig(options) {
     };
 }
 
-function getConfig(app, options) {
-    let localConf = path.join(paths.cwd, 'rollup.config.js');
-    if (fs.existsSync(localConf)) {
-        return importer(localConf)
-            .then((conf) => {
-                if (!conf.input) {
-                    conf.input = options.input;
-                }
-                app.log(colors.grey(`Config file: ${localConf}`));
-                return conf;
-            });
-    }
-    if (!options.output) {
-        app.log(colors.red(`Missing 'output' option for ${options.input}.`));
-        return global.Promise.reject();
-    }
-    const babelConfig = getBabelConfig(options);
-    return global.Promise.resolve({
-        input: options.input,
-        file: options.output,
-        output: {
-            name: options.name,
-            format: 'umd',
-            sourcemap: options.map !== false,
-        },
-        strict: false,
-        // https://github.com/rollup/rollup/issues/1626
-        cache: options.cache ? caches[options.input] : undefined,
-        indent: false,
-        plugins: [
-            /** PLUGINS THAT HAVE EFFECTS ON IMPORT HANDLING */
-            resolve(),
-            json(),
-            string({
-                include: [
-                    '**/*.{html,txt,svg,md}',
-                ],
-            }),
-            url({
-                limit: 10 * 1000 * 1024,
-                exclude: [],
-                include: [
-                    '**/*.{woff,ttf,eot,gif,png,jpg}',
-                ],
-            }),
-            sass({
-                processor: (css) =>
-                    postcss(
-                        [
-                            autoprefixer(getPostCssConfig()),
-                        ]
-                    ).process(css).then(result => result.css),
-                exclude: [],
-                include: [
-                    '**/*.{css,scss,sass}',
-                ],
-                options: {
-                    outFile: options['external-css'] && path.join(
-                        path.dirname(options.output),
-                        `${path.basename(options.output, path.extname(options.output))}.css`
-                    ),
-                    sourceMap: options.map !== false,
-                    sourceMapEmbed: options.map !== false,
-                },
-            }),
-            jsx({
-                // Required to be specified
-                include: '**/*.jsx',
-                // import header
-                header: 'import { IDOM } from \'@dnajs/idom\';',
-            }),
+function getConfig(app, bundler, options) {
+    let config;
+    if (bundler && bundler.config) {
+        config = bundler.config;
+        config.cache = bundler;
+    } else {
+        let localConf = path.join(paths.cwd, 'rollup.config.js');
+        if (fs.existsSync(localConf)) {
+            return importer(localConf)
+                .then((conf) => {
+                    if (!conf.input) {
+                        conf.input = options.input;
+                    }
+                    app.log(colors.grey(`Config file: ${localConf}`));
+                    return conf;
+                });
+        }
+        if (!options.output) {
+            app.log(colors.red(`Missing 'output' option for ${options.input}.`));
+            return global.Promise.reject();
+        }
+        const babelConfig = getBabelConfig(options);
+        config = {
+            input: options.input,
+            file: options.output,
+            output: {
+                name: options.name,
+                format: 'umd',
+                sourcemap: options.map !== false,
+            },
+            strict: false,
+            indent: false,
+            plugins: [
+                /** PLUGINS THAT HAVE EFFECTS ON IMPORT HANDLING */
+                resolve(),
+                json(),
+                string({
+                    include: [
+                        '**/*.{html,txt,svg,md}',
+                    ],
+                }),
+                url({
+                    limit: 10 * 1000 * 1024,
+                    exclude: [],
+                    include: [
+                        '**/*.{woff,ttf,eot,gif,png,jpg}',
+                    ],
+                }),
+                sass({
+                    processor: (css) =>
+                        postcss(
+                            [
+                                autoprefixer(getPostCssConfig()),
+                            ]
+                        ).process(css).then(result => result.css),
+                    exclude: [],
+                    include: [
+                        '**/*.{css,scss,sass}',
+                    ],
+                    options: {
+                        outFile: options['external-css'] && path.join(
+                            path.dirname(options.output),
+                            `${path.basename(options.output, path.extname(options.output))}.css`
+                        ),
+                        sourceMap: options.map !== false,
+                        sourceMapEmbed: options.map !== false,
+                    },
+                }),
+                jsx({
+                    // Required to be specified
+                    include: '**/*.jsx',
+                    // import header
+                    header: 'import { IDOM } from \'@dnajs/idom\';',
+                }),
 
-            /** PLUGINS THAT HAVE EFFECTS ON TRANSPILING AND CODE IN GENERAL */
-            babel(babelConfig),
-            common({
-                ignore: (id) => isCore(id),
-            }),
-            options.production ? uglify({
-                output: {
-                    comments: /@license/,
-                },
-            }) : {},
-        ],
-        onwarn(warning) {
-            let message = warning && warning.message || warning;
-            const whitelisted = () => {
-                message = message.toString();
-                if (message.indexOf('The \'this\' keyword') !== -1) {
-                    return false;
+                /** PLUGINS THAT HAVE EFFECTS ON TRANSPILING AND CODE IN GENERAL */
+                babel(babelConfig),
+                common({
+                    ignore: (id) => isCore(id),
+                }),
+                options.production ? uglify({
+                    output: {
+                        comments: /@license/,
+                    },
+                }) : {},
+            ],
+            onwarn(warning) {
+                let message = warning && warning.message || warning;
+                const whitelisted = () => {
+                    message = message.toString();
+                    if (message.indexOf('The \'this\' keyword') !== -1) {
+                        return false;
+                    }
+                    if (message.indexOf('It\'s strongly recommended that you use the "external-helpers" plugin') !== -1) {
+                        return false;
+                    }
+                    if (message.indexOf('rollupPluginBabelHelper') !== -1) {
+                        return false;
+                    }
+                    return true;
+                };
+                if (message && options.verbose || whitelisted()) {
+                    app.log(colors.yellow(`⚠️  ${message}`));
                 }
-                if (message.indexOf('It\'s strongly recommended that you use the "external-helpers" plugin') !== -1) {
-                    return false;
-                }
-                if (message.indexOf('commonjs-proxy:rollupPluginBabelHelper') !== -1) {
-                    return false;
-                }
-                return true;
-            };
-            if (message && options.verbose || whitelisted()) {
-                app.log(colors.yellow(`⚠️  ${message}`));
-            }
-        },
-    });
+            },
+        };
+    }
+
+    let timer = new RollupTimer();
+    if (app.options.profile) {
+        config.plugins = timer.time(config.plugins);
+    }
+
+    return global.Promise.resolve({ config, timer });
 }
 
 function timeReport(profile, timer) {
@@ -214,16 +225,14 @@ module.exports = (app, options, profiler) => {
         process.env.NODE_ENV = 'production';
     }
     let profile = profiler.task('rollup');
-    let task = app.log(`bundling${caches[options.input] ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
-    return getConfig(app, options)
-        .then((config) => {
-            const timer = new RollupTimer();
-            if (app.options.profile) {
-                config.plugins = timer.time(config.plugins);
-            }
-            return rollup.rollup(config)
+    let previousBundler = caches[options.input];
+    let task = app.log(`bundling${previousBundler ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
+    return getConfig(app, previousBundler, options)
+        .then(({ config, timer }) =>
+            rollup.rollup(config)
                 .then((bundler) => {
                     options.output = options.output || config.output;
+                    bundler.config = config;
                     caches[options.input] = bundler;
                     return bundler.write(config)
                         .then(() => {
@@ -244,8 +253,8 @@ module.exports = (app, options, profiler) => {
                             });
                             return global.Promise.resolve(manifest);
                         });
-                });
-        })
+                })
+        )
         .catch((err) => {
             task();
             if (err) {
