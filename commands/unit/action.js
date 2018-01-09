@@ -3,12 +3,10 @@ const path = require('path');
 const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
 const glob = require('glob');
-const nodeResolve = require('resolve');
 const karma = require('karma');
 const Mocha = require('mocha');
 const paths = require('../../lib/paths.js');
 const optionsUtils = require('../../lib/options.js');
-const manager = require('../../lib/package-manager.js');
 const runNativeScriptTest = require('./lib/ns.js');
 
 /**
@@ -56,14 +54,13 @@ function getConfig(app, options) {
 
         // frameworks to use
         // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-        frameworks: ['mocha'],
+        frameworks: ['mocha', 'chai'],
 
         // test results reporter to use
         // possible values: 'dots', 'progress'
         // available reporters: https://npmjs.org/browse/keyword/karma-reporter
         reporters: [
             options.ci ? 'dots' : 'mocha',
-            'coverage',
         ],
 
         // web server port
@@ -86,7 +83,7 @@ function getConfig(app, options) {
         plugins: [
             require('karma-mocha'),
             require('karma-mocha-reporter'),
-            require('karma-coverage'),
+            require('./plugins/karma-chai/index.js'),
         ],
 
         // Continuous Integration mode
@@ -126,7 +123,7 @@ function getConfig(app, options) {
         conf.browserDisconnectTolerance = 1;
         conf.browserNoActivityTimeout = 4 * 60 * 1000;
         conf.captureTimeout = 4 * 60 * 1000;
-        conf.reporters = ['dots', 'saucelabs'];
+        conf.reporters.push('saucelabs');
         conf.sauceLabs = {
             startConnect: true,
             connectOptions: {
@@ -160,11 +157,15 @@ function getConfig(app, options) {
         conf.logLevel = 'ERROR';
     }
 
-    if (options.coverage !== false) {
+    if (options.coverage) {
         // Collect code coverage.
+        conf.plugins.push('karma-coverage');
         conf.coverageReporter = {
             dir: 'coverage',
             reporters: [
+                {
+                    type: 'in-memory',
+                },
                 {
                     type: 'lcov',
                     subdir: (browserName) => path.join('report-lcov', browserName),
@@ -225,80 +226,116 @@ module.exports = (app, options = {}) => {
         taskEnvironments.push('browser');
     }
 
-    /**
-     * Dependencies install promise.
-     * @type {Promise}
-     */
-    let depsPromise = new global.Promise((resolve, reject) => {
-        try {
-            nodeResolve.sync('chai', { basedir: paths.cwd });
-            resolve();
-        } catch (err) {
-            manager.dev('chai')
-                .then(resolve)
-                .catch(reject);
-        }
-    });
-
-    return depsPromise.then(() => {
-        // build tests
-        let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
-        let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
-        fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
-        return app.exec('build', { // Build sources.
-            arguments: [tempSource],
-            output: tempUnit,
-            map: false,
-        }).then(() => { // Test built sources.
-            let promise = global.Promise.resolve();
-            taskEnvironments.forEach((taskEnvName) => {
-                let taskEnv = ENVIRONMENTS[taskEnvName];
-                if (taskEnv.runner === 'mocha') {
-                    // Startup Mocha.
-                    promise = promise.then(() => {
-                        const mocha = new Mocha();
-                        mocha.addFile(tempUnit);
-                        return new global.Promise((resolve, reject) => {
-                            mocha.run((failures) => {
-                                if (failures) {
-                                    reject(failures);
-                                } else {
-                                    resolve();
-                                }
-                            });
+    // build tests
+    let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
+    let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
+    fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
+    return app.exec('build', { // Build sources.
+        arguments: [tempSource],
+        coverage: options.coverage,
+        output: tempUnit,
+        map: false,
+    }).then(() => { // Test built sources.
+        let promise = global.Promise.resolve();
+        taskEnvironments.forEach((taskEnvName) => {
+            let taskEnv = ENVIRONMENTS[taskEnvName];
+            if (taskEnv.runner === 'mocha') {
+                // Startup Mocha.
+                promise = promise.then(() => {
+                    const mocha = new Mocha();
+                    mocha.addFile(tempUnit);
+                    return new global.Promise((resolve, reject) => {
+                        mocha.run((failures) => {
+                            if (failures) {
+                                reject(failures);
+                            } else {
+                                resolve();
+                            }
                         });
                     });
-                } else if (taskEnv.runner === 'karma') {
-                    // Startup Karma.
-                    promise = promise.then(() => {
-                        let karmaOptions = getConfig(app, {
-                            ci: options.ci,
-                            server: options.server,
-                            coverage: options.coverage,
-                            [taskEnvName]: true,
-                            chrome: options.chrome,
-                            firefox: options.firefox,
-                        });
-                        karmaOptions.files = [tempUnit];
-                        return new global.Promise((resolve, reject) => {
-                            let server = new karma.Server(karmaOptions, (exitCode) => {
-                                if (exitCode && !options.server) {
-                                    reject(exitCode);
-                                } else {
-                                    resolve();
-                                }
-                            });
-                            server.start();
-                        });
+                });
+            } else if (taskEnv.runner === 'karma') {
+                // Startup Karma.
+                promise = promise.then(() => {
+                    let karmaOptions = getConfig(app, {
+                        ci: options.ci,
+                        server: options.server,
+                        coverage: options.coverage,
+                        [taskEnvName]: true,
+                        chrome: options.chrome,
+                        firefox: options.firefox,
                     });
-                } else if (taskEnv.runner === 'ns') {
-                    // Create fake NS application.
-                    let platform = (options.ios && 'ios') || (options.android && 'android');
-                    promise = promise.then(() => runNativeScriptTest(platform, tempUnit));
-                }
-            });
-
-            return promise;
+                    karmaOptions.files = [tempUnit];
+                    return new global.Promise((resolve, reject) => {
+                        let server = new karma.Server(karmaOptions, (exitCode) => {
+                            if (exitCode && !options.server) {
+                                reject(exitCode);
+                            } else {
+                                resolve();
+                            }
+                        });
+                        if (options.coverage) {
+                            let reportMap;
+                            server.on('run_start', () => {
+                                reportMap = require('istanbul-lib-coverage').createCoverageMap({});
+                            });
+                            server.on('coverage_complete', (browser, coverageReport) => {
+                                reportMap.merge(coverageReport);
+                            });
+                            server.on('run_complete', () => {
+                                setTimeout(() => {
+                                    reportMap = reportMap.toJSON();
+                                    let coverageFiles = Object.keys(reportMap);
+                                    if (coverageFiles.length) {
+                                        const utils = require('istanbul/lib/object-utils');
+                                        let summaries = coverageFiles.map((coverageFile) => utils.summarizeFileCoverage(reportMap[coverageFile]));
+                                        let finalSummary = utils.mergeSummaryObjects.apply(null, summaries);
+                                        app.log(colors.bold(colors.underline('COVERAGE SUMMARY:')));
+                                        app.log(formatCoverageReport(finalSummary, 'statements'));
+                                        app.log(formatCoverageReport(finalSummary, 'branches'));
+                                        app.log(formatCoverageReport(finalSummary, 'functions'));
+                                        app.log(formatCoverageReport(finalSummary, 'lines'));
+                                    }
+                                });
+                            });
+                        }
+                        server.start();
+                    });
+                });
+            } else if (taskEnv.runner === 'ns') {
+                // Create fake NS application.
+                let platform = (options.ios && 'ios') || (options.android && 'android');
+                promise = promise.then(() => runNativeScriptTest(platform, tempUnit));
+            }
         });
+
+        return promise;
     });
 };
+
+/**
+ * Format coverage report metrics.
+ * @param {Object} summary The full file coverage report.
+ * @param {String} key The metric name.
+ * @return {String}
+ */
+function formatCoverageReport(summary, key) {
+    let metrics = summary[key];
+    let skipped;
+    let result;
+    // Capitalize the field name
+    let field = key.substring(0, 1).toUpperCase() + key.substring(1);
+    if (field.length < 12) {
+        // add extra spaces after the field name
+        field += '                   '.substring(0, 12 - field.length);
+    }
+    result = `${field} : ${metrics.pct}% (${metrics.covered}/${metrics.total})`;
+    skipped = metrics.skipped;
+    if (skipped > 0) {
+        result += `, ${skipped} ignored`;
+    }
+    let color = (metrics.pct >= 80 && 'green') ||
+        (metrics.pct >= 50 && 'yellow') ||
+        'red';
+    return colors[color](result);
+}

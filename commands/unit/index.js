@@ -22,6 +22,6 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
         .option('[--nativescript]', 'Use nativescript.')
         .option('[--ios]', 'Run test in iOS emulator.')
         .option('[--android]', 'Run test in Android emulator.')
-        .option('[--no-coverage]', 'Disable code coverage.')
+        .option('[--coverage]', 'Enable code coverage.')
         .action(require('path').resolve(__dirname, './action.js'));
 };
