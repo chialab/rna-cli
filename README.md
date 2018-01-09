@@ -4,9 +4,9 @@
 
 ## Install
 ```sh
-$ npm install -g rna-cli
+$ npm install -g @chialab/rna-cli
 # or
-$ yarn global add rna-cli
+$ yarn global add @chialab/rna-cli
 ```
 
 ## Usage
