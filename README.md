@@ -4,14 +4,14 @@
 
 ## Install
 ```sh
-$ npm install -g git+https://gitlab.com/chialab/rna-cli
+$ npm install -g rna-cli
 # or
-$ yarn global add https://gitlab.com/chialab/rna-cli.git
+$ yarn global add rna-cli
 ```
 
 ## Usage
 ```sh
-$ rna
+$ rna --help
 ```
 
 ## Commands
@@ -23,15 +23,16 @@ $ rna
 * [x] **bootstrap** - Sync project dependencies.
 * [x] **lint** - Lint your source files.
 * [x] **build** - Build the project.
+* [x] **manifest** - Generate webapp manifest.
+* [x] **sw** - Generate Service Worker with precached files.
 * [x] **watch** - Watch project files.
 * [x] **serve** - Setup a server for your project.
 * [x] **unit** - Run project unit tests.
 * [ ] **e2e** - Run project e2e tests.
 * [x] **publish** - Publish to NPM.
 * [ ] **cdn** - Publish to CDN.
-* [ ] **documentation** - Generate API references.
-* [x] **manifest** - Generate webapp manifest.
-* [x] **sw** - Generate Service Worker with precached files.
+* [x] **documentation** - Generate API references.
+* [ ] **website** - Generate project websie.
 * [x] **start** - `yarn/npm start` alias
 * [x] **run** - `yarn/npm run` alias
 
@@ -39,76 +40,68 @@ $ rna
 
 ### Common working directory
 
-Per i comandi che fanno riferimento a un progetto, la `cwd` di riferimento è sempre la root del progetto, identificata dalla presenza del file `package.json` o della cartella `.git`.
-La CLI risalse in automatico il file system per identificare la root del progetto.
+Commands which refere to the project use as `cwd` the path to the `package.json` file or `.git` folder.
 
-### Configuration overwrite
+RNA automatically walk the file system to identify the proejct root.
 
-Al momento, non supportiamo il merge di configurazioni, ma solo il replacement in toto. Se nel progetto è presente un file di configurazione, questo dovrà essere completo per eseguire lo step, perché la CLI userà solo quello.
-Da prevedere un'opzione generica (`--config`) che permetta di individuare il file di configurazione, al momento supportato solo in root.
+Othwerwise, the it uses the current terminal `cwd`.
+
+### Zero configuration
+
+You do not need to configure any tool like Babel or Rollup or Karma. RNA just extracts informations by the `package.json`.
 
 ### Pipelines
 
-Dal momento che alcuni comandi mantengono attivo il processo, non è possibile concatenare i comandi con `&&`, ma è comunque possibile creare una pipeline separando i comandi con `+`. Esempio:
+Commands which mantain an active process can be concatened in a pipeline using the `+` char. E.g:
 
 ```sh
-$ rna watch src/ + serve ./public
+$ rna build src/ --watch + serve ./public
 ```
 
 ### Files and packages
-Gli argomenti passati ai comandi possono essere file, cartelle e nomi di moduli (nel caso si utilizzi una struttura monorepo).
+Command's arguments can refer to files, folders and sub modules (monorepo structure).
 
-**Algoritmo di risoluzione**:
+**Resolution algorithm**:
 
-`$package` si riferisce al `package.json`.
+`$package` refers to `package.json`.
 
-Progetti semplici:
+Simple project structure:
 
-* `rna [cmd]` (senza argomenti)
+* `rna [cmd]` (no arguments)
 
-        # Esempio: esegue la build del progetto
+        # Exec project build
         $ rna build
 
-* `rna [cmd] file` (file generico)
+* `rna [cmd] file` (file entrypoint)
 
-        # Esempio: esegue il lint su un singolo file
+        # Lint a single file
         $ rna lint /full/path/to/src/demo.js
 
-* `rna [cmd] file dir/` (file multipli)
+* `rna [cmd] file dir/` (multi entrypoints)
 
-        # Esempio: attiva il watch sul file e tutta la cartella
+        # Watch a file and a folder
         $ rna watch ./src/demo.js ./dist/
 
 
-Progetti monorepo:
+Monorepo structure:
 
-* `rna [cmd]` (senza argomenti)
+* `rna [cmd]` (no arguments)
 
-        # Esempio: pubblica i progetti
+        # publish all the packages
         $ rna publish
 
-* `rna [cmd] $package1.name` (singolo progetto)
+* `rna [cmd] $package.name` (single module)
 
-        # Esempio: testa un progetto
+        # Exec unit tests for a single module
         $ rna unit @chialab/sidenav
 
-* `rna [cmd] $package1.name $package2.name` (progetti multipli)
+* `rna [cmd] $package1.name $package2.name` (multiple modules)
 
-        # Esempio: esegue la build di più progetti
+        # Build multiple modules
         $ rna build @chialab/sidenav @chialab/dialog
 
-* `rna [cmd] file` (singolo file)
+* `rna [cmd] $package1.name packages/package1/src/index.js dir/` (mixed mode)
 
-        # Esempio: esegue la build dell'applicazione e ignora i workspace
-        $ rna build app/index.js --output public/app.js
-
-* `rna [cmd] file dir/` (file multiplo)
-
-        # Esempio: crea un server per l'app
-        $ rna serve public/ assets/
-
-* `rna [cmd] $package1.name packages/package1/src/index.js dir/` (mix)
-
-        # Esempio: esegue un watch sia sull'app che per i workspace
+        # Watch workspace modules and single file
         $ rna watch src/app.js @chialab/synapse
 
