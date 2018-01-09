@@ -50,9 +50,14 @@ function getBabelConfig(options) {
         require('babel-plugin-transform-inline-environment-variables'),
     ];
     if (options.coverage) {
-        plugins.push([require('babel-plugin-istanbul'), {
-            exclude: ['**.jsx'],
-        }]);
+        plugins.push(
+            require('../plugins/arrow-function-coverage-fix/arrow-function-coverage-fix.js'),
+            [
+                require('babel-plugin-istanbul'), {
+                    exclude: ['**.jsx'],
+                },
+            ]
+        );
     }
 
     return {
