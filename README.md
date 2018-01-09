@@ -1,6 +1,6 @@
 # RNA CLI
 
-> A CLI to rule them all.
+A CLI to rule them all.
 
 ## Install
 ```sh
@@ -35,7 +35,7 @@ $ rna --help
 * [ ] **website** - Generate project websie.
 * [x] **start** - `yarn/npm start` alias.
 * [x] **run** - `yarn/npm run` alias.
-* [ ] **upgrade** - Update the CLI.
+* [x] **upgrade** - Update the CLI.
 
 ## Principles
 
