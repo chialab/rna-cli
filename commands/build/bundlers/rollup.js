@@ -106,9 +106,9 @@ function getConfig(app, bundler, options) {
                 name: options.name,
                 format: 'umd',
                 sourcemap: options.map !== false,
+                strict: false,
+                indent: false,
             },
-            strict: false,
-            indent: false,
             plugins: [
                 /** PLUGINS THAT HAVE EFFECTS ON IMPORT HANDLING */
                 resolve(),
