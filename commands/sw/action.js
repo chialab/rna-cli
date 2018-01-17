@@ -44,12 +44,19 @@ module.exports = (app, options) => {
             output,
             fs.readFileSync(output, 'utf8').replace(/\.precache\s*\(\s*\[([^\]]*)\]\)/gi, '.precache([])')
         );
+        let exclude = [
+            'service-worker.js',
+            '*.map',
+        ];
+        if (options.exclude) {
+            exclude.push(options.exclude);
+        }
         returnPromise = workbox.injectManifest({
             swSrc: output,
             swDest: output,
             globDirectory: input,
             globPatterns: ['**/*'],
-            globIgnores: ['service-worker.js', '*.map'],
+            globIgnores: exclude,
             maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
         });
     } else {
