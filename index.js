@@ -15,6 +15,7 @@ require('./commands/manifest/index.js')(program);
 require('./commands/sw/index.js')(program);
 require('./commands/serve/index.js')(program);
 require('./commands/unit/index.js')(program);
+require('./commands/e2e/index.js')(program);
 require('./commands/publish/index.js')(program);
 require('./commands/start/index.js')(program);
 require('./commands/documentation/index.js')(program);
