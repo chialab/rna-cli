@@ -30,9 +30,8 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
             baseDir: base,
             directory: options.directory === true,
         },
-        // files: [],
         ghostMode: false,
-        logLevel: 'silent',
+        tunnel: options.tunnel,
         logFileChanges: false,
         open: false,
         xip: true,
@@ -91,8 +90,6 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
         if (nil) {
             return reject(nil);
         }
-        let urlStr = server.options.get('urls').toJS().local;
-        app.log(colors.cyan(`server ready at ${colors.magenta(urlStr)}`));
         resolve({
             config,
             bs: browserSync,
