@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const colors = require('colors/safe');
-const browserSync = require('browser-sync').create();
 const watcher = require('../../lib/watcher.js');
 const commondir = require('commondir');
 const cwd = require('../../lib/paths.js').cwd;
@@ -31,13 +30,13 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
             baseDir: base,
             directory: options.directory === true,
         },
-        // files: [],
         ghostMode: false,
-        logLevel: 'silent',
+        tunnel: options.tunnel,
         logFileChanges: false,
         open: false,
         xip: true,
-        injectChanges: true,
+        notify: !!options.watch,
+        injectChanges: !!options.watch,
         middleware: !options.directory && [
             (req, res, next) => {
                 const headers = req.headers;
@@ -63,6 +62,16 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
             base,
         ],
     };
+    if (!options.watch) {
+        // Disable BrowserSync sockets and tunnels.
+        require('browser-sync/lib/async.js').startSockets = (bs, done) => { done(); };
+        config.ui = false;
+        config.snippetOptions = {
+            rule: {
+                match: /\${50}/i,
+            },
+        };
+    }
     if (options.https) {
         config.https = {
             key: options.https,
@@ -74,13 +83,13 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
         config.port = options.port;
     }
 
+    const browserSync = require('browser-sync').create();
+
     // Start BrowserSync server.
     browserSync.init(config, (nil, server) => {
         if (nil) {
             return reject(nil);
         }
-        let urlStr = server.options.get('urls').toJS().local;
-        app.log(colors.cyan(`server ready at ${colors.magenta(urlStr)}`));
         resolve({
             config,
             bs: browserSync,

@@ -14,6 +14,14 @@ $ yarn global add @chialab/rna-cli
 $ rna --help
 ```
 
+## Docker
+
+RNA is also available as a Docker image on the official Docker Hub.
+
+```bash
+$ docker run chialab/rna-cli rna --version
+```
+
 ## Commands
 
 * [x] **help** - Show CLI help

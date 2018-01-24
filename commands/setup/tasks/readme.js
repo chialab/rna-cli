@@ -28,7 +28,7 @@ module.exports = (app, options) => {
         let requirements = `### Requirements
 
 * Node (>= 6)
-* RNA cli ([https://gitlab.com/chialab/rna-cli](https://gitlab.com/chialab/rna-cli))
+* RNA cli (\`npm install @chialab/rna-cli\`)
 `;
 
         let content = `# ${json.name}
@@ -42,13 +42,13 @@ ${json.description || ''}
 ### Build the project.
 
 \`\`\`
-$ rna bootstrap
+$ rna install
 $ rna build --production
 \`\`\`
 
 ### Develpment mode.
 \`\`\`
-$ rna start
+$ rna build --watch + serve ./public --watch
 \`\`\`
 `;
         } else if (json.structure === 'module') {
@@ -67,14 +67,14 @@ ${requirements}
 ### Build the project.
 
 \`\`\`
-$ rna bootstrap
+$ rna install
 $ rna build --production
 \`\`\`
 
 ### Watch the project.
 \`\`\`
-$ rna bootstrap
-$ rna watch
+$ rna install
+$ rna build --watch
 \`\`\`
 `;
         } else if (json.structure === 'monorepo') {
@@ -94,21 +94,21 @@ ${requirements}
 ### Build all projects.
 
 \`\`\`
-$ rna bootstrap
+$ rna install
 $ rna build --production
 \`\`\`
 
 ### Build projects selectively.
 
 \`\`\`
-$ rna bootstrap
+$ rna install
 $ rna build [package-name] [package-name] --production
 \`\`\`
 
 ### Watch the projects.
 \`\`\`
-$ rna bootstrap
-$ rna watch
+$ rna install
+$ rna build --watch
 \`\`\`
 `;
         }

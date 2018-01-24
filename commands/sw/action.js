@@ -3,6 +3,7 @@ const path = require('path');
 const colors = require('colors/safe');
 const workbox = require('workbox-build');
 const watcher = require('../../lib/watcher.js');
+const glob = require('glob');
 
 function remember(app, output) {
     app.log(colors.yellow('remember to include'));
@@ -39,18 +40,18 @@ module.exports = (app, options) => {
     const output = path.resolve(process.cwd(), options.output);
     let task = app.log('generating service worker...', true);
     let returnPromise;
+    let exclude = [
+        'service-worker.js',
+        '*.map',
+    ];
+    if (options.exclude) {
+        exclude.push(options.exclude);
+    }
     if (fs.existsSync(output)) {
         fs.writeFileSync(
             output,
             fs.readFileSync(output, 'utf8').replace(/\.precache\s*\(\s*\[([^\]]*)\]\)/gi, '.precache([])')
         );
-        let exclude = [
-            'service-worker.js',
-            '*.map',
-        ];
-        if (options.exclude) {
-            exclude.push(options.exclude);
-        }
         returnPromise = workbox.injectManifest({
             swSrc: output,
             swDest: output,
@@ -64,7 +65,7 @@ module.exports = (app, options) => {
             globDirectory: input,
             swDest: output,
             globPatterns: ['**/*'],
-            globIgnores: ['service-worker.js', '*.map'],
+            globIgnores: exclude,
             maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
         });
     }
@@ -76,7 +77,11 @@ module.exports = (app, options) => {
         }
         if (options.watch) {
             let lastContent = fs.readFileSync(output, 'utf8');
-            watcher(app, path.join(input, '**/*'), (event, file) => {
+            let filesToWatch = glob.sync(path.join(input, '**/*'), {
+                ignore: exclude.map((pattern) => path.join(input, pattern)),
+            });
+            filesToWatch.push(output);
+            watcher(app, filesToWatch, (event, file) => {
                 if (file === output) {
                     if (fs.readFileSync(output, 'utf8') === lastContent) {
                         return;

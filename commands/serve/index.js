@@ -11,6 +11,7 @@ module.exports = (program) => {
         .option('<file>', 'The server directory.')
         .option('[--port]', 'The server port.')
         .option('[--watch]', 'Should watch server directory.')
+        .option('[--tunnel]', 'Create a tunnel for the server')
         .option('[--directory]', 'Should list directories.')
         .option('[--https]', 'Path to server https key.')
         .action(require('path').resolve(__dirname, './action.js'));
