@@ -60,24 +60,7 @@ function getConfig(app, options) {
         // Local Nighwatch config exists. Use that.
         return global.Promise.resolve(require(localConf));
     }
-    if (!options.url) {
-        return global.Promise.reject('Missing `url` option.');
-    }
-    if (!options.browser) {
-        return global.Promise.reject('Missing `browser` option.');
-    }
-    let seleniumHost = options['selenium.host'] || 'localhost';
-    let seleniumPort = options['selenium.port'] || 4444;
-    let screenshotsPath;
-    if (options.screenshots) {
-        if (typeof options.screenshots === 'string') {
-            screenshotsPath = options.screenshots;
-        } else {
-            screenshotsPath = 'test/screenshots/e2e';
-        }
-    }
     return global.Promise.resolve({
-        src_folders: options.arguments.length ? options.arguments : ['test/e2e'],
         selenium: {
             start_process: false,
         },
@@ -85,14 +68,8 @@ function getConfig(app, options) {
         test_settings: {
             default: {
                 launch_url: options.url,
-                selenium_port: seleniumPort,
-                selenium_host: seleniumHost,
                 silent: true,
-                screenshots: {
-                    enabled: !!screenshotsPath,
-                    path: screenshotsPath,
-                },
-                desiredCapabilities: getBrowserConfig(options.browser, {
+                desiredCapabilities: getBrowserConfig(options.browser || 'chrome', {
                     javascriptEnabled: true,
                     acceptSslCerts: true,
                     acceptInsecureCerts: true,
@@ -117,6 +94,42 @@ module.exports = (app, options = {}) => {
     }
     return getConfig(app, options)
         .then((config) => {
+            // test path defaults
+            if (options.arguments.length || !config.src_folders) {
+                config.src_folders = options.arguments.length ? options.arguments : ['test/e2e'];
+            }
+            if (config.test_settings && config.test_settings.default) {
+                if (options.url) {
+                    config.test_settings.default.launch_url = options.url;
+                }
+                // selenium conf defaults
+                if (options['selenium.host'] || !config.test_settings.default.selenium_host) {
+                    config.test_settings.default.selenium_host = options['selenium.host'] || 'localhost';
+                }
+                if (options['selenium.port'] || !config.test_settings.default.selenium_port) {
+                    config.test_settings.default.selenium_port = options['selenium.port'] || 4444;
+                }
+                // screenshots conf defaults
+                if (options.hasOwnProperty('screenshots') || !config.test_settings.default.screenshots) {
+                    // option.screenshots detected
+                    if (options.screenshots) {
+                        // option.screenshots is true or a path
+                        config.test_settings.default.screenshots = {
+                            enabled: true,
+                        };
+                        if (typeof options.screenshots === 'string') {
+                            // override the path
+                            config.test_settings.default.screenshots.path = options.screenshots;
+                        } else {
+                            // set a default path
+                            config.test_settings.default.screenshots.path = config.test_settings.default.screenshots.path || 'test/screenshots/e2e';
+                        }
+                    } else {
+                        // option.screenshots is false
+                        config.test_settings.default.screenshots = { enabled: false };
+                    }
+                }
+            }
             const nw = new nightwatch.CliRunner({
                 env: 'default',
             });
