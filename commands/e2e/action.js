@@ -130,6 +130,8 @@ module.exports = (app, options = {}) => {
                     }
                 }
             }
+            config.output = config.output || typeof config.output == 'undefined';
+            config.detailed_output = config.detailed_output || typeof config.detailed_output == 'undefined';
             const nw = new nightwatch.CliRunner({
                 env: 'default',
             });
