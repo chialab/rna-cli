@@ -71,7 +71,7 @@ module.exports = (app, options = {}, profiler) => {
                     // if module field is a javascript file, use it as source file.
                     jsOptions.input = path.join(pkg.path, json.module);
                     // if the output option is missing, use the main field.
-                    let stat = fs.statSync(json.main);
+                    let stat = fs.existsSync(json.main) && fs.statSync(json.main);
                     let distPath = stat && stat.isDirectory() ?
                         path.join(pkg.path, json.main, path.basename(jsOptions.input)) :
                         path.join(pkg.path, json.main);
@@ -99,7 +99,7 @@ module.exports = (app, options = {}, profiler) => {
                     // if style field is a style file, use it as source file.
                     styleOptions.input = path.join(pkg.path, json.style);
                     // if the output option is missing, use the main field.
-                    let stat = fs.statSync(json.main);
+                    let stat = fs.existsSync(json.main) && fs.statSync(json.main);
                     let distPath = stat && stat.isDirectory() ?
                         path.join(pkg.path, json.main, path.basename(jsOptions.input)) :
                         path.join(pkg.path, json.main);
