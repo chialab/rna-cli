@@ -7,7 +7,7 @@
     "type": "git",
     "url": "git+https://gitlab.com/chialab/rna-cli.git"
   },
-  "author": "Chialab <dev@chialab.io> (https://chialab.io)",
+  "author": "Chialab <dev@chialab.io> (http://www.chialab.it)",
   "license": "MIT",
   "bugs": {
     "url": "https://gitlab.com/chialab/rna-cli/issues"
@@ -51,6 +51,7 @@
     "lerna": "^2.4.0",
     "md5-file": "^3.2.3",
     "mocha": "^4.0.1",
+    "nightwatch": "^0.9.19",
     "npm-which": "^3.0.1",
     "resolve": "^1.5.0",
     "rfg-api": "^0.3.0",
