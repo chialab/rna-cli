@@ -64,7 +64,7 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
     };
     if (!options.watch) {
         // Disable BrowserSync sockets and tunnels.
-        require('browser-sync/lib/async.js').startSockets = (bs, done) => { done(); };
+        require('browser-sync/dist/async.js').startSockets = (bs, done) => { done(); };
         config.ui = false;
         config.snippetOptions = {
             rule: {

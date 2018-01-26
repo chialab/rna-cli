@@ -183,11 +183,13 @@ module.exports = (app, options = {}, profiler) => {
                         // setup a rebuild Promises chain.
                         let rebuildPromise = global.Promise.resolve();
                         bundles.forEach((bundle) => {
+                            let shouldLint = (ext.isStyleFile(fp) && (options['lint-styles'] !== false && options.lint !== false)) ||
+                                (ext.isJSFile(fp) && (options['lint-js'] !== false && options.lint !== false));
                             // exec build again using cache.
                             rebuildPromise = rebuildPromise.then(() => app.exec('build', Object.assign(options, {
                                 arguments: [bundle.input],
                                 output: bundle.output,
-                                lint: fp,
+                                lint: shouldLint && fp,
                                 cache: true,
                                 watch: false,
                             }))).catch((err) => {
