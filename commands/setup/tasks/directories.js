@@ -18,28 +18,23 @@ module.exports = () => {
     }
     const json = require(jsonFile);
 
-    if (json.main) {
-        // Ensure path specified in `package.json` "main" key is present.
-        let main = path.resolve(cwd, json.main);
-        fs.ensureDirSync(path.dirname(main));
-        if (!fs.existsSync(main)) {
-            fs.writeFileSync(main, '');
-            if (json.structure === 'webapp') {
-                // Using a simple HTML file as main entrypoint.
-                let publicDir = path.resolve(cwd, json.main.split(path.sep)[0]);
-                let index = path.join(publicDir, 'index.html');
-                if (!fs.existsSync(index)) {
-                    fs.writeFileSync(index, `<html>
-    <head>
-        <meta charset="UTF-8" />
-        <title>${json.name}</title>
-    </head>
-    <body>
-        <script src="${json.main.split(path.sep).slice(1).join(path.sep)}"></script>
-    </body>
+    // Ensure path specified in `package.json` "main" key is present.
+    if (json.structure === 'webapp') {
+        // Using a simple HTML file as main entrypoint.
+        let publicDir = path.resolve(cwd, json.main);
+        fs.ensureDirSync(publicDir);
+        let index = path.join(publicDir, 'index.html');
+        if (!fs.existsSync(index)) {
+            fs.writeFileSync(index, `<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>${json.name}</title>
+    <link rel="stylesheet" href="${json.style.split(path.sep).slice(1).join(path.sep).replace('.scss', '.css')}">
+</head>
+<body>
+    <script src="${json.module.split(path.sep).slice(1).join(path.sep)}"></script>
+</body>
 </html>`);
-                }
-            }
         }
     }
 
@@ -49,6 +44,15 @@ module.exports = () => {
         fs.ensureDirSync(path.dirname(mod));
         if (!fs.existsSync(mod)) {
             fs.writeFileSync(mod, '');
+        }
+    }
+
+    if (json.style) {
+        // Ensure path specified in `package.json` "style" key is present.
+        let style = path.resolve(cwd, json.style);
+        fs.ensureDirSync(path.dirname(style));
+        if (!fs.existsSync(style)) {
+            fs.writeFileSync(style, '');
         }
     }
 

@@ -80,16 +80,24 @@ module.exports = (app, options) => {
                     },
                     {
                         type: 'input',
-                        name: 'main',
-                        message: formatQuestion('entry point'),
-                        default: json.main || 'dist/index.js',
-                        when: (answers) => answers.structure === 'module',
+                        name: 'style',
+                        message: formatQuestion('style entry point'),
+                        default: json.style || 'src/index.scss',
+                        when: (answers) => answers.structure === 'webapp',
                     },
                     {
                         type: 'input',
                         name: 'main',
                         message: formatQuestion('entry point'),
-                        default: json.main || 'public/index.js',
+                        default: json.main || 'dist/index.js',
+                        when: (answers) => answers.structure === 'module',
+                    },
+
+                    {
+                        type: 'input',
+                        name: 'main',
+                        message: formatQuestion('public path'),
+                        default: json.main || 'public',
                         when: (answers) => answers.structure === 'webapp',
                     },
                     {
@@ -123,6 +131,9 @@ module.exports = (app, options) => {
                     if (answers.module) {
                         json.module = answers.module;
                     }
+                    if (answers.style) {
+                        json.style = answers.style;
+                    }
                     if (remote && answers.workspaces) {
                         json.workspaces = answers.workspaces.split(/,\s*/);
                         json.private = true;
@@ -146,7 +157,7 @@ module.exports = (app, options) => {
                         if (json.structure === 'module') {
                             content = path.dirname(json.main);
                         } else if (json.structure === 'webapp') {
-                            content = json.main.replace(path.extname(json.main), '.*{js,css,map}');
+                            content = path.join(json.main, '*.{js,css,map}');
                         }
 
                         // "Append" configuration to `.gitignore`.

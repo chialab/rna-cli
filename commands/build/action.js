@@ -1,3 +1,4 @@
+const fs = require('fs-extra');
 const path = require('path');
 const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
@@ -70,7 +71,11 @@ module.exports = (app, options = {}, profiler) => {
                     // if module field is a javascript file, use it as source file.
                     jsOptions.input = path.join(pkg.path, json.module);
                     // if the output option is missing, use the main field.
-                    jsOptions.output = jsOptions.output || path.join(pkg.path, json.main);
+                    let stat = fs.statSync(json.main);
+                    let distPath = stat && stat.isDirectory() ?
+                        path.join(pkg.path, json.main, path.basename(jsOptions.input)) :
+                        path.join(pkg.path, json.main);
+                    jsOptions.output = jsOptions.output || distPath;
                 } else if (jsOptions.output && ext.isJSFile(json.main)) {
                     // if output option is different from the main field
                     // we can use the main file as source if it is javascript.
@@ -94,7 +99,11 @@ module.exports = (app, options = {}, profiler) => {
                     // if style field is a style file, use it as source file.
                     styleOptions.input = path.join(pkg.path, json.style);
                     // if the output option is missing, use the main field.
-                    styleOptions.output = styleOptions.output || path.join(pkg.path, json.main);
+                    let stat = fs.statSync(json.main);
+                    let distPath = stat && stat.isDirectory() ?
+                        path.join(pkg.path, json.main, path.basename(jsOptions.input)) :
+                        path.join(pkg.path, json.main);
+                    styleOptions.output = styleOptions.output || distPath;
                     // ensure output style file.
                     if (!ext.isStyleFile(styleOptions.output)) {
                         styleOptions.output = path.join(
