@@ -94,60 +94,54 @@ function getConfig(app, options) {
         // how many browser should be started simultaneous
         concurrency: Infinity,
     };
-
-    if (options.browser) {
-        // browser environment.
-        conf.customLaunchers = {
-            Chrome_CI: {
-                base: 'Chrome',
-                flags: ['--no-sandbox'],
-            },
-        };
-        let useAll = !options.chrome && !options.firefox;
-        if (options.chrome || useAll) {
-            // Test on Chrome.
+    if (!options.server) {
+        if (options.browser) {
+            // browser environment.
+            conf.customLaunchers = {
+                Chrome_CI: {
+                    base: 'Chrome',
+                    flags: ['--no-sandbox'],
+                },
+            };
             conf.browsers.push('Chrome_CI');
             conf.plugins.push(require('karma-chrome-launcher'));
-        }
-        if (options.firefox || useAll) {
-            // Test on Firefox.
             conf.browsers.push('Firefox');
             conf.plugins.push(require('karma-firefox-launcher'));
         }
-    }
 
-    if (options.saucelabs) {
-        // SauceLabs configuration.
-        conf.retryLimit = 3;
-        conf.browserDisconnectTimeout = 10000;
-        conf.browserDisconnectTolerance = 1;
-        conf.browserNoActivityTimeout = 4 * 60 * 1000;
-        conf.captureTimeout = 4 * 60 * 1000;
-        conf.reporters.push('saucelabs');
-        conf.sauceLabs = {
-            startConnect: true,
-            connectOptions: {
-                'no-ssl-bump-domains': 'all',
-                'username': process.env.SAUCE_USERNAME,
-                'accessKey': process.env.SAUCE_ACCESS_KEY,
-            },
-            options: {},
-            username: process.env.SAUCE_USERNAME,
-            accessKey: process.env.SAUCE_ACCESS_KEY,
-            build: process.env.TRAVIS ? `TRAVIS # ${process.env.TRAVIS_BUILD_NUMBER} (${process.env.TRAVIS_BUILD_ID})` : undefined,
-            tunnelIdentifier: process.env.TRAVIS ? process.env.TRAVIS_JOB_NUMBER : undefined,
-            recordScreenshots: true,
-        };
-        let saucelabsBrowsers = getSauceBrowsers();
-        conf.customLaunchers = saucelabsBrowsers;
-        conf.browsers = Object.keys(saucelabsBrowsers);
-        conf.plugins.push(require('karma-sauce-launcher'));
-    }
+        if (options.saucelabs) {
+            // SauceLabs configuration.
+            conf.retryLimit = 3;
+            conf.browserDisconnectTimeout = 10000;
+            conf.browserDisconnectTolerance = 1;
+            conf.browserNoActivityTimeout = 4 * 60 * 1000;
+            conf.captureTimeout = 4 * 60 * 1000;
+            conf.reporters.push('saucelabs');
+            conf.sauceLabs = {
+                startConnect: true,
+                connectOptions: {
+                    'no-ssl-bump-domains': 'all',
+                    'username': process.env.SAUCE_USERNAME,
+                    'accessKey': process.env.SAUCE_ACCESS_KEY,
+                },
+                options: {},
+                username: process.env.SAUCE_USERNAME,
+                accessKey: process.env.SAUCE_ACCESS_KEY,
+                build: process.env.TRAVIS ? `TRAVIS # ${process.env.TRAVIS_BUILD_NUMBER} (${process.env.TRAVIS_BUILD_ID})` : undefined,
+                tunnelIdentifier: process.env.TRAVIS ? process.env.TRAVIS_JOB_NUMBER : undefined,
+                recordScreenshots: true,
+            };
+            let saucelabsBrowsers = getSauceBrowsers();
+            conf.customLaunchers = saucelabsBrowsers;
+            conf.browsers = Object.keys(saucelabsBrowsers);
+            conf.plugins.push(require('karma-sauce-launcher'));
+        }
 
-    if (options.electron) {
-        // Test on Electron.
-        conf.browsers = ['Electron'];
-        conf.plugins.push(require('./plugins/karma-electron-launcher/index.js'));
+        if (options.electron) {
+            // Test on Electron.
+            conf.browsers = ['Electron'];
+            conf.plugins.push(require('./plugins/karma-electron-launcher/index.js'));
+        }
     }
 
     if (options.ci) {
@@ -262,8 +256,6 @@ module.exports = (app, options = {}) => {
                         server: options.server,
                         coverage: options.coverage,
                         [taskEnvName]: true,
-                        chrome: options.chrome,
-                        firefox: options.firefox,
                     });
                     karmaOptions.files = [tempUnit];
                     return new global.Promise((resolve, reject) => {

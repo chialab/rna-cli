@@ -15,8 +15,6 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
         .option('[--ci]', 'Run in continuous integration mode.')
         .option('[--node]', 'Run tests in node context.')
         .option('[--browser]', 'Run tests in browser context.')
-        .option('[--chrome]', 'Do not start Chrome browser.')
-        .option('[--firefox]', 'Do not start Firefox browser.')
         .option('[--saucelabs]', 'Use saucelabs as browsers provider.')
         .option('[--electron]', 'Use electron.')
         .option('[--nativescript]', 'Use nativescript.')
