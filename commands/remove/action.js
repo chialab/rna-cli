@@ -19,7 +19,7 @@ module.exports = (app, options = {}) => {
     let args = options.arguments || [];
     if (args.length === 0) {
         // Nothing to remove.
-        app.log(colors.yellow(`${utils.extractRandom(['🤷‍', '🤷‍♂️'])} specify the package to remove.`));
+        app.log(colors.yellow('🤷‍ specify the package to remove.'));
     } else {
         // Remove requested packages.
         return manager.remove(...options.arguments)

@@ -95,17 +95,18 @@ function getConfig(app, options) {
     };
     if (!options.server) {
         if (options.browser) {
-            // browser environment.
-            conf.customLaunchers = {
-                Chrome_CI: {
-                    base: 'Chrome',
-                    flags: ['--no-sandbox'],
-                },
+            conf.frameworks.push('detectBrowsers');
+            conf.plugins.push(
+                require('karma-chrome-launcher'),
+                require('karma-firefox-launcher'),
+                require('karma-edge-launcher'),
+                require('karma-safari-launcher'),
+                require('karma-opera-launcher'),
+                require('karma-detect-browsers')
+            );
+            conf.detectBrowsers = {
+                usePhantomJS: false,
             };
-            conf.browsers.push('Chrome_CI');
-            conf.plugins.push(require('karma-chrome-launcher'));
-            conf.browsers.push('Firefox');
-            conf.plugins.push(require('karma-firefox-launcher'));
         }
 
         if (options.saucelabs) {
@@ -262,7 +263,7 @@ module.exports = (app, options = {}) => {
                     return new global.Promise((resolve, reject) => {
                         let server = new karma.Server(karmaOptions, (exitCode) => {
                             if (exitCode && !options.server) {
-                                reject(exitCode);
+                                reject();
                             } else {
                                 resolve();
                             }
@@ -296,9 +297,12 @@ module.exports = (app, options = {}) => {
                     });
                 });
             } else if (taskEnv.runner === 'ns') {
-                // Create fake NS application.
-                let platform = (options.ios && 'ios') || (options.android && 'android');
-                promise = promise.then(() => runNativeScriptTest(platform, tempUnit));
+                if (!['ios', 'android'].includes(options.nativescript.toLowerCase())) {
+                    promise.then(() => global.Promise.reject('Invalid nativescript platform. Valid platforms are `ios` and `android`.'));
+                } else {
+                    // Create fake NS application.
+                    promise = promise.then(() => runNativeScriptTest(options.nativescript, tempUnit));
+                }
             }
         });
 
