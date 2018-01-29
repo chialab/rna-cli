@@ -59,7 +59,7 @@ module.exports = (app, options = {}, profiler) => {
                     let opts = Proteins.clone(options);
                     opts.input = entry.file.path;
                     if (opts.output) {
-                        if (entry.length > 1) {
+                        if (entries.length > 1) {
                             opts.output = path.resolve(path.dirname(entry.file.path), opts.output);
                         }
                     }

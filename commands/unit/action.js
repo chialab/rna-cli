@@ -196,18 +196,18 @@ module.exports = (app, options = {}) => {
 
     // Load list of files to be tested.
     let files = [];
-    let entries = Entry.resolve(options.arguments);
+    let entries = Entry.resolve(options.arguments.length ? options.arguments : Object.keys(require('../../lib/packages.js')));
     entries.forEach((entry) => {
         if (entry.file) {
             // process file
             if (fs.statSync(entry.file.path).isDirectory()) {
-                files.push(...Entry.resolve(path.join(entry.file.path, '!node_modules/**/unit/**/*.js')));
+                files.push(...Entry.resolve(path.join(entry.file.path, 'test/unit/**/*.js')));
             } else {
                 files.push(entry);
             }
         } else {
             // process package
-            files.push(...Entry.resolve(path.join(entry.package.path, '!node_modules/**/unit/**/*.js')));
+            files.push(...Entry.resolve(path.join(entry.package.path, 'test/unit/**/*.js')));
         }
     });
     if (!files.length) {
@@ -224,7 +224,7 @@ module.exports = (app, options = {}) => {
     // build tests
     let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
     let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
-    fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
+    fs.writeFileSync(tempSource, files.map((entry) => `import '${entry.file.path}';`).join('\n'));
     return app.exec('build', { // Build sources.
         arguments: [tempSource],
         coverage: options.coverage,
