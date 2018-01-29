@@ -1,5 +1,5 @@
 FROM node
 
 COPY . /opt/rna
-RUN yarn global add /opt/rna \
-    && rm -rf /opt/rna
+RUN git -C /opt/rna clean -Xdf \
+    && yarn global add /opt/rna
