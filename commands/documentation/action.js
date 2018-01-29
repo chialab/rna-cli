@@ -1,10 +1,9 @@
 const fs = require('fs-extra');
 const path = require('path');
 const colors = require('colors/safe');
-const glob = require('glob');
 const paths = require('../../lib/paths.js');
 const documentation = require('documentation');
-const optionsUtils = require('../../lib/options.js');
+const Entry = require('../../lib/entry.js');
 
 /**
  * Generate the API reference file.
@@ -47,8 +46,8 @@ function generate(app, sources, output) {
  * @returns {Promise}
  */
 module.exports = (app, options) => {
-    let filter = optionsUtils.handleArguments(options);
-    if (!options.arguments.length) {
+    let entries = Entry.resolve(options.arguments);
+    if (!entries.length) {
         // no arguments
         if (!paths.cwd) {
             // Unable to detect project root.
@@ -56,7 +55,7 @@ module.exports = (app, options) => {
             return global.Promise.reject();
         } else {
             // use cwd sources.
-            filter.files = glob.sync(path.join(paths.cwd, 'src/**/*.js'));
+            entries = Entry.resolve(path.join(paths.cwd, 'src/**/*.js'));
         }
     }
 
@@ -67,33 +66,36 @@ module.exports = (app, options) => {
 
     let promise = global.Promise.resolve();
 
-    // process packages
-    Object.values(filter.packages).forEach((info) => {
-        let output = path.resolve(info.path, options.output);
-        if (!path.extname(output)) {
-            // `output` options is a folder
-            let shortName = info.name.split('/')[1];
-            // generate a file with the name of the package.
-            output = path.join(output, `api-${shortName.toLowerCase()}.md`);
+    // process entries
+    entries.forEach((entry) => {
+        if (entry.file) {
+            // process file
+            let output = path.resolve(paths.cwd, options.output);
+            if (!path.extname(output)) {
+                // `output` options is a folder
+                output = path.join(output, `${path.basename(entry.file.path, path.extname(entry.file.path))}.md`);
+            }
+            promise = promise.then(() => generate(
+                app,
+                [entry.file.path],
+                options.output
+            ));
+        } else {
+            // process package
+            let output = path.resolve(entry.package.path, options.output);
+            if (!path.extname(output)) {
+                // `output` options is a folder
+                let shortName = entry.package.name.split('/')[1];
+                // generate a file with the name of the package.
+                output = path.join(output, `${shortName.toLowerCase()}.md`);
+            }
+            promise = promise.then(() => generate(
+                app,
+                [path.join(entry.package.path, entry.package.json.module || entry.package.json.main)],
+                output
+            ));
         }
-        promise = promise.then(() => generate(
-            app,
-            [path.join(info.path, info.json.module || info.json.main)],
-            output
-        ));
     });
-
-    // process files
-    let output = path.resolve(paths.cwd || process.cwd(), options.output);
-    if (!path.extname(output)) {
-        // `output` options is a folder
-        output = path.join(output, 'api.md');
-    }
-    promise = promise.then(() => generate(
-        app,
-        filter.files,
-        options.output
-    ));
 
     return promise;
 };

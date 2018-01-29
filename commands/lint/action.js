@@ -1,7 +1,40 @@
+const path = require('path');
 const colors = require('colors/safe');
+const commondir = require('commondir');
 const paths = require('../../lib/paths.js');
-const optionsUtils = require('../../lib/options.js');
+const Entry = require('../../lib/entry.js');
 const watcher = require('../../lib/watcher.js');
+const ext = require('../../lib/extensions.js');
+
+function filterJSFiles(entries) {
+    let filtered = [];
+    entries.forEach((entry) => {
+        if (entry.file) {
+            if (ext.isJSFile(entry.file.path)) {
+                filtered.push(entry.file.path);
+            }
+        } else if (entry.package) {
+            filtered.push(...Entry.resolve(path.join(entry.package.path, 'src/**/*.{js,jsx,mjs}')));
+        }
+    });
+    return filtered;
+}
+
+function filterStyleFiles(entries) {
+    let filtered = [];
+    entries.forEach((entry) => {
+        if (entry.file) {
+            if (ext.isStyleFile(entry.file.path)) {
+                filtered.push(entry.file.path);
+            }
+        } else if (entry.package) {
+            Entry.resolve(path.join(entry.package.path, 'src/**/*.{sass,scss}')).forEach((subEntry) => {
+                filtered.push(subEntry.file.path);
+            });
+        }
+    });
+    return filtered;
+}
 
 /**
  * Command action to run linter.
@@ -24,17 +57,15 @@ module.exports = (app, options, profiler) => {
         return global.Promise.reject();
     }
     let res = [];
-    let filter = optionsUtils.handleArguments(options);
-    let lintFiles = filter.files.concat(Object.values(filter.packages).map((pkg) => pkg.path));
-    let linterOptions = { warnings: options.warnings, files: lintFiles };
+    let entries = Entry.resolve(options.arguments.length ? options.arguments : ['src/**/*.*', 'packages/*/src/**/*.*']);
     const eslintTask = options.js !== false ? require('./linters/eslint.js') : () => global.Promise.resolve();
-    let response = eslintTask(app, linterOptions, profiler)
+    let response = eslintTask(app, { warnings: options.warnings, files: filterJSFiles(entries) }, profiler)
         .then((eslintRes) => {
             if (eslintRes) {
                 res.push(eslintRes);
             }
             const sasslintTask = options.styles !== false ? require('./linters/sass-lint.js') : () => global.Promise.resolve();
-            return sasslintTask(app, linterOptions, profiler)
+            return sasslintTask(app, { warnings: options.warnings, files: filterStyleFiles(entries) }, profiler)
                 .then((sassRes) => {
                     if (sassRes) {
                         res.push(sassRes);
@@ -46,7 +77,8 @@ module.exports = (app, options, profiler) => {
     return response
         .then((res) => {
             if (options.watch) {
-                watcher(app, lintFiles, (event, fp) => {
+                let dir = commondir(entries.map((entry) => (entry.file ? entry.file.path : entry.package.path)));
+                watcher(app, dir, (event, fp) => {
                     app.exec('lint', {
                         arguments: [fp],
                         warnings: options.warnings,

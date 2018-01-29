@@ -131,22 +131,6 @@ function resolver() {
 }
 
 /**
- * Get the postcss config.
- * @return {Object} The post css configuration.
- */
-function getPostCssConfig() {
-    let localConf = path.join(paths.cwd, 'postcss.json');
-    if (fs.existsSync(localConf)) {
-        // local configuration
-        return require(localConf);
-    }
-    // default configuration
-    return {
-        browsers: ['last 3 versions'],
-    };
-}
-
-/**
  * Command action to run linter.
  *
  * @param {CLI} app CLI instance.
@@ -174,7 +158,7 @@ module.exports = (app, options, profiler) => {
         let profile = profiler.task('sass');
         let task = app.log(`sass... ${colors.grey(`(${options.input})`)}`, true);
         let postCssPlugins = [
-            autoprefixer(getPostCssConfig()),
+            autoprefixer(options.browserslist),
         ];
         if (options.production) {
             postCssPlugins.push(cssnano({

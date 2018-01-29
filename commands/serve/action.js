@@ -5,7 +5,7 @@ const colors = require('colors/safe');
 const watcher = require('../../lib/watcher.js');
 const commondir = require('commondir');
 const cwd = require('../../lib/paths.js').cwd;
-const optionsUtils = require('../../lib/options.js');
+const Entry = require('../../lib/entry.js');
 
 /**
  * Command action to run a local development server.
@@ -16,10 +16,11 @@ const optionsUtils = require('../../lib/options.js');
  */
 module.exports = (app, options = {}) => new global.Promise((resolve, reject) => {
     // Load directory to be served.
-    let filter = optionsUtils.handleArguments(options);
-    let base = filter.files.length ? commondir(filter.files) : './public';
+    let entries = Entry.resolve(options.arguments);
+    let files = entries.map((entry) => (entry.file ? entry.file.path : entry.package.path));
+    let base = files.length ? commondir(files) : './public';
     base = path.resolve(cwd, base);
-    if (filter.files.length > 1) {
+    if (options.arguments.length > 1) {
         // serving multi path, force directory option
         options.directory = true;
     }
@@ -98,7 +99,9 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
 
         if (options.watch) {
             // Watch only requested paths, not the commondir
-            let paths = filter.files.map((p) => path.join(p, '**/*'));
+            let paths = files
+                .filter((p) => fs.statSync(p).isDirectory())
+                .map((p) => path.join(p, '**/*'));
             // Configure watch.
             watcher(app, paths, (event, p) => {
                 if (event !== 'unlink') {

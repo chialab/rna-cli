@@ -2,11 +2,10 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
-const glob = require('glob');
 const karma = require('karma');
 const Mocha = require('mocha');
 const paths = require('../../lib/paths.js');
-const optionsUtils = require('../../lib/options.js');
+const Entry = require('../../lib/entry.js');
 const runNativeScriptTest = require('./lib/ns.js');
 
 /**
@@ -197,18 +196,20 @@ module.exports = (app, options = {}) => {
 
     // Load list of files to be tested.
     let files = [];
-    let filter = optionsUtils.handleArguments(options);
-    filter.files.forEach((f) => files.push(...glob.sync(f, {
-        ignore: '**/node_modules/**/*',
-    })));
-    Object.values(filter.packages)
-        .forEach((pkg) =>
-            files.push(...glob.sync(
-                path.join(pkg.path, '**/unit/**/*.js'), {
-                    ignore: '**/node_modules/**/*',
-                })
-            )
-        );
+    let entries = Entry.resolve(options.arguments);
+    entries.forEach((entry) => {
+        if (entry.file) {
+            // process file
+            if (fs.statSync(entry.file.path).isDirectory()) {
+                files.push(...Entry.resolve(path.join(entry.file.path, '!node_modules/**/unit/**/*.js')));
+            } else {
+                files.push(entry);
+            }
+        } else {
+            // process package
+            files.push(...Entry.resolve(path.join(entry.package.path, '!node_modules/**/unit/**/*.js')));
+        }
+    });
     if (!files.length) {
         app.log(colors.yellow('no unit tests found.'));
         return global.Promise.resolve();
