@@ -1,51 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
-const paths = require('../../lib/paths.js');
 const nightwatch = require('nightwatch');
-
-/**
- * Convert browsers nicknames into the Selenium name.
- * @param {String} browserName The browser nickname to convert.
- * @param {Object} config The generic configuration.
- * @return {Object} The final configuration
- */
-function getBrowserConfig(browserName, config) {
-    switch (browserName) {
-        case 'chrome': {
-            config.browserName = 'chrome';
-            config.chromeOptions = {
-                args: ['--no-sandbox', '--disable-web-security'],
-                prefs: {
-                    'intl.accept_languages': 'en',
-                },
-            };
-            break;
-        }
-        case 'firefox': {
-            config.browserName = 'firefox';
-            config.firefoxOptions = {
-                prefs: {
-                    'intl.accept_languages': 'en',
-                },
-            };
-            break;
-        }
-        case 'edge': {
-            config.browserName = 'MicrosoftEdge';
-            break;
-        }
-        case 'ie': {
-            config.browserName = 'internet explorer';
-            break;
-        }
-        default: {
-            config.browserName = browserName;
-            break;
-        }
-    }
-    return config;
-}
+const paths = require('../../lib/paths.js');
+const browserslist = require('../../lib/browserslist.js');
+const saucelabs = require('../../lib/saucelabs.js');
 
 /**
  * Get Nighwatch configuration.
@@ -69,11 +28,42 @@ function getConfig(app, options) {
             default: {
                 launch_url: options.url,
                 silent: true,
-                desiredCapabilities: getBrowserConfig(options.browser || 'chrome', {
+                desiredCapabilities: {
                     javascriptEnabled: true,
                     acceptSslCerts: true,
                     acceptInsecureCerts: true,
-                }),
+                },
+            },
+            chrome: {
+                desiredCapabilities: {
+                    browserName: 'chrome',
+                    chromeOptions: {
+                        args: ['--no-sandbox', '--disable-web-security'],
+                        prefs: {
+                            'intl.accept_languages': 'en',
+                        },
+                    },
+                },
+            },
+            firefox: {
+                desiredCapabilities: {
+                    browserName: 'firefox',
+                    firefoxOptions: {
+                        prefs: {
+                            'intl.accept_languages': 'en',
+                        },
+                    },
+                },
+            },
+            edge: {
+                desiredCapabilities: {
+                    browserName: 'MicrosoftEdge',
+                },
+            },
+            ie: {
+                desiredCapabilities: {
+                    browserName: 'internet explorer',
+                },
             },
         },
     });
@@ -103,8 +93,13 @@ module.exports = (app, options = {}) => {
                     config.test_settings.default.launch_url = options.url;
                 }
                 // selenium conf defaults
-                if (options['selenium.host'] || !config.test_settings.default.selenium_host) {
-                    config.test_settings.default.selenium_host = options['selenium.host'] || 'localhost';
+                if (options['selenium.host'] || options.saucelabs || !config.test_settings.default.selenium_host) {
+                    if (options.saucelabs) {
+                        config.test_settings.default.selenium_host = options.saucelabs;
+                        config.test_settings.default.selenium_port = 80;
+                    } else {
+                        config.test_settings.default.selenium_host = options['selenium.host'] || 'localhost';
+                    }
                 }
                 if (options['selenium.port'] || !config.test_settings.default.selenium_port) {
                     config.test_settings.default.selenium_port = options['selenium.port'] || 4444;
@@ -132,8 +127,18 @@ module.exports = (app, options = {}) => {
             }
             config.output = config.output || typeof config.output == 'undefined';
             config.detailed_output = config.detailed_output || typeof config.detailed_output == 'undefined';
+
+            if (options.saucelabs) {
+                config.test_settings = config.test_settings || {};
+                let browsers = saucelabs.selenium(options.targets ? browserslist.elaborate(options.targets) : browserslist.load(paths.cwd));
+                for (let k in browsers) {
+                    config.test_settings[k] = browsers[k];
+                }
+                options.browsers = Object.keys(browsers).join(',');
+            }
+
             const nw = new nightwatch.CliRunner({
-                env: 'default',
+                env: options.browsers || 'default',
             });
             nw.settings = config;
             nw.parseTestSettings();

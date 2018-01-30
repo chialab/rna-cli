@@ -15,6 +15,7 @@ Anyway, the developer can use a custom configuration if the \`nightwatch.conf.js
         .option('<path>', 'The e2e tests path.')
         .option('[--url]', 'The app url to test.')
         .option('[--browser]', 'The browser name to test.')
+        .option('[--saucelabs]', 'Run tests in the SauceLabs cloud.')
         .option('[--selenium.host]', 'Selenium hostname. Default `localhost`.')
         .option('[--selenium.port]', 'Selenium port. Default `4444`.')
         .option('[--screenshots]', 'The path where to save screenshots.')
