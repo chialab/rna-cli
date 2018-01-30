@@ -148,7 +148,7 @@ function getConfig(app, options) {
         // Collect code coverage.
         conf.plugins.push('karma-coverage');
         conf.coverageReporter = {
-            dir: 'coverage',
+            dir: 'reports/unit/coverage',
             reporters: [
                 {
                     type: 'in-memory',
