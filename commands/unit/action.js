@@ -268,6 +268,12 @@ module.exports = (app, options = {}) => {
                                 resolve();
                             }
                         });
+                        server.on('listening', (port) => {
+                            const browsers = server.get('config').browsers;
+                            if (!browsers || browsers.length === 0) {
+                                karma.stopper.stop({ port });
+                            }
+                        });
                         if (options.coverage) {
                             let reportMap;
                             server.on('run_start', () => {
