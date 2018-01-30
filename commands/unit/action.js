@@ -124,6 +124,9 @@ function getConfig(app, options) {
             let saucelabsBrowsers = suacelabs.launchers(options.targets ? browserslist.elaborate(options.targets) : browserslist.load(paths.cwd));
             conf.customLaunchers = saucelabsBrowsers;
             conf.browsers = Object.keys(saucelabsBrowsers);
+            if (conf.browsers.length === 0) {
+                throw new Error('invalid SauceLabs targets.');
+            }
             conf.plugins.push(require('karma-sauce-launcher'));
         }
 
@@ -244,12 +247,18 @@ module.exports = (app, options = {}) => {
             } else if (taskEnv.runner === 'karma') {
                 // Startup Karma.
                 promise = promise.then(() => {
-                    let karmaOptions = getConfig(app, {
-                        ci: options.ci,
-                        server: options.server,
-                        coverage: options.coverage,
-                        [taskEnvName]: true,
-                    });
+                    let karmaOptions;
+                    try {
+                        karmaOptions = getConfig(app, {
+                            ci: options.ci,
+                            server: options.server,
+                            coverage: options.coverage,
+                            targets: options.targets,
+                            [taskEnvName]: true,
+                        });
+                    } catch (err) {
+                        return global.Promise.reject(err);
+                    }
                     karmaOptions.files = [tempUnit];
                     return new global.Promise((resolve, reject) => {
                         let server = new karma.Server(karmaOptions, (exitCode) => {
