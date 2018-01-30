@@ -5,7 +5,9 @@ const Proteins = require('@chialab/proteins');
 const karma = require('karma');
 const Mocha = require('mocha');
 const paths = require('../../lib/paths.js');
+const suacelabs = require('../../lib/saucelabs.js');
 const Entry = require('../../lib/entry.js');
+const browserslist = require('../../lib/browserslist.js');
 const runNativeScriptTest = require('./lib/ns.js');
 
 /**
@@ -19,19 +21,6 @@ const ENVIRONMENTS = {
     electron: { runner: 'karma' },
     nativescript: { runner: 'ns' },
 };
-
-/**
- * Get SauceLabs browsers configuration.
- *
- * @returns {Object}
- */
-function getSauceBrowsers() {
-    let localConf = path.join(paths.cwd, 'sauce.brosers.js'); // Typo? ~~fquffio
-    if (fs.existsSync(localConf)) {
-        return require(localConf);
-    }
-    return require('../../configs/unit/sauce.browsers.js');
-}
 
 /**
  * Get Karma configuration.
@@ -99,6 +88,7 @@ function getConfig(app, options) {
             conf.plugins.push(
                 require('karma-chrome-launcher'),
                 require('karma-firefox-launcher'),
+                require('karma-ie-launcher'),
                 require('karma-edge-launcher'),
                 require('karma-safari-launcher'),
                 require('karma-opera-launcher'),
@@ -131,7 +121,7 @@ function getConfig(app, options) {
                 tunnelIdentifier: process.env.TRAVIS ? process.env.TRAVIS_JOB_NUMBER : undefined,
                 recordScreenshots: true,
             };
-            let saucelabsBrowsers = getSauceBrowsers();
+            let saucelabsBrowsers = suacelabs.launchers(options.targets ? browserslist.elaborate(options.targets) : browserslist.load(paths.cwd));
             conf.customLaunchers = saucelabsBrowsers;
             conf.browsers = Object.keys(saucelabsBrowsers);
             conf.plugins.push(require('karma-sauce-launcher'));
@@ -230,6 +220,7 @@ module.exports = (app, options = {}) => {
         arguments: [tempSource],
         coverage: options.coverage,
         output: tempUnit,
+        targets: options.targets,
         map: false,
     }).then(() => { // Test built sources.
         let promise = global.Promise.resolve();

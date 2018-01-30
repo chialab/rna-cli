@@ -58,7 +58,7 @@ function getBabelConfig(options) {
         presets: options.transpile !== false ? [
             [require('@babel/preset-env'), {
                 targets: {
-                    browsers: options.browserslist,
+                    browsers: options.targets,
                 },
                 modules: false,
             }],
@@ -119,7 +119,7 @@ function getConfig(app, bundler, options) {
                     processor: (css) =>
                         postcss(
                             [
-                                autoprefixer(options.browserslist),
+                                autoprefixer(options.targets),
                             ]
                         ).process(css).then(result => result.css),
                     exclude: [],

@@ -110,7 +110,7 @@ module.exports = (app, options = {}, profiler) => {
                         jsOptions.input = path.join(entry.package.path, json.main);
                     }
                     if (jsOptions.input) {
-                        jsOptions.browserslist = browserslist(json);
+                        jsOptions.targets = options.targets ? browserslist.elaborate(options.targets) : browserslist.load(json);
                         // a javascript source has been detected.
                         packageBundlePromise = packageBundlePromise.then(() =>
                             bundle(app, jsOptions, profiler)
@@ -146,7 +146,7 @@ module.exports = (app, options = {}, profiler) => {
                         styleOptions.input = path.join(entry.package.path, json.main);
                     }
                     if (styleOptions.input) {
-                        styleOptions.browserslist = browserslist(json);
+                        styleOptions.targets = options.targets ? browserslist.elaborate(options.targets) : browserslist.load(json);
                         // a style source has been detected.
                         packageBundlePromise = packageBundlePromise.then(() =>
                             sass(app, styleOptions, profiler)

@@ -1,6 +1,5 @@
 const colors = require('colors/safe');
 const manager = require('../../lib/package-manager.js');
-const utils = require('../../lib/utils.js');
 const paths = require('../../lib/paths.js');
 
 /**

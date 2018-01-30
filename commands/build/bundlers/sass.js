@@ -158,7 +158,7 @@ module.exports = (app, options, profiler) => {
         let profile = profiler.task('sass');
         let task = app.log(`sass... ${colors.grey(`(${options.input})`)}`, true);
         let postCssPlugins = [
-            autoprefixer(options.browserslist),
+            autoprefixer(options.targets),
         ];
         if (options.production) {
             postCssPlugins.push(cssnano({

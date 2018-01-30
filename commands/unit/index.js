@@ -12,6 +12,7 @@ module.exports = (program) => {
 
 A default configuration is also provided.
 Anyway, the developer can use a custom configuration if the \`karma.conf.js\` file exists in the root of the project.`)
+        .option('[--targets]', 'A supported browserslist query.')
         .option('[--node]', 'Run tests in node context.')
         .option('[--browser]', 'Run tests in browser context.')
         .option('[--saucelabs]', 'Use saucelabs as browsers provider.')
