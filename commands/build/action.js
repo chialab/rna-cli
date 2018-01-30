@@ -63,6 +63,7 @@ module.exports = (app, options = {}, profiler) => {
                             opts.output = path.resolve(path.dirname(entry.file.path), opts.output);
                         }
                     }
+                    opts.targets = opts.targets ? browserslist.elaborate(opts.targets) : browserslist.load(opts.input);
                     if (ext.isStyleFile(entry.file.path)) {
                         // Style file
                         return sass(app, opts, profiler)
