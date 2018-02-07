@@ -14,7 +14,7 @@ function filterJSFiles(entries) {
                 filtered.push(entry.file.path);
             }
         } else if (entry.package) {
-            filtered.push(...Entry.resolve(path.join(entry.package.path, 'src/**/*.{js,jsx,mjs}')));
+            filtered.push(...Entry.resolve(paths.cwd, path.join(entry.package.path, 'src/**/*.{js,jsx,mjs}')));
         }
     });
     return filtered;
@@ -28,7 +28,7 @@ function filterStyleFiles(entries) {
                 filtered.push(entry.file.path);
             }
         } else if (entry.package) {
-            Entry.resolve(path.join(entry.package.path, 'src/**/*.{sass,scss}')).forEach((subEntry) => {
+            Entry.resolve(paths.cwd, path.join(entry.package.path, 'src/**/*.{sass,scss}')).forEach((subEntry) => {
                 filtered.push(subEntry.file.path);
             });
         }
@@ -57,7 +57,7 @@ module.exports = (app, options, profiler) => {
         return global.Promise.reject();
     }
     let res = [];
-    let entries = Entry.resolve(options.arguments.length ? options.arguments : ['src/**/*.*', 'packages/*/src/**/*.*']);
+    let entries = Entry.resolve(paths.cwd, options.arguments.length ? options.arguments : ['src/**/*.*', 'packages/*/src/**/*.*']);
     const eslintTask = options.js !== false ? require('./linters/eslint.js') : () => global.Promise.resolve();
     let response = eslintTask(app, { warnings: options.warnings, files: filterJSFiles(entries) }, profiler)
         .then((eslintRes) => {

@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const paths = require('../../../lib/paths.js');
+const Entry = require('../../../lib/entry.js');
 
 /**
  * Ensure README file is present.
@@ -79,12 +80,12 @@ $ rna build --watch
 `;
         } else if (json.structure === 'monorepo') {
             // README for repositories that contain multiple modules.
-            let packages = require('../../../lib/packages.js');
-            if (Object.keys(packages).length) {
+            let packages = Entry.resolve(cwd, []);
+            if (packages.length) {
                 content += `
 | **Package** | **Path** | **Status** |
 |---------|--------|--------|
-${Object.keys(packages).map((p) => `| ${packages[p].name} | ./${path.relative(cwd, p)} | [![NPM](https://img.shields.io/npm/v/${packages[p].name}.svg)](https://www.npmjs.com/package/${packages[p].name}) |`).join('\n')}
+${packages.map((entry) => `| ${entry.package.name} | ./${path.relative(cwd, entry.package.path)} | [![NPM](https://img.shields.io/npm/v/${entry.package.name}.svg)](https://www.npmjs.com/package/${entry.package.name}) |`).join('\n')}
 `;
             }
             content += `

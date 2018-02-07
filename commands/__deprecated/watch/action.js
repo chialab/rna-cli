@@ -121,7 +121,7 @@ module.exports = (app, options) => {
     }
 
     // Load list of files to be watched.
-    let entries = Entry.resolve(options.arguments);
+    let entries = Entry.resolve(cwd, options.arguments);
     let watch = entries
         .forEach((entry) => {
             if (entry.file) {

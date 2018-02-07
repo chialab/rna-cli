@@ -190,18 +190,18 @@ module.exports = (app, options = {}) => {
 
     // Load list of files to be tested.
     let files = [];
-    let entries = Entry.resolve(options.arguments.length ? options.arguments : Object.keys(require('../../lib/packages.js')));
+    let entries = Entry.resolve(paths.cwd, options.arguments);
     entries.forEach((entry) => {
         if (entry.file) {
             // process file
             if (fs.statSync(entry.file.path).isDirectory()) {
-                files.push(...Entry.resolve(path.join(entry.file.path, 'test/unit/**/*.js')));
+                files.push(...Entry.resolve(paths.cwd, path.join(entry.file.path, 'test/unit/**/*.js')));
             } else {
                 files.push(entry);
             }
         } else {
             // process package
-            files.push(...Entry.resolve(path.join(entry.package.path, 'test/unit/**/*.js')));
+            files.push(...Entry.resolve(paths.cwd, path.join(entry.package.path, 'test/unit/**/*.js')));
         }
     });
     if (!files.length) {

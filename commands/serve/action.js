@@ -16,7 +16,7 @@ const Entry = require('../../lib/entry.js');
  */
 module.exports = (app, options = {}) => new global.Promise((resolve, reject) => {
     // Load directory to be served.
-    let entries = Entry.resolve(options.arguments);
+    let entries = Entry.resolve(cwd, options.arguments);
     let files = entries.map((entry) => (entry.file ? entry.file.path : entry.package.path));
     let base = files.length ? commondir(files) : './public';
     base = path.resolve(cwd, base);

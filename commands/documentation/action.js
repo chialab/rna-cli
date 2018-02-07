@@ -46,7 +46,7 @@ function generate(app, sources, output) {
  * @returns {Promise}
  */
 module.exports = (app, options) => {
-    let entries = Entry.resolve(options.arguments);
+    let entries = Entry.resolve(paths.cwd, options.arguments);
     if (!entries.length) {
         // no arguments
         if (!paths.cwd) {
@@ -55,7 +55,7 @@ module.exports = (app, options) => {
             return global.Promise.reject();
         } else {
             // use cwd sources.
-            entries = Entry.resolve(path.join(paths.cwd, 'src/**/*.js'));
+            entries = Entry.resolve(paths.cwd, path.join(paths.cwd, 'src/**/*.js'));
         }
     }
 

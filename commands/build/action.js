@@ -47,7 +47,7 @@ module.exports = (app, options = {}, profiler) => {
         if (lintErrors && lintErrors.length) {
             return global.Promise.reject();
         }
-        let entries = Entry.resolve(options.arguments.length ? options.arguments : paths.cwd);
+        let entries = Entry.resolve(paths.cwd, options.arguments);
         let promise = global.Promise.resolve();
 
         let bundleManifests = [];
