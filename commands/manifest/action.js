@@ -79,9 +79,11 @@ function generateIcons(manifest, index, icon, output) {
                 return reject(err);
             }
             // update manifest
-            let apiManifest = path.join(output, 'manifest.json');
-            manifest.icons = require(apiManifest).icons;
-            fs.unlinkSync(apiManifest);
+            let apiManifest = path.join(output, 'site.webmanifest');
+            let newManifest = path.join(output, 'manifest.json');
+            fs.moveSync(apiManifest, newManifest);
+            manifest.icons = require(newManifest).icons;
+            fs.unlinkSync(newManifest);
             // update index links
             if (index) {
                 // `res.favicon.overlapping_markups` contains a list of selectors of elements to update/replace
@@ -101,7 +103,7 @@ function generateIcons(manifest, index, icon, output) {
                 if (res.favicon.html_code) {
                     index.head.innerHTML += res.favicon.html_code
                         // change manifest reference
-                        .replace('href="icons/manifest.json"', 'href="manifest.json"');
+                        .replace('href="icons/site.webmanifest"', 'href="manifest.json"');
                 }
             }
             return resolve();
