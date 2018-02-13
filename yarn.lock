@@ -7551,7 +7551,7 @@ sass@^1.0.0-beta.3, sass@^1.0.0-beta.4:
   version "1.0.0-beta.4"
   resolved "https://registry.npmjs.org/sass/-/sass-1.0.0-beta.4.tgz#8ace58451904070c308699e756f6a9d4f92024b5"
 
-sauce-connect-launcher@^1.2.2:
+sauce-connect-launcher@^1.2.2, sauce-connect-launcher@^1.2.3:
   version "1.2.3"
   resolved "https://registry.npmjs.org/sauce-connect-launcher/-/sauce-connect-launcher-1.2.3.tgz#d2f931ad7ae8fdabf1968a440e7b20417aca7f86"
   dependencies:

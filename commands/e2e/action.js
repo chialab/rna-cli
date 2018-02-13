@@ -89,6 +89,7 @@ module.exports = (app, options = {}) => {
     }
     return getConfig(app, options)
         .then((config) => {
+            let promise = global.Promise.resolve();
             // test path defaults
             if (options.arguments.length || !config.src_folders) {
                 config.src_folders = options.arguments.length ? options.arguments : ['test/e2e'];
@@ -134,11 +135,29 @@ module.exports = (app, options = {}) => {
                     }
                 }
             }
+            let sauceConnectProcess;
             if (options.saucelabs) {
+                promise = promise.then(() => new global.Promise((resolve, reject) => {
+                    const sauceConnectLauncher = require('sauce-connect-launcher');
+                    sauceConnectLauncher({
+                        username: process.env.SAUCE_USERNAME,
+                        accessKey: process.env.SAUCE_ACCESS_KEY,
+                    }, (err, scProcess) => {
+                        if (err) {
+                            return reject(err.message);
+                        }
+                        sauceConnectProcess = scProcess;
+                        resolve();
+                    });
+                }));
                 config.test_settings = config.test_settings || {};
                 let browsers = saucelabs.selenium(options.targets ? browserslist.elaborate(options.targets) : browserslist.load(paths.cwd));
                 for (let k in browsers) {
                     config.test_settings[k] = browsers[k];
+                    if (options.url) {
+                        config.test_settings[k].desiredCapabilities = config.test_settings[k].desiredCapabilities || {};
+                        config.test_settings[k].desiredCapabilities['name'] = `E2E test for ${options.url}`;
+                    }
                 }
                 options.browsers = Object.keys(browsers).join(',');
             }
@@ -146,7 +165,6 @@ module.exports = (app, options = {}) => {
 
             let configSource = path.join(paths.tmp, `nightwatch-config-${Date.now()}.json`);
             fs.writeFileSync(configSource, JSON.stringify(config));
-            let promise = global.Promise.resolve();
             let failed = false;
             (options.browsers || 'default').split(',').forEach((env) => {
                 promise = promise
@@ -162,6 +180,9 @@ module.exports = (app, options = {}) => {
             return promise.then(() => {
                 if (failed) {
                     return global.Promise.reject();
+                }
+                if (sauceConnectProcess) {
+                    sauceConnectProcess.close();
                 }
                 return global.Promise.resolve();
             });
