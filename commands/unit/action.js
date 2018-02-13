@@ -5,7 +5,7 @@ const Proteins = require('@chialab/proteins');
 const karma = require('karma');
 const Mocha = require('mocha');
 const paths = require('../../lib/paths.js');
-const suacelabs = require('../../lib/saucelabs.js');
+const saucelabs = require('../../lib/saucelabs.js');
 const Entry = require('../../lib/entry.js');
 const browserslist = require('../../lib/browserslist.js');
 const runNativeScriptTest = require('./lib/ns.js');
@@ -124,9 +124,9 @@ function getConfig(app, options) {
                 recordScreenshots: true,
             };
             if (entry && entry.package) {
-                conf.sauceLabs.testName = `Unit tests for ${entry.package.name}`;
+                conf.sauceLabs.testName = saucelabs.getTestName(entry.package.name, 'Unit');
             }
-            let saucelabsBrowsers = suacelabs.launchers(options.targets ? browserslist.elaborate(options.targets) : browserslist.load(paths.cwd));
+            let saucelabsBrowsers = saucelabs.launchers(options.targets ? browserslist.elaborate(options.targets) : browserslist.load(paths.cwd));
             conf.customLaunchers = saucelabsBrowsers;
             conf.browsers = Object.keys(saucelabsBrowsers);
             if (conf.browsers.length === 0) {
