@@ -137,6 +137,23 @@ module.exports = (app, options = {}) => {
             }
             let sauceConnectProcess;
             if (options.saucelabs) {
+                // check sauce values
+                if (options['saucelabs.username']) {
+                    process.env.SAUCE_USERNAME = options['saucelabs.username'];
+                }
+                if (options['saucelabs.key']) {
+                    process.env.SAUCE_ACCESS_KEY = options['saucelabs.key'];
+                }
+                if (!process.env.SAUCE_USERNAME) {
+                    app.log(colors.red('Missing SAUCE_USERNAME variable.'));
+                    app.log(colors.grey('export a `SAUCE_USERNAME` environment variable or use the `--saucelabs.username` flag.'));
+                    return global.Promise.reject();
+                }
+                if (!process.env.SAUCE_ACCESS_KEY) {
+                    app.log(colors.red('Missing SAUCE_ACCESS_KEY variable.'));
+                    app.log(colors.grey('export a `SAUCE_ACCESS_KEY` environment variable or use the `--saucelabs.key` flag.'));
+                    return global.Promise.reject();
+                }
                 promise = promise.then(() => new global.Promise((resolve, reject) => {
                     // setup sauce connect for localhost tunnel
                     const sauceConnectLauncher = require('sauce-connect-launcher');

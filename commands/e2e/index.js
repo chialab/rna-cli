@@ -16,6 +16,8 @@ Anyway, the developer can use a custom configuration if the \`nightwatch.conf.js
         .option('[--url]', 'The app url to test.')
         .option('[--targets]', 'A browserslist query to test.')
         .option('[--saucelabs]', 'Run tests in the SauceLabs cloud.')
+        .option('[--saucelabs.username]', 'SauceLabs username.')
+        .option('[--saucelabs.key]', 'SauceLabs access key.')
         .option('[--selenium.host]', 'Selenium hostname. Default `localhost`.')
         .option('[--selenium.port]', 'Selenium port. Default `4444`.')
         .option('[--screenshots]', 'The path where to save screenshots.')
