@@ -138,11 +138,14 @@ module.exports = (app, options = {}) => {
             let sauceConnectProcess;
             if (options.saucelabs) {
                 promise = promise.then(() => new global.Promise((resolve, reject) => {
+                    // setup sauce connect for localhost tunnel
                     const sauceConnectLauncher = require('sauce-connect-launcher');
+                    let scTask = app.log('Setting up sauce connect...', true);
                     sauceConnectLauncher({
                         username: process.env.SAUCE_USERNAME,
                         accessKey: process.env.SAUCE_ACCESS_KEY,
                     }, (err, scProcess) => {
+                        scTask();
                         if (err) {
                             return reject(err.message);
                         }
@@ -154,12 +157,15 @@ module.exports = (app, options = {}) => {
                 let browsers = saucelabs.selenium(options.targets ? browserslist.elaborate(options.targets) : browserslist.load(paths.cwd));
                 for (let k in browsers) {
                     config.test_settings[k] = browsers[k];
-                    if (options.url) {
-                        config.test_settings[k].desiredCapabilities = config.test_settings[k].desiredCapabilities || {};
-                        config.test_settings[k].desiredCapabilities['name'] = `E2E test for ${options.url}`;
-                    }
                 }
                 options.browsers = Object.keys(browsers).join(',');
+            }
+            // Setup test name
+            if (config.test_settings.default.launch_url) {
+                for (let k in config.test_settings) {
+                    config.test_settings[k].desiredCapabilities = config.test_settings[k].desiredCapabilities || {};
+                    config.test_settings[k].desiredCapabilities['name'] = `E2E test for ${config.test_settings.default.launch_url}`;
+                }
             }
             config.detailed_output = config.test_settings.default.detailed_output || !options.browsers || !options.browsers.includes(',');
 

@@ -35,6 +35,7 @@ function getConfig(app, options) {
         // Local Karma config exists. Use that.
         return localConf;
     }
+    let entry = Entry.resolve(paths.cwd, paths.cwd)[0];
 
     let conf = {
         // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -102,6 +103,7 @@ function getConfig(app, options) {
         if (options.saucelabs) {
             // SauceLabs configuration.
             conf.retryLimit = 3;
+            conf.concurrency = 2;
             conf.browserDisconnectTimeout = 10000;
             conf.browserDisconnectTolerance = 1;
             conf.browserNoActivityTimeout = 4 * 60 * 1000;
@@ -121,6 +123,9 @@ function getConfig(app, options) {
                 tunnelIdentifier: process.env.TRAVIS ? process.env.TRAVIS_JOB_NUMBER : undefined,
                 recordScreenshots: true,
             };
+            if (entry && entry.package) {
+                conf.sauceLabs.testName = `Unit tests for ${entry.package.name}`;
+            }
             let saucelabsBrowsers = suacelabs.launchers(options.targets ? browserslist.elaborate(options.targets) : browserslist.load(paths.cwd));
             conf.customLaunchers = saucelabsBrowsers;
             conf.browsers = Object.keys(saucelabsBrowsers);

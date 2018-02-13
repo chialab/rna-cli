@@ -16,6 +16,7 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
         .option('[--node]', 'Run tests in node context.')
         .option('[--browser]', 'Run tests in browser context.')
         .option('[--saucelabs]', 'Use saucelabs as browsers provider.')
+        .option('[--targets]', 'A browserslist query to test.')
         .option('[--electron]', 'Use electron.')
         .option('[--nativescript <ios|android>]', 'Use nativescript.')
         .option('[--coverage]', 'Enable code coverage.')
