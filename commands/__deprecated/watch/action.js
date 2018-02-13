@@ -3,7 +3,7 @@ const path = require('path');
 const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
 const chokidar = require('chokidar');
-const optionsUtils = require('../../../lib/options.js');
+const Entry = require('../../../lib/entry.js');
 const cwd = require('../../../lib/paths.js').cwd;
 const wait = require('../../../lib/watch-queue.js');
 
@@ -121,15 +121,13 @@ module.exports = (app, options) => {
     }
 
     // Load list of files to be watched.
-    let filter = optionsUtils.handleArguments(options);
-    let watch = filter.files
-        .concat(Object.values(filter.packages).map((pkg) => pkg.path))
-        .filter((p) => fs.existsSync(p))
-        .map((p) => {
-            if (fs.statSync(p).isFile()) {
-                return p;
+    let entries = Entry.resolve(cwd, options.arguments);
+    let watch = entries
+        .forEach((entry) => {
+            if (entry.file) {
+                return entry.file.path;
             }
-            return path.join(p, '**/*');
+            return path.join(entry.package.path, '**/*');
         });
     app.log(colors.bold('watching files...'));
 

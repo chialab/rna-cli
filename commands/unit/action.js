@@ -2,11 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
-const glob = require('glob');
 const karma = require('karma');
 const Mocha = require('mocha');
 const paths = require('../../lib/paths.js');
-const optionsUtils = require('../../lib/options.js');
+const suacelabs = require('../../lib/saucelabs.js');
+const Entry = require('../../lib/entry.js');
+const browserslist = require('../../lib/browserslist.js');
 const runNativeScriptTest = require('./lib/ns.js');
 
 /**
@@ -22,19 +23,6 @@ const ENVIRONMENTS = {
 };
 
 /**
- * Get SauceLabs browsers configuration.
- *
- * @returns {Object}
- */
-function getSauceBrowsers() {
-    let localConf = path.join(paths.cwd, 'sauce.brosers.js'); // Typo? ~~fquffio
-    if (fs.existsSync(localConf)) {
-        return require(localConf);
-    }
-    return require('../../configs/unit/sauce.browsers.js');
-}
-
-/**
  * Get Karma configuration.
  *
  * @param {CLI} app CLI.
@@ -47,6 +35,7 @@ function getConfig(app, options) {
         // Local Karma config exists. Use that.
         return localConf;
     }
+    let entry = Entry.resolve(paths.cwd, paths.cwd)[0];
 
     let conf = {
         // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -94,60 +83,63 @@ function getConfig(app, options) {
         // how many browser should be started simultaneous
         concurrency: Infinity,
     };
-
-    if (options.browser) {
-        // browser environment.
-        conf.customLaunchers = {
-            Chrome_CI: {
-                base: 'Chrome',
-                flags: ['--no-sandbox'],
-            },
-        };
-        let useAll = !options.chrome && !options.firefox;
-        if (options.chrome || useAll) {
-            // Test on Chrome.
-            conf.browsers.push('Chrome_CI');
-            conf.plugins.push(require('karma-chrome-launcher'));
+    if (!options.server) {
+        if (options.browser) {
+            conf.frameworks.push('detectBrowsers');
+            conf.plugins.push(
+                require('karma-chrome-launcher'),
+                require('karma-firefox-launcher'),
+                require('karma-ie-launcher'),
+                require('karma-edge-launcher'),
+                require('karma-safari-launcher'),
+                require('karma-opera-launcher'),
+                require('karma-detect-browsers')
+            );
+            conf.detectBrowsers = {
+                usePhantomJS: false,
+            };
         }
-        if (options.firefox || useAll) {
-            // Test on Firefox.
-            conf.browsers.push('Firefox');
-            conf.plugins.push(require('karma-firefox-launcher'));
+
+        if (options.saucelabs) {
+            // SauceLabs configuration.
+            conf.retryLimit = 3;
+            conf.concurrency = 2;
+            conf.browserDisconnectTimeout = 10000;
+            conf.browserDisconnectTolerance = 1;
+            conf.browserNoActivityTimeout = 4 * 60 * 1000;
+            conf.captureTimeout = 4 * 60 * 1000;
+            conf.reporters.push('saucelabs');
+            conf.sauceLabs = {
+                startConnect: true,
+                connectOptions: {
+                    'no-ssl-bump-domains': 'all',
+                    'username': process.env.SAUCE_USERNAME,
+                    'accessKey': process.env.SAUCE_ACCESS_KEY,
+                },
+                options: {},
+                username: process.env.SAUCE_USERNAME,
+                accessKey: process.env.SAUCE_ACCESS_KEY,
+                build: process.env.TRAVIS ? `TRAVIS # ${process.env.TRAVIS_BUILD_NUMBER} (${process.env.TRAVIS_BUILD_ID})` : undefined,
+                tunnelIdentifier: process.env.TRAVIS ? process.env.TRAVIS_JOB_NUMBER : undefined,
+                recordScreenshots: true,
+            };
+            if (entry && entry.package) {
+                conf.sauceLabs.testName = `Unit tests for ${entry.package.name}`;
+            }
+            let saucelabsBrowsers = suacelabs.launchers(options.targets ? browserslist.elaborate(options.targets) : browserslist.load(paths.cwd));
+            conf.customLaunchers = saucelabsBrowsers;
+            conf.browsers = Object.keys(saucelabsBrowsers);
+            if (conf.browsers.length === 0) {
+                throw new Error('invalid SauceLabs targets.');
+            }
+            conf.plugins.push(require('karma-sauce-launcher'));
         }
-    }
 
-    if (options.saucelabs) {
-        // SauceLabs configuration.
-        conf.retryLimit = 3;
-        conf.browserDisconnectTimeout = 10000;
-        conf.browserDisconnectTolerance = 1;
-        conf.browserNoActivityTimeout = 4 * 60 * 1000;
-        conf.captureTimeout = 4 * 60 * 1000;
-        conf.reporters.push('saucelabs');
-        conf.sauceLabs = {
-            startConnect: true,
-            connectOptions: {
-                'no-ssl-bump-domains': 'all',
-                'username': process.env.SAUCE_USERNAME,
-                'accessKey': process.env.SAUCE_ACCESS_KEY,
-            },
-            options: {},
-            username: process.env.SAUCE_USERNAME,
-            accessKey: process.env.SAUCE_ACCESS_KEY,
-            build: process.env.TRAVIS ? `TRAVIS # ${process.env.TRAVIS_BUILD_NUMBER} (${process.env.TRAVIS_BUILD_ID})` : undefined,
-            tunnelIdentifier: process.env.TRAVIS ? process.env.TRAVIS_JOB_NUMBER : undefined,
-            recordScreenshots: true,
-        };
-        let saucelabsBrowsers = getSauceBrowsers();
-        conf.customLaunchers = saucelabsBrowsers;
-        conf.browsers = Object.keys(saucelabsBrowsers);
-        conf.plugins.push(require('karma-sauce-launcher'));
-    }
-
-    if (options.electron) {
-        // Test on Electron.
-        conf.browsers = ['Electron'];
-        conf.plugins.push(require('./plugins/karma-electron-launcher/index.js'));
+        if (options.electron) {
+            // Test on Electron.
+            conf.browsers = ['Electron'];
+            conf.plugins.push(require('./plugins/karma-electron-launcher/index.js'));
+        }
     }
 
     if (options.ci) {
@@ -161,7 +153,7 @@ function getConfig(app, options) {
         // Collect code coverage.
         conf.plugins.push('karma-coverage');
         conf.coverageReporter = {
-            dir: 'coverage',
+            dir: 'reports/unit/coverage',
             reporters: [
                 {
                     type: 'in-memory',
@@ -191,6 +183,27 @@ module.exports = (app, options = {}) => {
         app.log(colors.red('no project found.'));
         return global.Promise.reject();
     }
+
+    // check sauce values
+    if (options.saucelabs) {
+        if (options['saucelabs.username']) {
+            process.env.SAUCE_USERNAME = options['saucelabs.username'];
+        }
+        if (options['saucelabs.key']) {
+            process.env.SAUCE_ACCESS_KEY = options['saucelabs.key'];
+        }
+        if (!process.env.SAUCE_USERNAME) {
+            app.log(colors.red('Missing SAUCE_USERNAME variable.'));
+            app.log(colors.grey('export a `SAUCE_USERNAME` environment variable or use the `--saucelabs.username` flag.'));
+            return global.Promise.reject();
+        }
+        if (!process.env.SAUCE_ACCESS_KEY) {
+            app.log(colors.red('Missing SAUCE_ACCESS_KEY variable.'));
+            app.log(colors.grey('export a `SAUCE_ACCESS_KEY` environment variable or use the `--saucelabs.key` flag.'));
+            return global.Promise.reject();
+        }
+    }
+
     if (!process.env.hasOwnProperty('NODE_ENV')) {
         // Set NODE_ENV environment variable.
         app.log(colors.yellow('🔍 setting "test" environment.'));
@@ -203,18 +216,20 @@ module.exports = (app, options = {}) => {
 
     // Load list of files to be tested.
     let files = [];
-    let filter = optionsUtils.handleArguments(options);
-    filter.files.forEach((f) => files.push(...glob.sync(f, {
-        ignore: '**/node_modules/**/*',
-    })));
-    Object.values(filter.packages)
-        .forEach((pkg) =>
-            files.push(...glob.sync(
-                path.join(pkg.path, '**/unit/**/*.js'), {
-                    ignore: '**/node_modules/**/*',
-                })
-            )
-        );
+    let entries = Entry.resolve(paths.cwd, options.arguments);
+    entries.forEach((entry) => {
+        if (entry.file) {
+            // process file
+            if (fs.statSync(entry.file.path).isDirectory()) {
+                files.push(...Entry.resolve(paths.cwd, path.join(entry.file.path, 'test/unit/**/*.js')));
+            } else {
+                files.push(entry);
+            }
+        } else {
+            // process package
+            files.push(...Entry.resolve(paths.cwd, path.join(entry.package.path, 'test/unit/**/*.js')));
+        }
+    });
     if (!files.length) {
         app.log(colors.yellow('no unit tests found.'));
         return global.Promise.resolve();
@@ -229,11 +244,12 @@ module.exports = (app, options = {}) => {
     // build tests
     let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
     let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
-    fs.writeFileSync(tempSource, files.map((uri) => `import '${uri}';`).join('\n'));
+    fs.writeFileSync(tempSource, files.map((entry) => `import '${entry.file.path}';`).join('\n'));
     return app.exec('build', { // Build sources.
         arguments: [tempSource],
         coverage: options.coverage,
         output: tempUnit,
+        targets: options.targets,
         map: false,
     }).then(() => { // Test built sources.
         let promise = global.Promise.resolve();
@@ -257,21 +273,31 @@ module.exports = (app, options = {}) => {
             } else if (taskEnv.runner === 'karma') {
                 // Startup Karma.
                 promise = promise.then(() => {
-                    let karmaOptions = getConfig(app, {
-                        ci: options.ci,
-                        server: options.server,
-                        coverage: options.coverage,
-                        [taskEnvName]: true,
-                        chrome: options.chrome,
-                        firefox: options.firefox,
-                    });
+                    let karmaOptions;
+                    try {
+                        karmaOptions = getConfig(app, {
+                            ci: options.ci,
+                            server: options.server,
+                            coverage: options.coverage,
+                            targets: options.targets,
+                            [taskEnvName]: true,
+                        });
+                    } catch (err) {
+                        return global.Promise.reject(err);
+                    }
                     karmaOptions.files = [tempUnit];
                     return new global.Promise((resolve, reject) => {
                         let server = new karma.Server(karmaOptions, (exitCode) => {
                             if (exitCode && !options.server) {
-                                reject(exitCode);
+                                reject();
                             } else {
                                 resolve();
+                            }
+                        });
+                        server.on('listening', (port) => {
+                            const browsers = server.get('config').browsers;
+                            if (!browsers || browsers.length === 0) {
+                                karma.stopper.stop({ port });
                             }
                         });
                         if (options.coverage) {
@@ -303,9 +329,12 @@ module.exports = (app, options = {}) => {
                     });
                 });
             } else if (taskEnv.runner === 'ns') {
-                // Create fake NS application.
-                let platform = (options.ios && 'ios') || (options.android && 'android');
-                promise = promise.then(() => runNativeScriptTest(platform, tempUnit));
+                if (!['ios', 'android'].includes(options.nativescript.toLowerCase())) {
+                    promise.then(() => global.Promise.reject('Invalid nativescript platform. Valid platforms are `ios` and `android`.'));
+                } else {
+                    // Create fake NS application.
+                    promise = promise.then(() => runNativeScriptTest(options.nativescript, tempUnit));
+                }
             }
         });
 

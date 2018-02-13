@@ -24,16 +24,6 @@ const autoprefixer = require('autoprefixer');
 
 const caches = {};
 
-function getPostCssConfig() {
-    let localConf = path.join(paths.cwd, 'postcss.json');
-    if (fs.existsSync(localConf)) {
-        return require(localConf);
-    }
-    return {
-        browsers: ['last 3 versions'],
-    };
-}
-
 function getBabelConfig(options) {
     let localConf = path.join(paths.cwd, '.babelrc');
     if (fs.existsSync(localConf)) {
@@ -68,7 +58,7 @@ function getBabelConfig(options) {
         presets: options.transpile !== false ? [
             [require('@babel/preset-env'), {
                 targets: {
-                    browsers: ['ie >= 11', 'safari >= 8'],
+                    browsers: options.targets,
                 },
                 modules: false,
             }],
@@ -129,7 +119,7 @@ function getConfig(app, bundler, options) {
                     processor: (css) =>
                         postcss(
                             [
-                                autoprefixer(getPostCssConfig()),
+                                autoprefixer(options.targets),
                             ]
                         ).process(css).then(result => result.css),
                     exclude: [],

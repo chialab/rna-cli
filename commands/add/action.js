@@ -1,6 +1,5 @@
 const colors = require('colors/safe');
 const manager = require('../../lib/package-manager.js');
-const utils = require('../../lib/utils.js');
 const paths = require('../../lib/paths.js');
 
 /**
@@ -19,7 +18,7 @@ module.exports = (app, options) => {
     let args = options.arguments || [];
     if (args.length === 0) {
         // Nothing to add.
-        app.log(colors.yellow(`${utils.extractRandom(['🤷‍', '🤷‍♂️'])} specify the package to add.`));
+        app.log(colors.yellow('🤷‍ specify the package to add.'));
     } else {
         // Add requested packages.
         let request = options.dev ? manager.dev(...options.arguments) : manager.add(...options.arguments);

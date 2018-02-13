@@ -12,16 +12,16 @@ module.exports = (program) => {
 
 A default configuration is also provided.
 Anyway, the developer can use a custom configuration if the \`karma.conf.js\` file exists in the root of the project.`)
-        .option('[--ci]', 'Run in continuous integration mode.')
+        .option('[--targets]', 'A supported browserslist query.')
         .option('[--node]', 'Run tests in node context.')
         .option('[--browser]', 'Run tests in browser context.')
-        .option('[--chrome]', 'Do not start Chrome browser.')
-        .option('[--firefox]', 'Do not start Firefox browser.')
-        .option('[--saucelabs]', 'Use saucelabs as browsers provider.')
+        .option('[--saucelabs]', 'Use SauceLabs as browsers provider.')
+        .option('[--saucelabs.username]', 'SauceLabs username.')
+        .option('[--saucelabs.key]', 'SauceLabs access key.')
+        .option('[--targets]', 'A browserslist query to test.')
         .option('[--electron]', 'Use electron.')
-        .option('[--nativescript]', 'Use nativescript.')
-        .option('[--ios]', 'Run test in iOS emulator.')
-        .option('[--android]', 'Run test in Android emulator.')
+        .option('[--nativescript <ios|android>]', 'Use nativescript.')
         .option('[--coverage]', 'Enable code coverage.')
+        .option('[--ci]', 'Run in continuous integration mode.')
         .action(require('path').resolve(__dirname, './action.js'));
 };
