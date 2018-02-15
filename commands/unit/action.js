@@ -69,6 +69,9 @@ function getConfig(app, options) {
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
         browsers: [],
 
+        // customContextFile if any
+        customContextFile: options.customContextFile ? options.customContextFile : null,
+
         plugins: [
             require('karma-mocha'),
             require('karma-mocha-reporter'),
@@ -204,6 +207,9 @@ module.exports = (app, options = {}) => {
         }
     }
 
+    // Handle Karma custom context file option
+    const customContextFile = options['context'];
+
     if (!process.env.hasOwnProperty('NODE_ENV')) {
         // Set NODE_ENV environment variable.
         app.log(colors.yellow('🔍 setting "test" environment.'));
@@ -280,6 +286,7 @@ module.exports = (app, options = {}) => {
                             server: options.server,
                             coverage: options.coverage,
                             targets: options.targets,
+                            customContextFile,
                             [taskEnvName]: true,
                         });
                     } catch (err) {
