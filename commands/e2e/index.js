@@ -15,6 +15,7 @@ Anyway, the developer can use a custom configuration if the \`nightwatch.conf.js
         .option('<path>', 'The e2e tests path.')
         .option('[--url]', 'The app url to test.')
         .option('[--targets]', 'A browserslist query to test.')
+        .option('[--browsers]', 'A list of browsers to test (for local environment).')
         .option('[--saucelabs]', 'Run tests in the SauceLabs cloud.')
         .option('[--saucelabs.username]', 'SauceLabs username.')
         .option('[--saucelabs.key]', 'SauceLabs access key.')
