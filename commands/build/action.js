@@ -9,6 +9,8 @@ const sass = require('./bundlers/sass.js');
 const watcher = require('../../lib/watcher.js');
 const ext = require('../../lib/extensions.js');
 const browserslist = require('../../lib/browserslist.js');
+const PriorityQueues = require('../../lib/PriorityQueues');
+const Queue = require('../../lib/Queue');
 
 /**
  * Command action to build sources.
@@ -179,27 +181,32 @@ module.exports = (app, options = {}, profiler) => {
                             files[f].push(bundleManifest);
                         });
                     });
+                    // setup a bundles priority chain.
+                    const BUNDLES_QUEUES = new PriorityQueues();
+                    // setup a rebuild Promises chain.
+                    const REBUILD_QUEUE = new Queue();
                     // start the watch task
                     watcher(app, Object.keys(files), (event, fp) => {
                         // find out manifests with changed file dependency.
-                        let bundles = files[fp];
-                        // setup a rebuild Promises chain.
-                        let rebuildPromise = global.Promise.resolve();
-                        bundles.forEach((bundle) => {
-                            let shouldLint = (ext.isStyleFile(fp) && (options['lint-styles'] !== false && options.lint !== false)) ||
-                                (ext.isJSFile(fp) && (options['lint-js'] !== false && options.lint !== false));
-                            // exec build again using cache.
-                            rebuildPromise = rebuildPromise.then(() => app.exec('build', Object.assign(options, {
-                                arguments: [bundle.input],
-                                output: bundle.output,
-                                lint: shouldLint && fp,
-                                cache: true,
-                                watch: false,
-                            }))).catch((err) => {
-                                if (err) {
-                                    app.log(err);
-                                }
-                            });
+                        files[fp].forEach((bundle) => {
+                            BUNDLES_QUEUES.tick(bundle, 100)
+                                .then(() => {
+                                    // exec build again using cache.
+                                    REBUILD_QUEUE.add(() => app.exec('build', Object.assign(options, {
+                                        arguments: [bundle.input],
+                                        output: bundle.output,
+                                        lint: fp,
+                                        cache: true,
+                                        watch: false,
+                                    }))).catch((err) => {
+                                        if (err) {
+                                            app.log(err);
+                                        }
+                                    });
+                                })
+                                .catch(() => {
+                                    // Some other changes requested the rebuild.
+                                });
                         });
                     });
                 }
