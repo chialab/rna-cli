@@ -181,7 +181,7 @@ module.exports = (app, options = {}) => {
             if (config.test_settings.default.launch_url) {
                 for (let k in config.test_settings) {
                     config.test_settings[k].desiredCapabilities = config.test_settings[k].desiredCapabilities || {};
-                    config.test_settings[k].desiredCapabilities['name'] = saucelabs.getTestName(config.test_settings.default.launch_url, 'E2E');
+                    config.test_settings[k].desiredCapabilities['name'] = saucelabs.getTestName(paths.cwd, config.test_settings.default.launch_url, 'E2E');
                 }
             }
             config.detailed_output = config.test_settings.default.detailed_output || !options.browsers || !options.browsers.includes(',');
@@ -193,7 +193,7 @@ module.exports = (app, options = {}) => {
                 promise = promise
                     .then(() => {
                         app.log(colors.cyan(`running ${env}`));
-                        return exec(`${NIGHTWATCH_BIN} --config ${configSource} --env ${env}`);
+                        return exec(NIGHTWATCH_BIN, ['--config', configSource, '--env', env]);
                     })
                     .catch(() => {
                         failed = true;

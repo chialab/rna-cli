@@ -127,7 +127,7 @@ function getConfig(app, options) {
                 recordScreenshots: true,
             };
             if (entry && entry.package) {
-                conf.sauceLabs.testName = saucelabs.getTestName(entry.package.name, 'Unit');
+                conf.sauceLabs.testName = saucelabs.getTestName(paths.cwd, entry.package.name, 'Unit');
             }
             let saucelabsBrowsers = saucelabs.launchers(options.targets ? browserslist.elaborate(options.targets) : browserslist.load(paths.cwd));
             conf.customLaunchers = saucelabsBrowsers;

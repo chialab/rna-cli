@@ -15,7 +15,7 @@ module.exports = (app) => {
         return global.Promise.reject();
     }
     // Run `yarn install`.
-    return manager.update()
+    return manager.update(paths.cwd)
         .then((res) => {
             app.log(colors.green('dependencies successfully updated.'));
             return global.Promise.resolve(res);

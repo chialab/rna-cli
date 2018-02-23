@@ -21,7 +21,7 @@ module.exports = (app, options) => {
         app.log(colors.yellow('🤷‍ specify the package to add.'));
     } else {
         // Add requested packages.
-        let request = options.dev ? manager.dev(...options.arguments) : manager.add(...options.arguments);
+        let request = options.dev ? manager.dev(paths.cwd, ...options.arguments) : manager.add(paths.cwd, ...options.arguments);
         return request
             .then((res) => {
                 app.log(colors.green('packages successfully added.'));

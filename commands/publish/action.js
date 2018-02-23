@@ -31,5 +31,5 @@ module.exports = (app, options) => {
     if (process.env.CI) {
         args.push('--yes');
     }
-    return exec(`${BIN} ${args.join(' ')}`);
+    return exec(BIN, args);
 };

@@ -19,10 +19,10 @@ module.exports = (app, options) => {
         let gitPath = path.join(cwd, '.git');
 
         // Initialize repository if `.git` directory doesn't already exist.
-        let init = fs.existsSync(gitPath) ? global.Promise.resolve(true) : git.init();
+        let init = fs.existsSync(gitPath) ? global.Promise.resolve(true) : git.init(cwd);
 
         return init.then(() =>
-            git.getRemote()
+            git.getRemote(cwd)
                 .then((res) => {
                     if (res) {
                         if (!options.force) {
@@ -46,7 +46,7 @@ module.exports = (app, options) => {
                     return prompt([opts]).then((answers) => {
                         if (answers.repository) {
                             // Configure remote.
-                            return git.addRemote(answers.repository)
+                            return git.addRemote(cwd, answers.repository)
                                 .then(() => {
                                     app.log(`${colors.green('git project created.')} ${colors.grey(`(${cwd})`)}`);
                                     return global.Promise.resolve();
@@ -55,7 +55,7 @@ module.exports = (app, options) => {
 
                         // Remove remote.
                         // Is this needed? We don't end up here if a remote is configured already. ~~fquffio
-                        return git.removeRemote()
+                        return git.removeRemote(cwd)
                             .then(() => {
                                 app.log(`${colors.green('git project created without remote.')} ${colors.grey(`(${cwd})`)}`);
                             });
