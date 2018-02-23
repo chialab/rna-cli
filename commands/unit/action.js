@@ -108,7 +108,7 @@ function getConfig(app, options) {
                 usePhantomJS: false,
                 postDetection: (availableBrowser) => {
                     // we are replacing the detected `Chrome` with the `Chrome_CI` configuration.
-                    let ioChrome = availableBrowser.indexOf('Chrome');
+                    const ioChrome = availableBrowser.indexOf('Chrome');
                     if (ioChrome !== -1) {
                         availableBrowser.splice(ioChrome, 1, 'Chrome_CI');
                     }
