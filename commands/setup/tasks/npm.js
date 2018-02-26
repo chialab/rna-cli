@@ -30,7 +30,7 @@ module.exports = (app, options) => {
             }
         }
 
-        return git.getRemote()
+        return git.getRemote(cwd)
             .catch(() => global.Promise.resolve())
             .then((remote) => {
                 const formatQuestion = (msg) => `${colors.cyan('package')} > ${msg}:`;
@@ -42,10 +42,10 @@ module.exports = (app, options) => {
                         type: 'input',
                         name: 'name',
                         message: formatQuestion('name'),
-                        default: json.name || path.basename(cwd),
+                        default: (json.name || path.basename(cwd)).toLowerCase().replace(/\s+/g, '_'),
                         validate: (input) => input.length > 0
                             && input.length <= 214
-                            && !input.match(/A-Z/) // Is "C-A-Z-Z-O" not allowed here? ~~fquffio
+                            && !input.match(/A-Z/)
                             && !input.match(/^[._]/)
                             && !input.match(/^\s/)
                             && !input.match(/\s$/)

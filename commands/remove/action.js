@@ -21,7 +21,7 @@ module.exports = (app, options = {}) => {
         app.log(colors.yellow('🤷‍ specify the package to remove.'));
     } else {
         // Remove requested packages.
-        return manager.remove(...options.arguments)
+        return manager.remove(paths.cwd, ...options.arguments)
             .then((res) => {
                 app.log(colors.green('packages successfully removed.'));
                 return global.Promise.resolve(res);

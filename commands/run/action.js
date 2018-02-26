@@ -14,5 +14,5 @@ module.exports = (app) => {
         app.log(colors.red('no project found.'));
         return global.Promise.reject();
     }
-    return manager.run(process.argv[3], process.argv.slice(4));
+    return manager.run(paths.cwd, process.argv[3], process.argv.slice(4));
 };

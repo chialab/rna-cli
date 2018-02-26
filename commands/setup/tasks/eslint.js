@@ -36,7 +36,7 @@ module.exports = (app, options) => {
         configurator(eslintConfig, content, '# RNA');
 
         if (isNew) {
-            eslintPromise = manager.dev('eslint', 'eslint-plugin-mocha');
+            eslintPromise = manager.dev(paths.cwd, 'eslint', 'eslint-plugin-mocha');
             app.log(`${colors.green('.eslintrc.yml created.')} ${colors.grey(`(${eslintConfig})`)}`);
         } else {
             app.log(`${colors.green('.eslintrc.yml updated.')} ${colors.grey(`(${eslintConfig})`)}`);
