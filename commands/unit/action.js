@@ -98,8 +98,22 @@ function getConfig(app, options) {
                 require('karma-opera-launcher'),
                 require('karma-detect-browsers')
             );
+            conf.customLaunchers = {
+                Chrome_CI: {
+                    base: 'Chrome',
+                    flags: ['--no-sandbox'],
+                },
+            };
             conf.detectBrowsers = {
                 usePhantomJS: false,
+                postDetection: (availableBrowser) => {
+                    // we are replacing the detected `Chrome` with the `Chrome_CI` configuration.
+                    const ioChrome = availableBrowser.indexOf('Chrome');
+                    if (ioChrome !== -1) {
+                        availableBrowser.splice(ioChrome, 1, 'Chrome_CI');
+                    }
+                    return availableBrowser;
+                },
             };
         }
 
