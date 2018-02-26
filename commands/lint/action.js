@@ -3,7 +3,7 @@ const colors = require('colors/safe');
 const commondir = require('commondir');
 const paths = require('../../lib/paths.js');
 const Entry = require('../../lib/entry.js');
-const Watcher = require('../../lib/watcher');
+const Watcher = require('../../lib/Watcher');
 const ext = require('../../lib/extensions.js');
 
 function filterJSFiles(entries) {
