@@ -95,7 +95,7 @@ function getConfig(app, bundler, options) {
                 file: options.output,
                 name: options.name,
                 format: 'umd',
-                sourcemap: options.map !== false,
+                sourcemap: (typeof options.map === 'string') ? options.map : (options.map !== false),
                 strict: false,
                 indent: false,
             },

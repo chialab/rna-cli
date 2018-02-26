@@ -73,6 +73,7 @@ function getConfig(app, options) {
         customContextFile: options.customContextFile ? options.customContextFile : null,
 
         plugins: [
+            require('karma-sourcemap-loader'),
             require('karma-mocha'),
             require('karma-mocha-reporter'),
             require('./plugins/karma-chai/index.js'),
@@ -264,13 +265,14 @@ module.exports = (app, options = {}) => {
     // build tests
     let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
     let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
-    fs.writeFileSync(tempSource, files.map((entry) => `import '${entry.file.path}';`).join('\n'));
+    const unitCode = `${files.map((entry) => `import '${entry.file.path}';`).join('\n')}`;
+    fs.writeFileSync(tempSource, unitCode);
     return app.exec('build', { // Build sources.
         arguments: [tempSource],
         coverage: options.coverage,
         output: tempUnit,
         targets: options.targets,
-        map: false,
+        map: 'inline',
     }).then(() => { // Test built sources.
         let promise = global.Promise.resolve();
         taskEnvironments.forEach((taskEnvName) => {
@@ -307,6 +309,9 @@ module.exports = (app, options = {}) => {
                         return global.Promise.reject(err);
                     }
                     karmaOptions.files = [tempUnit];
+                    karmaOptions.preprocessors = {
+                        [tempUnit]: ['sourcemap'],
+                    };
                     return new global.Promise((resolve, reject) => {
                         let server = new karma.Server(karmaOptions, (exitCode) => {
                             if (exitCode && !options.server) {
