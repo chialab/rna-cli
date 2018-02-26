@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const colors = require('colors/safe');
-const watcher = require('../../lib/watcher.js');
+const Watcher = require('../../lib/Watcher');
 const commondir = require('commondir');
 const cwd = require('../../lib/paths.js').cwd;
 const Entry = require('../../lib/entry.js');
@@ -91,19 +91,20 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
         if (nil) {
             return reject(nil);
         }
-        resolve({
-            config,
-            bs: browserSync,
-            server,
-        });
 
         if (options.watch) {
             // Watch only requested paths, not the commondir
-            let paths = files
+            const PATHS = files
                 .filter((p) => fs.statSync(p).isDirectory())
                 .map((p) => path.join(p, '**/*'));
             // Configure watch.
-            watcher(app, paths, (event, p) => {
+            const WATCHER = new Watcher({
+                cwd,
+                debounce: 200,
+                log: false,
+            });
+            WATCHER.add(PATHS);
+            return WATCHER.watch((event, p) => {
                 if (event !== 'unlink') {
                     let toReload = p.replace(base, '').replace(/^\/*/, '');
                     // File updated: notify BrowserSync so that it can be reloaded.
@@ -111,10 +112,13 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
                     app.log(colors.cyan(`${toReload} injected.`));
                 }
                 return global.Promise.resolve();
-            }, {
-                debounce: 200,
-                log: false,
             });
         }
+
+        resolve({
+            config,
+            bs: browserSync,
+            server,
+        });
     });
 });

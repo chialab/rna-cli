@@ -6,11 +6,32 @@ const paths = require('../../lib/paths.js');
 const Entry = require('../../lib/entry.js');
 const bundle = require('./bundlers/rollup.js');
 const sass = require('./bundlers/sass.js');
-const watcher = require('../../lib/watcher.js');
+const Watcher = require('../../lib/Watcher');
 const ext = require('../../lib/extensions.js');
 const browserslist = require('../../lib/browserslist.js');
 const PriorityQueues = require('../../lib/PriorityQueues');
 const Queue = require('../../lib/Queue');
+
+/**
+ * Add bundles' files to the watcher.
+ * @param {Watcher} watcher The watcher instance.
+ * @param {Array<BundleManifest>} bundleManifests An array of bundles.
+ * @return {Object} A set of data where keys are file paths and values a list of related bundles.
+ */
+function watchBundles(watcher, bundleManifests) {
+    const FILES = {};
+    // iterate BundleManifest instances.
+    bundleManifests.forEach((bundleManifest) => {
+        // iterate bundle dependencies.
+        bundleManifest.files.forEach((f) => {
+            // collect file manifest dependents.
+            FILES[f] = FILES[f] || [];
+            FILES[f].push(bundleManifest);
+            watcher.add(f);
+        });
+    });
+    return FILES;
+}
 
 /**
  * Command action to build sources.
@@ -170,35 +191,35 @@ module.exports = (app, options = {}, profiler) => {
             .then(() => {
                 // once bundles are generated, check for watch option.
                 if (options.watch) {
-                    // collect bundles dependencies.
-                    let files = {};
-                    // iterate BundleManifest instances.
-                    bundleManifests.forEach((bundleManifest) => {
-                        // iterate bundle dependencies.
-                        bundleManifest.files.forEach((f) => {
-                            // collect file manifest dependents.
-                            files[f] = files[f] || [];
-                            files[f].push(bundleManifest);
-                        });
-                    });
                     // setup a bundles priority chain.
                     const BUNDLES_QUEUES = new PriorityQueues();
                     // setup a rebuild Promises chain.
                     const REBUILD_QUEUE = new Queue();
                     // start the watch task
-                    watcher(app, Object.keys(files), (event, fp) => {
+                    const WATCHER = new Watcher({
+                        cwd: paths.cwd,
+                        log: true,
+                    });
+                    // collect bundles dependencies.
+                    let FILES = watchBundles(WATCHER, bundleManifests);
+                    return WATCHER.watch((event, fp) => {
                         // find out manifests with changed file dependency.
-                        files[fp].forEach((bundle) => {
+                        FILES[fp].forEach((bundle) => {
                             BUNDLES_QUEUES.tick(bundle, 100)
                                 .then(() => {
                                     // exec build again using cache.
-                                    REBUILD_QUEUE.add(() => app.exec('build', Object.assign(options, {
-                                        arguments: [bundle.input],
-                                        output: bundle.output,
-                                        lint: fp,
-                                        cache: true,
-                                        watch: false,
-                                    }))).catch((err) => {
+                                    REBUILD_QUEUE.add(
+                                        () => app.exec('build', Object.assign(options, {
+                                            arguments: [bundle.input],
+                                            output: bundle.output,
+                                            lint: fp,
+                                            cache: true,
+                                            watch: false,
+                                        }))
+                                    ).then((bundleManifests) => {
+                                        // watch new files for bundles.
+                                        FILES = watchBundles(WATCHER, bundleManifests);
+                                    }).catch ((err) => {
                                         if (err) {
                                             app.log(err);
                                         }

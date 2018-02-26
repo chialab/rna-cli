@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const workbox = require('workbox-build');
-const watcher = require('../../lib/watcher.js');
+const Watcher = require('../../lib/Watcher');
 const glob = require('glob');
 
 function remember(app, output) {
@@ -76,25 +76,21 @@ module.exports = (app, options) => {
             remember(app, path.relative(input, output));
         }
         if (options.watch) {
-            let lastContent = fs.readFileSync(output, 'utf8');
-            let filesToWatch = glob.sync(path.join(input, '**/*'), {
+            const FILES = glob.sync(path.join(input, '**/*'), {
                 ignore: exclude.map((pattern) => path.join(input, pattern)),
             });
-            filesToWatch.push(output);
-            watcher(app, filesToWatch, (event, file) => {
-                if (file === output) {
-                    if (fs.readFileSync(output, 'utf8') === lastContent) {
-                        return;
-                    }
-                }
-                app.exec('sw', Object.assign({}, options, { remember: false, watch: false }))
-                    .then(() => {
-                        lastContent = fs.readFileSync(output, 'utf8');
-                    });
-            }, {
+            FILES.push(output);
+            const WATCHER = new Watcher({
                 log: false,
                 debounce: 200,
                 ignored: '**/*.map',
+            });
+            WATCHER.add(FILES);
+            return WATCHER.watch((event, file) => {
+                if (file === output) {
+                    return;
+                }
+                app.exec('sw', Object.assign({}, options, { remember: false, watch: false }));
             });
         }
         return global.Promise.resolve(res);

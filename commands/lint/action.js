@@ -3,7 +3,7 @@ const colors = require('colors/safe');
 const commondir = require('commondir');
 const paths = require('../../lib/paths.js');
 const Entry = require('../../lib/entry.js');
-const watcher = require('../../lib/watcher.js');
+const Watcher = require('../../lib/watcher');
 const ext = require('../../lib/extensions.js');
 
 function filterJSFiles(entries) {
@@ -77,8 +77,12 @@ module.exports = (app, options, profiler) => {
     return response
         .then((res) => {
             if (options.watch) {
-                let dir = commondir(entries.map((entry) => (entry.file ? entry.file.path : entry.package.path)));
-                watcher(app, dir, (event, fp) => {
+                const DIR = commondir(entries.map((entry) => (entry.file ? entry.file.path : entry.package.path)));
+                const WATCHER = new Watcher({
+                    cwd: DIR,
+                });
+                WATCHER.add('**/*.{js,jsx,sass,scss,css}');
+                return WATCHER.watch((event, fp) => {
                     app.exec('lint', {
                         arguments: [fp],
                         warnings: options.warnings,
