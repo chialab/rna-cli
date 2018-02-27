@@ -314,19 +314,21 @@ module.exports = (app, options = {}) => {
                         [tempUnit]: ['sourcemap'],
                     };
                     return new global.Promise((resolve, reject) => {
-                        let server = new karma.Server(karmaOptions, (exitCode) => {
+                        const server = new karma.Server(karmaOptions, (exitCode) => {
                             if (exitCode && !options.server) {
                                 reject();
                             } else {
                                 resolve();
                             }
                         });
-                        server.on('listening', (port) => {
-                            const browsers = server.get('config').browsers;
-                            if (!browsers || browsers.length === 0) {
-                                karma.stopper.stop({ port });
-                            }
-                        });
+                        if (!options.server) {
+                            server.on('listening', (port) => {
+                                const browsers = server.get('config').browsers;
+                                if (!browsers || browsers.length === 0) {
+                                    karma.stopper.stop({ port });
+                                }
+                            });
+                        }
                         if (options.coverage) {
                             let reportMap;
                             server.on('run_start', () => {
