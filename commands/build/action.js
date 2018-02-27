@@ -14,23 +14,29 @@ const Queue = require('../../lib/Queue');
 
 /**
  * Add bundles' files to the watcher.
+ * @param {Object} files Set of data where keys are file paths and values a list of related bundles.
  * @param {Watcher} watcher The watcher instance.
- * @param {Array<BundleManifest>} bundleManifests An array of bundles.
- * @return {Object} A set of data where keys are file paths and values a list of related bundles.
+ * @param {BundleManifest} bundleManifest A bundle.
+ * @param {BundleManifest} oldManifest The previous bundle.
  */
-function watchBundles(watcher, bundleManifests) {
-    const FILES = {};
-    // iterate BundleManifest instances.
-    bundleManifests.forEach((bundleManifest) => {
-        // iterate bundle dependencies.
-        bundleManifest.files.forEach((f) => {
-            // collect file manifest dependents.
-            FILES[f] = FILES[f] || [];
-            FILES[f].push(bundleManifest);
-            watcher.add(f);
+function watchBundle(files, watcher, bundleManifest, oldManifest) {
+    if (oldManifest) {
+        // remove old manifest from the list.
+        oldManifest.files.forEach((f) => {
+            const list = files[f] || [];
+            const io = list.indexOf(oldManifest);
+            if (io !== -1) {
+                list.splice(io, 1);
+            }
         });
+    }
+    // iterate bundle dependencies.
+    bundleManifest.files.forEach((f) => {
+        // collect file manifest dependents.
+        files[f] = files[f] || [];
+        files[f].push(bundleManifest);
+        watcher.add(f);
     });
-    return FILES;
 }
 
 /**
@@ -201,7 +207,10 @@ module.exports = (app, options = {}, profiler) => {
                         log: true,
                     });
                     // collect bundles dependencies.
-                    let FILES = watchBundles(WATCHER, bundleManifests);
+                    const FILES = {};
+                    bundleManifests.forEach((bundle) => {
+                        watchBundle(FILES, WATCHER, bundle);
+                    });
                     return WATCHER.watch((event, fp) => {
                         // find out manifests with changed file dependency.
                         FILES[fp].forEach((bundle) => {
@@ -218,7 +227,7 @@ module.exports = (app, options = {}, profiler) => {
                                         }))
                                     ).then((bundleManifests) => {
                                         // watch new files for bundles.
-                                        FILES = watchBundles(WATCHER, bundleManifests);
+                                        watchBundle(FILES, WATCHER, bundleManifests[0], bundle);
                                     }).catch ((err) => {
                                         if (err) {
                                             app.log(err);
