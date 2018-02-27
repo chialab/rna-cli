@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const paths = require('paths');
 const colors = require('colors/safe');
 const workbox = require('workbox-build');
 const Watcher = require('../../lib/Watcher');
@@ -84,6 +85,7 @@ module.exports = (app, options) => {
                 log: false,
                 debounce: 200,
                 ignored: '**/*.map',
+                cwd: paths.cwd,
             });
             WATCHER.add(FILES);
             return WATCHER.watch((event, file) => {
