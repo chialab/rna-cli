@@ -280,6 +280,7 @@ module.exports = (app, options = {}) => {
             if (taskEnv.runner === 'mocha') {
                 // Startup Mocha.
                 promise = promise.then(() => {
+                    require('source-map-support/register');
                     const mocha = new Mocha();
                     mocha.addFile(tempUnit);
                     return new global.Promise((resolve, reject) => {
