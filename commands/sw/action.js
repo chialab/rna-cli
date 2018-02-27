@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const paths = require('paths');
+const paths = require('../../lib/paths.js');
 const colors = require('colors/safe');
 const workbox = require('workbox-build');
 const Watcher = require('../../lib/Watcher');
