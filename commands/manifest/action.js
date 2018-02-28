@@ -50,7 +50,7 @@ function generateIcons(manifest, index, icon, output) {
             desktop_browser: {},
             ios: {
                 picture_aspect: 'background_and_margin',
-                background_color: (manifest && (manifest.theme_color || manifest.background_color)) || '#fff',
+                background_color: (manifest && (manifest.background_color || manifest.theme_color)) || '#fff',
                 margin: '14%',
                 assets: {
                     ios6_and_prior_icons: false,
