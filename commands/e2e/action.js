@@ -163,6 +163,7 @@ module.exports = (app, options = {}) => {
                     sauceConnectLauncher({
                         username: process.env.SAUCE_USERNAME,
                         accessKey: process.env.SAUCE_ACCESS_KEY,
+                        tunnelIdentifier: `RNA-${Date.now()}`,
                     }, (err, scProcess) => {
                         scTask();
                         if (err) {
