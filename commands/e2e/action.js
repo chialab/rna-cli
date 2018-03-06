@@ -140,9 +140,11 @@ module.exports = (app, options = {}) => {
                 // check sauce values
                 if (options['saucelabs.username']) {
                     process.env.SAUCE_USERNAME = options['saucelabs.username'];
+                    config.test_settings.default.username = process.env.SAUCE_USERNAME;
                 }
                 if (options['saucelabs.key']) {
                     process.env.SAUCE_ACCESS_KEY = options['saucelabs.key'];
+                    config.test_settings.default.access_key = process.env.SAUCE_ACCESS_KEY;
                 }
                 if (!process.env.SAUCE_USERNAME) {
                     app.log(colors.red('Missing SAUCE_USERNAME variable.'));
