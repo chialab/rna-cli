@@ -90,7 +90,10 @@ module.exports = (app, options) => {
             WATCHER.add(FILES);
             return WATCHER.watch((event, file) => {
                 if (file === output) {
-                    return;
+                    const content = fs.readFileSync(file, 'utf8');
+                    if (content.indexOf('.precache([])') === -1) {
+                        return;
+                    }
                 }
                 app.exec('sw', Object.assign({}, options, { remember: false, watch: false }));
             });

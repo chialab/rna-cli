@@ -141,6 +141,7 @@ function getConfig(app, options) {
                     'no-ssl-bump-domains': 'all',
                     'username': process.env.SAUCE_USERNAME,
                     'accessKey': process.env.SAUCE_ACCESS_KEY,
+                    'tunnelIdentifier': `RNA-${Date.now()}`,
                 },
                 options: {},
                 username: process.env.SAUCE_USERNAME,
