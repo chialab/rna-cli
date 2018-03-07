@@ -9,11 +9,11 @@ const utils = require('../../../lib/utils.js');
 const BundleManifest = require('../../../lib/bundle.js');
 const isCore = require('resolve').isCore;
 
-const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel.js');
+const babel = require('rollup-plugin-babel');
 const resolve = require('rollup-plugin-node-resolve');
 const common = require('rollup-plugin-commonjs');
 const sass = require('rollup-plugin-sass-modules');
-const uglify = require('rollup-plugin-uglify');
+const uglify = require('rollup-plugin-uglify-es');
 const json = require('rollup-plugin-json');
 const url = require('rollup-plugin-url');
 const jsx = require('rollup-plugin-external-jsx');
@@ -31,6 +31,7 @@ function getBabelConfig(options) {
     }
 
     let plugins = [
+        require('@babel/plugin-external-helpers'),
         [require('@babel/plugin-transform-template-literals'), {
             loose: true,
         }],
@@ -38,6 +39,7 @@ function getBabelConfig(options) {
             pragma: 'IDOM.h',
         }],
         require('babel-plugin-transform-inline-environment-variables'),
+        // require('fast-async'),
     ];
     if (options.coverage) {
         plugins.push(
@@ -55,12 +57,16 @@ function getBabelConfig(options) {
         exclude: [],
         babelrc: false,
         compact: false,
+        externalHelpers: true,
         presets: options.transpile !== false ? [
             [require('@babel/preset-env'), {
                 targets: {
                     browsers: options.targets,
                 },
                 modules: false,
+                // exclude: [
+                //     'transform-regenerator',
+                // ],
             }],
         ] : undefined,
         plugins,

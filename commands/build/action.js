@@ -216,12 +216,22 @@ module.exports = (app, options = {}, profiler) => {
                         FILES[fp].forEach((bundle) => {
                             BUNDLES_QUEUES.tick(bundle, 100)
                                 .then(() => {
+                                    let shouldLint = options.lint !== false;
+                                    if (shouldLint) {
+                                        if (ext.isJSFile(fp)) {
+                                            shouldLint = options['lint-js'] !== false;
+                                        } else if (ext.isStyleFile(fp)) {
+                                            shouldLint = options['lint-styles'] !== false;
+                                        } else {
+                                            shouldLint = false;
+                                        }
+                                    }
                                     // exec build again using cache.
                                     REBUILD_QUEUE.add(
                                         () => app.exec('build', Object.assign(options, {
                                             arguments: [bundle.input],
                                             output: bundle.output,
-                                            lint: fp,
+                                            lint: shouldLint && fp,
                                             cache: true,
                                             watch: false,
                                         }))

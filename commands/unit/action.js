@@ -131,14 +131,11 @@ function getConfig(app, options) {
                 startConnect: true,
                 connectOptions: {
                     'no-ssl-bump-domains': 'all',
-                    'username': process.env.SAUCE_USERNAME,
-                    'accessKey': process.env.SAUCE_ACCESS_KEY,
-                    'tunnelIdentifier': `RNA-${Date.now()}`,
                 },
                 options: {},
                 username: process.env.SAUCE_USERNAME,
                 accessKey: process.env.SAUCE_ACCESS_KEY,
-                build: process.env.TRAVIS ? `TRAVIS # ${process.env.TRAVIS_BUILD_NUMBER} (${process.env.TRAVIS_BUILD_ID})` : undefined,
+                build: process.env.TRAVIS ? `TRAVIS # ${process.env.TRAVIS_BUILD_NUMBER} (${process.env.TRAVIS_BUILD_ID})` : `RNA-${Date.now()}`,
                 tunnelIdentifier: process.env.TRAVIS ? process.env.TRAVIS_JOB_NUMBER : undefined,
                 recordScreenshots: true,
             };
