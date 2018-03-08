@@ -43,7 +43,6 @@ function getBabelConfig(options) {
     ];
     if (options.coverage) {
         plugins.push(
-            require('../plugins/arrow-function-coverage-fix/arrow-function-coverage-fix.js'),
             [
                 require('babel-plugin-istanbul'), {
                     exclude: ['**.jsx'],
