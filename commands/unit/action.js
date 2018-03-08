@@ -55,6 +55,12 @@ function getConfig(app, options) {
         // web server port
         port: 9876,
 
+        // browser's timeout for handling Safari issues
+        browserDisconnectTimeout: 6 * 1000,
+        browserDisconnectTolerance: 5,
+        browserNoActivityTimeout: 2 * 60 * 1000,
+        captureTimeout: 2 * 60 * 1000,
+
         // enable / disable colors in the output (reporters and logs)
         colors: true,
 
@@ -122,10 +128,6 @@ function getConfig(app, options) {
             // SauceLabs configuration.
             conf.retryLimit = 3;
             conf.concurrency = 2;
-            conf.browserDisconnectTimeout = 10000;
-            conf.browserDisconnectTolerance = 1;
-            conf.browserNoActivityTimeout = 4 * 60 * 1000;
-            conf.captureTimeout = 4 * 60 * 1000;
             conf.reporters.push('saucelabs');
             conf.sauceLabs = {
                 startConnect: true,
