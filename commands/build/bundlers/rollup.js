@@ -9,11 +9,11 @@ const utils = require('../../../lib/utils.js');
 const BundleManifest = require('../../../lib/bundle.js');
 const isCore = require('resolve').isCore;
 
-const babel = require('rollup-plugin-babel');
+const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel');
 const resolve = require('rollup-plugin-node-resolve');
 const common = require('rollup-plugin-commonjs');
 const sass = require('rollup-plugin-sass-modules');
-const uglify = require('rollup-plugin-uglify-es');
+const uglify = require('../plugins/rollup-plugin-uglify/rollup-plugin-uglify');
 const json = require('rollup-plugin-json');
 const url = require('rollup-plugin-url');
 const jsx = require('rollup-plugin-external-jsx');
@@ -31,7 +31,6 @@ function getBabelConfig(options) {
     }
 
     let plugins = [
-        require('@babel/plugin-external-helpers'),
         [require('@babel/plugin-transform-template-literals'), {
             loose: true,
         }],
@@ -39,7 +38,6 @@ function getBabelConfig(options) {
             pragma: 'IDOM.h',
         }],
         require('babel-plugin-transform-inline-environment-variables'),
-        // require('fast-async'),
     ];
     if (options.coverage) {
         plugins.push(
@@ -53,19 +51,19 @@ function getBabelConfig(options) {
 
     return {
         include: '**/*.{mjs,js,jsx}',
-        exclude: [],
+        exclude: [
+            '**/node_modules/core-js/**/*',
+            '**/node_modules/regenerator-runtime/**/*',
+        ],
         babelrc: false,
         compact: false,
-        externalHelpers: true,
         presets: options.transpile !== false ? [
             [require('@babel/preset-env'), {
                 targets: {
                     browsers: options.targets,
                 },
+                useBuiltIns: options.polyfill ? 'usage' : 'entry',
                 modules: false,
-                // exclude: [
-                //     'transform-regenerator',
-                // ],
             }],
         ] : undefined,
         plugins,
@@ -162,6 +160,9 @@ function getConfig(app, bundler, options) {
                 let message = warning && warning.message || warning;
                 const whitelisted = () => {
                     message = message.toString();
+                    if (message.indexOf('Using "external-helpers" plugin with rollup-plugin-babel is deprecated') !== -1) {
+                        return false;
+                    }
                     if (message.indexOf('The \'this\' keyword') !== -1) {
                         return false;
                     }
