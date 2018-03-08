@@ -55,6 +55,12 @@ function getConfig(app, options) {
         // web server port
         port: 9876,
 
+        // browser's timeout for handling Safari issues
+        browserDisconnectTimeout: 6 * 1000,
+        browserDisconnectTolerance: 5,
+        browserNoActivityTimeout: 2 * 60 * 1000,
+        captureTimeout: 2 * 60 * 1000,
+
         // enable / disable colors in the output (reporters and logs)
         colors: true,
 
@@ -90,13 +96,15 @@ function getConfig(app, options) {
     if (!options.server) {
         if (options.browser) {
             conf.frameworks.push('detectBrowsers');
+            // list of browsers with launcher.
+            const launchers = ['chrome', 'firefox', 'ie', 'edge', 'safari', 'opera'];
+            launchers.forEach((launcherName) => {
+                // add the launcher plugin for each browser.
+                conf.plugins.push(
+                    require(`karma-${launcherName}-launcher`)
+                );
+            });
             conf.plugins.push(
-                require('karma-chrome-launcher'),
-                require('karma-firefox-launcher'),
-                require('karma-ie-launcher'),
-                require('karma-edge-launcher'),
-                require('karma-safari-launcher'),
-                require('karma-opera-launcher'),
                 require('karma-detect-browsers')
             );
             conf.customLaunchers = {
@@ -108,6 +116,8 @@ function getConfig(app, options) {
             conf.detectBrowsers = {
                 usePhantomJS: false,
                 postDetection: (availableBrowser) => {
+                    // remove available browsers without a launcher.
+                    availableBrowser = availableBrowser.filter((browserName) => launchers.indexOf(browserName.toLowerCase()) !== -1);
                     // we are replacing the detected `Chrome` with the `Chrome_CI` configuration.
                     const ioChrome = availableBrowser.indexOf('Chrome');
                     if (ioChrome !== -1) {
@@ -122,10 +132,6 @@ function getConfig(app, options) {
             // SauceLabs configuration.
             conf.retryLimit = 3;
             conf.concurrency = 2;
-            conf.browserDisconnectTimeout = 10000;
-            conf.browserDisconnectTolerance = 1;
-            conf.browserNoActivityTimeout = 4 * 60 * 1000;
-            conf.captureTimeout = 4 * 60 * 1000;
             conf.reporters.push('saucelabs');
             conf.sauceLabs = {
                 startConnect: true,
