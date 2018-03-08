@@ -53,7 +53,7 @@
     "karma-mocha-reporter": "^2.2.5",
     "karma-opera-launcher": "^1.0.0",
     "karma-safari-launcher": "^1.0.0",
-    "karma-sauce-launcher": "^1.2.0",
+    "karma-sauce-launcher": "github:edoardocavazza/karma-sauce-launcher#chialab",
     "karma-sourcemap-loader": "^0.3.7",
     "lerna": "^2.4.0",
     "md5-file": "^3.2.3",
