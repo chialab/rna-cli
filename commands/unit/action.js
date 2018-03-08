@@ -128,12 +128,6 @@ function getConfig(app, options) {
             // SauceLabs configuration.
             conf.retryLimit = 3;
             conf.concurrency = 2;
-
-            conf.browserDisconnectTimeout = 6 * 1000;
-            conf.browserDisconnectTolerance = 5;
-            conf.browserNoActivityTimeout = 2 * 60 * 1000;
-            conf.captureTimeout = 2 * 60 * 1000;
-
             conf.reporters.push('saucelabs');
             conf.sauceLabs = {
                 startConnect: true,
