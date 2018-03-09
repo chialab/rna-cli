@@ -90,9 +90,10 @@ function getConfig(app, options) {
         singleRun: !options.server,
 
         // Concurrency level
-        // how many browser should be started simultaneous
-        concurrency: Infinity,
+        // how many browser should be started simultaneously
+        concurrency:  Proteins.isNumber(options.concurrency) ? options.concurrency : Infinity,
     };
+
     if (!options.server) {
         if (options.browser) {
             conf.frameworks.push('detectBrowsers');
@@ -111,6 +112,7 @@ function getConfig(app, options) {
                     flags: ['--no-sandbox'],
                 },
             };
+
             conf.detectBrowsers = {
                 usePhantomJS: false,
                 postDetection: (availableBrowser) => {
@@ -127,7 +129,7 @@ function getConfig(app, options) {
         if (options.saucelabs) {
             // SauceLabs configuration.
             conf.retryLimit = 3;
-            conf.concurrency = 2;
+            conf.concurrency = conf.concurrency ? conf.concurrency : 2;
             conf.reporters.push('saucelabs');
             conf.sauceLabs = {
                 startConnect: true,

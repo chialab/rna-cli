@@ -23,6 +23,7 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
         .option('[--nativescript <ios|android>]', 'Use nativescript.')
         .option('[--coverage]', 'Enable code coverage.')
         .option('[--ci]', 'Run in continuous integration mode.')
+        .option('[--concurrency]', 'Concurrency level for Karma.')
         .option('[--context]', 'Use specified file as Karma custom context file for polyfill script.')
         .action(require('path').resolve(__dirname, './action.js'));
 };
