@@ -6,10 +6,7 @@ const sass = require('sass');
 const resolve = require('resolve');
 const BundleManifest = require('../../../lib/bundle.js');
 const ext = require('../../../lib/extensions.js');
-
 const postcss = require('postcss');
-const autoprefixer = require('autoprefixer');
-const cssnano = require('cssnano');
 
 /**
  * Generate a list of file paths with all style extensions.
@@ -158,10 +155,11 @@ module.exports = (app, options, profiler) => {
         let profile = profiler.task('sass');
         let task = app.log(`sass... ${colors.grey(`(${options.input})`)}`, true);
         let postCssPlugins = [
-            autoprefixer(options.targets),
+            require('autoprefixer')(options.targets),
+            require('postcss-all-unset'),
         ];
         if (options.production) {
-            postCssPlugins.push(cssnano({
+            postCssPlugins.push(require('cssnano')({
                 discardUnused: false,
                 reduceIdents: false,
             }));
