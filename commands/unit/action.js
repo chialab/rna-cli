@@ -312,6 +312,7 @@ module.exports = (app, options = {}) => {
                             server: options.server,
                             coverage: options.coverage,
                             targets: options.targets,
+                            concurrency: options.concurrency,
                             customContextFile,
                             [taskEnvName]: true,
                         });
