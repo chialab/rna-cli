@@ -91,9 +91,8 @@ function getConfig(app, options) {
 
         // Concurrency level
         // how many browser should be started simultaneously
-        concurrency:  Proteins.isNumber(options.concurrency) ? options.concurrency : Infinity,
+        concurrency: options.concurrency && Proteins.isNumber(Number(options.concurrency)) ? options.concurrency : Infinity,
     };
-
     if (!options.server) {
         if (options.browser) {
             conf.frameworks.push('detectBrowsers');
