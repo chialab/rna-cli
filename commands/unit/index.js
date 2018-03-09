@@ -18,7 +18,6 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
         .option('[--saucelabs]', 'Use SauceLabs as browsers provider.')
         .option('[--saucelabs.username]', 'SauceLabs username.')
         .option('[--saucelabs.key]', 'SauceLabs access key.')
-        .option('[--targets]', 'A browserslist query to test.')
         .option('[--electron]', 'Use electron.')
         .option('[--nativescript <ios|android>]', 'Use nativescript.')
         .option('[--coverage]', 'Enable code coverage.')

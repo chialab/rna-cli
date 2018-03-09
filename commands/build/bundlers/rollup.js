@@ -25,12 +25,12 @@ const autoprefixer = require('autoprefixer');
 const caches = {};
 
 function getBabelConfig(options) {
-    let localConf = path.join(paths.cwd, '.babelrc');
+    const localConf = path.join(paths.cwd, '.babelrc');
     if (fs.existsSync(localConf)) {
         return JSON.parse(fs.readFileSync(localConf), 'utf8');
     }
 
-    let plugins = [
+    const plugins = [
         [require('@babel/plugin-transform-template-literals'), {
             loose: true,
         }],
@@ -57,7 +57,7 @@ function getBabelConfig(options) {
         ],
         babelrc: false,
         compact: false,
-        presets: options.transpile !== false ? [
+        presets: [
             [require('@babel/preset-env'), {
                 targets: {
                     browsers: options.targets,
@@ -65,7 +65,7 @@ function getBabelConfig(options) {
                 useBuiltIns: options.polyfill ? 'usage' : 'entry',
                 modules: false,
             }],
-        ] : undefined,
+        ],
         plugins,
     };
 }
@@ -216,9 +216,6 @@ module.exports = (app, options, profiler) => {
         options.name = utils.camelize(
             path.basename(options.output, path.extname(options.output))
         );
-    }
-    if (options.transpile === false) {
-        app.log(colors.yellow('⚠️ skipping Babel task.'));
     }
     if (options.production && !process.env.hasOwnProperty('NODE_ENV')) {
         // Set NODE_ENV environment variable if `--production` flag is set.
