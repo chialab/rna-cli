@@ -134,16 +134,16 @@ module.exports = (app, options) => {
                     if (answers.style) {
                         json.style = answers.style;
                     }
-                    if (remote && answers.workspaces) {
+                    if (answers.workspaces) {
                         json.workspaces = answers.workspaces.split(/,\s*/);
                         json.private = true;
                     }
                     json.license = answers.license;
                     json.author = answers.author;
-                    if (answers.repository) {
+                    if (answers.repository || remote) {
                         json.repository = json.repository || {};
                         json.repository.type = json.repository.type || 'git';
-                        json.repository.url = answers.repository || json.repository.url;
+                        json.repository.url = answers.repository || json.repository.url || remote;
                     }
 
                     // Write `package.json`.
