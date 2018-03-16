@@ -11,7 +11,7 @@ const isCore = require('resolve').isCore;
 
 const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel');
 const resolve = require('rollup-plugin-node-resolve');
-const common = require('rollup-plugin-commonjs');
+const common = require('../plugins/rollup-plugin-commonjs/rollup-plugin-commonjs');
 const sass = require('rollup-plugin-sass-modules');
 const uglify = require('../plugins/rollup-plugin-uglify/rollup-plugin-uglify');
 const json = require('rollup-plugin-json');
