@@ -2,16 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const rollup = require('rollup');
-const RollupTimer = require('rollup-timer').RollupTimer;
 const paths = require('../../../lib/paths.js');
 const importer = require('../../../lib/import.js');
 const utils = require('../../../lib/utils.js');
 const BundleManifest = require('../../../lib/bundle.js');
-const isCore = require('resolve').isCore;
 
-const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel.js');
+const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel');
 const resolve = require('rollup-plugin-node-resolve');
-const common = require('rollup-plugin-commonjs');
 const sass = require('rollup-plugin-sass-modules');
 const uglify = require('rollup-plugin-uglify');
 const json = require('rollup-plugin-json');
@@ -25,12 +22,12 @@ const autoprefixer = require('autoprefixer');
 const caches = {};
 
 function getBabelConfig(options) {
-    let localConf = path.join(paths.cwd, '.babelrc');
+    const localConf = path.join(paths.cwd, '.babelrc');
     if (fs.existsSync(localConf)) {
         return JSON.parse(fs.readFileSync(localConf), 'utf8');
     }
 
-    let plugins = [
+    const plugins = [
         [require('@babel/plugin-transform-template-literals'), {
             loose: true,
         }],
@@ -41,7 +38,6 @@ function getBabelConfig(options) {
     ];
     if (options.coverage) {
         plugins.push(
-            require('../plugins/arrow-function-coverage-fix/arrow-function-coverage-fix.js'),
             [
                 require('babel-plugin-istanbul'), {
                     exclude: ['**.jsx'],
@@ -52,17 +48,17 @@ function getBabelConfig(options) {
 
     return {
         include: '**/*.{mjs,js,jsx}',
-        exclude: [],
         babelrc: false,
         compact: false,
-        presets: options.transpile !== false ? [
+        presets: [
             [require('@babel/preset-env'), {
                 targets: {
                     browsers: options.targets,
                 },
+                useBuiltIns: options.polyfill ? 'usage' : 'entry',
                 modules: false,
             }],
-        ] : undefined,
+        ],
         plugins,
     };
 }
@@ -144,19 +140,19 @@ function getConfig(app, bundler, options) {
 
                 /** PLUGINS THAT HAVE EFFECTS ON TRANSPILING AND CODE IN GENERAL */
                 babel(babelConfig),
-                common({
-                    ignore: (id) => isCore(id),
-                }),
                 options.production ? uglify({
                     output: {
                         comments: /@license/,
                     },
-                }) : {},
+                }, require('uglify-es').minify) : {},
             ],
             onwarn(warning) {
                 let message = warning && warning.message || warning;
                 const whitelisted = () => {
                     message = message.toString();
+                    if (message.indexOf('Using "external-helpers" plugin with rollup-plugin-babel is deprecated') !== -1) {
+                        return false;
+                    }
                     if (message.indexOf('The \'this\' keyword') !== -1) {
                         return false;
                     }
@@ -172,26 +168,30 @@ function getConfig(app, bundler, options) {
                     app.log(colors.yellow(`⚠️  ${message}`));
                 }
             },
+            perf: app.options.profile,
         };
     }
 
-    let timer = new RollupTimer();
-    if (app.options.profile) {
-        config.plugins = timer.time(config.plugins);
-    }
-
-    return global.Promise.resolve({ config, timer });
+    return global.Promise.resolve(config);
 }
 
-function timeReport(profile, timer) {
-    let timings = timer._timings || {};
-    for (let k in timings) {
-        let data = timings[k];
-        if (data.length) {
-            let sum = 0;
-            data.forEach((t) => sum += t);
-            profile.task(k, false).set(sum);
+function timeReport(profile, bundle) {
+    let timings = bundle.getTimings();
+    let tasks = {
+        treeshaking: 0,
+    };
+    Object.keys(timings).forEach((key) => {
+        if (key.match(/treeshaking/)) {
+            tasks.treeshaking += timings[key];
+        } else if (key.match(/plugin/)) {
+            let match = key.match(/plugin\s*(\d*)(?:\s*\(([\w-_]*)\))?/i);
+            let name = match[2] || match[1];
+            tasks[name] = tasks[name] || 0;
+            tasks[name] += timings[key];
         }
+    });
+    for (let k in tasks) {
+        profile.task(k, false).set(tasks[k]);
     }
 }
 
@@ -211,9 +211,6 @@ module.exports = (app, options, profiler) => {
             path.basename(options.output, path.extname(options.output))
         );
     }
-    if (options.transpile === false) {
-        app.log(colors.yellow('⚠️ skipping Babel task.'));
-    }
     if (options.production && !process.env.hasOwnProperty('NODE_ENV')) {
         // Set NODE_ENV environment variable if `--production` flag is set.
         app.log(colors.yellow('🚢 setting "production" environment.'));
@@ -223,7 +220,7 @@ module.exports = (app, options, profiler) => {
     let previousBundler = caches[options.input];
     let task = app.log(`bundling${previousBundler ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
     return getConfig(app, previousBundler, options)
-        .then(({ config, timer }) =>
+        .then((config) =>
             rollup.rollup(config)
                 .then((bundler) => {
                     options.output = options.output || config.output;
@@ -231,7 +228,9 @@ module.exports = (app, options, profiler) => {
                     caches[options.input] = bundler;
                     return bundler.write(config.output)
                         .then(() => {
-                            timeReport(profile, timer);
+                            if (app.options.profile) {
+                                timeReport(profile, bundler);
+                            }
                             profile.end();
                             task();
                             app.log(`${colors.bold(colors.green('bundle ready!'))} ${colors.grey(`(${options.output})`)}`);
