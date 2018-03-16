@@ -19,14 +19,19 @@ function helperPlugin() {
     };
 }
 
-function commonPlugin({ types }) {
-    /**
-     * Match AST types for ES6 import export.
-     * @type {RegExp}
-     */
-    const IMPORT_EXPORT_DECL_REGEX = /^(?:Import|Export(?:Named|Default|All))Declaration/;
+function commonRequire({ types }) {
     return {
         visitor: {
+            FunctionExpression(path) {
+                if ((path.node.params || []).find((param) => param.name === 'require')) {
+                    path.scope.rename('require');
+                }
+            },
+            FunctionDeclaration(path) {
+                if ((path.node.params || []).find((param) => param.name === 'require')) {
+                    path.scope.rename('require');
+                }
+            },
             // intercept call expressions.
             CallExpression(path) {
                 const node = path.node;
@@ -39,7 +44,7 @@ function commonPlugin({ types }) {
                     return;
                 }
 
-                if (isCore(node.arguments[0].type)) {
+                if (isCore(node.arguments[0].value)) {
                     return;
                 }
 
@@ -57,6 +62,18 @@ function commonPlugin({ types }) {
                 let program = path.hub.file.path;
                 program.node.body.unshift(importDecl);
             },
+        },
+    };
+}
+
+function commonExports({ types }) {
+    /**
+     * Match AST types for ES6 import export.
+     * @type {RegExp}
+     */
+    const IMPORT_EXPORT_DECL_REGEX = /^(?:Import|Export(?:Named|Default|All))Declaration/;
+    return {
+        visitor: {
             // intercept file top-level.
             Program(path) {
                 // check if the file has not ES6 imports/exports. we do not handle mixed mode.
@@ -142,9 +159,14 @@ module.exports = function(options = {}) {
 
             let extraPlugins = [helperPlugin];
 
-            if (code.match(/\b(?:require|module|exports)\b/)) {
+            if (code.match(/\b(?:require)\b/)) {
                 // add the plugin for `require` transformations.
-                extraPlugins.push(commonPlugin);
+                extraPlugins.push(commonRequire);
+            }
+
+            if (code.match(/\b(?:module|exports)\b/)) {
+                // add the plugin for `exports` transformations.
+                extraPlugins.push(commonExports);
             }
 
             if (filterPolyfills(id)) {
@@ -159,6 +181,10 @@ module.exports = function(options = {}) {
             }
 
             const transformed = babelCore.transform(code, localOpts);
+
+            // if (id.includes('videojs-external')) {
+            //     console.log(transformed.code);
+            // }
 
             return {
                 code: transformed.code,
