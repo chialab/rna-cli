@@ -108,6 +108,11 @@ module.exports = function(options = {}) {
     options = Object.assign({}, options);
 
     const filter = rollupUtils.createFilter(options.include, options.exclude);
+    const filterPolyfills = rollupUtils.createFilter([
+        '**/node_modules/core-js/**/*',
+        '**/node_modules/regenerator-runtime/**/*',
+    ], []);
+
     delete options.include;
     delete options.exclude;
 
@@ -142,9 +147,16 @@ module.exports = function(options = {}) {
                 extraPlugins.push(commonPlugin);
             }
 
-            localOpts = Object.assign({}, localOpts, {
-                plugins: (localOpts.plugins || []).concat(extraPlugins),
-            });
+            if (filterPolyfills(id)) {
+                localOpts = Object.assign({}, localOpts, {
+                    presets: [],
+                    plugins: extraPlugins,
+                });
+            } else {
+                localOpts = Object.assign({}, localOpts, {
+                    plugins: (localOpts.plugins || []).concat(extraPlugins),
+                });
+            }
 
             const transformed = babelCore.transform(code, localOpts);
 
