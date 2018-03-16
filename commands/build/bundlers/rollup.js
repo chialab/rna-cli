@@ -2,18 +2,15 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const rollup = require('rollup');
-const RollupTimer = require('rollup-timer').RollupTimer;
 const paths = require('../../../lib/paths.js');
 const importer = require('../../../lib/import.js');
 const utils = require('../../../lib/utils.js');
 const BundleManifest = require('../../../lib/bundle.js');
-const isCore = require('resolve').isCore;
 
 const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel');
 const resolve = require('rollup-plugin-node-resolve');
-const common = require('../plugins/rollup-plugin-commonjs/rollup-plugin-commonjs');
 const sass = require('rollup-plugin-sass-modules');
-const uglify = require('../plugins/rollup-plugin-uglify/rollup-plugin-uglify');
+const uglify = require('rollup-plugin-uglify');
 const json = require('rollup-plugin-json');
 const url = require('rollup-plugin-url');
 const jsx = require('rollup-plugin-external-jsx');
@@ -51,10 +48,6 @@ function getBabelConfig(options) {
 
     return {
         include: '**/*.{mjs,js,jsx}',
-        exclude: [
-            '**/node_modules/core-js/**/*',
-            '**/node_modules/regenerator-runtime/**/*',
-        ],
         babelrc: false,
         compact: false,
         presets: [
@@ -147,14 +140,11 @@ function getConfig(app, bundler, options) {
 
                 /** PLUGINS THAT HAVE EFFECTS ON TRANSPILING AND CODE IN GENERAL */
                 babel(babelConfig),
-                common({
-                    ignore: (id) => isCore(id),
-                }),
                 options.production ? uglify({
                     output: {
                         comments: /@license/,
                     },
-                }) : {},
+                }, require('uglify-es').minify) : {},
             ],
             onwarn(warning) {
                 let message = warning && warning.message || warning;
@@ -178,26 +168,30 @@ function getConfig(app, bundler, options) {
                     app.log(colors.yellow(`⚠️  ${message}`));
                 }
             },
+            perf: app.options.profile,
         };
     }
 
-    let timer = new RollupTimer();
-    if (app.options.profile) {
-        config.plugins = timer.time(config.plugins);
-    }
-
-    return global.Promise.resolve({ config, timer });
+    return global.Promise.resolve(config);
 }
 
-function timeReport(profile, timer) {
-    let timings = timer._timings || {};
-    for (let k in timings) {
-        let data = timings[k];
-        if (data.length) {
-            let sum = 0;
-            data.forEach((t) => sum += t);
-            profile.task(k, false).set(sum);
+function timeReport(profile, bundle) {
+    let timings = bundle.getTimings();
+    let tasks = {
+        treeshaking: 0,
+    };
+    Object.keys(timings).forEach((key) => {
+        if (key.match(/treeshaking/)) {
+            tasks.treeshaking += timings[key];
+        } else if (key.match(/plugin/)) {
+            let match = key.match(/plugin\s*(\d*)(?:\s*\(([\w-_]*)\))?/i);
+            let name = match[2] || match[1];
+            tasks[name] = tasks[name] || 0;
+            tasks[name] += timings[key];
         }
+    });
+    for (let k in tasks) {
+        profile.task(k, false).set(tasks[k]);
     }
 }
 
@@ -226,7 +220,7 @@ module.exports = (app, options, profiler) => {
     let previousBundler = caches[options.input];
     let task = app.log(`bundling${previousBundler ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
     return getConfig(app, previousBundler, options)
-        .then(({ config, timer }) =>
+        .then((config) =>
             rollup.rollup(config)
                 .then((bundler) => {
                     options.output = options.output || config.output;
@@ -234,7 +228,9 @@ module.exports = (app, options, profiler) => {
                     caches[options.input] = bundler;
                     return bundler.write(config.output)
                         .then(() => {
-                            timeReport(profile, timer);
+                            if (app.options.profile) {
+                                timeReport(profile, bundler);
+                            }
                             profile.end();
                             task();
                             app.log(`${colors.bold(colors.green('bundle ready!'))} ${colors.grey(`(${options.output})`)}`);
