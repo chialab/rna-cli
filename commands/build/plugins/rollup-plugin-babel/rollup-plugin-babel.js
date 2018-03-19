@@ -107,7 +107,11 @@ function commonExports({ types }) {
                             reexportsId,
                             types.logicalExpression(
                                 '||',
-                                types.memberExpression(types.memberExpression(id, exportsId), types.identifier('default')),
+                                types.logicalExpression(
+                                    '&&',
+                                    types.memberExpression(id, exportsId),
+                                    types.memberExpression(types.memberExpression(id, exportsId), types.identifier('default'))
+                                ),
                                 types.memberExpression(id, exportsId)
                             )
                         ),
@@ -181,10 +185,6 @@ module.exports = function(options = {}) {
             }
 
             const transformed = babelCore.transform(code, localOpts);
-
-            // if (id.includes('videojs-external')) {
-            //     console.log(transformed.code);
-            // }
 
             return {
                 code: transformed.code,
