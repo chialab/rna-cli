@@ -162,6 +162,7 @@ module.exports = (app, options, profiler) => {
             postCssPlugins.push(require('cssnano')({
                 discardUnused: false,
                 reduceIdents: false,
+                zindex: false,
             }));
         }
         fs.ensureDirSync(path.dirname(options.output));
