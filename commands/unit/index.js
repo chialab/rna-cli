@@ -24,5 +24,6 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
         .option('[--ci]', 'Run in continuous integration mode.')
         .option('[--concurrency]', 'Concurrency level for Karma.')
         .option('[--context]', 'Use specified file as Karma custom context file for polyfill script.')
+        .option('[--timeout]', 'Mocha timeout for a single test. Defaults to 2000 (ms).')
         .action(require('path').resolve(__dirname, './action.js'));
 };
