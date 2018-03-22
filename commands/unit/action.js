@@ -45,6 +45,13 @@ function getConfig(app, options) {
         // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
         frameworks: ['mocha', 'chai'],
 
+        // mocha timeout option if given
+        client: {
+            mocha: {
+                timeout: options.timeout && Proteins.isNumber(Number(options.timeout)) ? options.timeout : 2000,
+            },
+        },
+
         // test results reporter to use
         // possible values: 'dots', 'progress'
         // available reporters: https://npmjs.org/browse/keyword/karma-reporter
