@@ -316,6 +316,7 @@ module.exports = (app, options = {}) => {
                             coverage: options.coverage,
                             targets: options.targets,
                             concurrency: options.concurrency,
+                            timeout: options.timeout,
                             customContextFile,
                             [taskEnvName]: true,
                         });
