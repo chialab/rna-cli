@@ -98,7 +98,7 @@ function getConfig(app, options) {
 
         // Concurrency level
         // how many browser should be started simultaneously
-        concurrency: options.concurrency && Proteins.isNumber(Number(options.concurrency)) ? options.concurrency : Infinity,
+        concurrency: options.concurrency && Proteins.isNumber(Number(options.concurrency)) ? options.concurrency : 2,
     };
     if (!options.server) {
         if (options.browser) {
@@ -139,7 +139,6 @@ function getConfig(app, options) {
         if (options.saucelabs) {
             // SauceLabs configuration.
             conf.retryLimit = 3;
-            conf.concurrency = conf.concurrency ? conf.concurrency : 2;
             conf.reporters.push('saucelabs');
             conf.sauceLabs = {
                 startConnect: true,
