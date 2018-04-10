@@ -41,7 +41,7 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
         middleware: !options.directory && [
             (req, res, next) => {
                 const headers = req.headers;
-                if (req.method === 'GET' && ~headers.accept.indexOf('text/html') && !headers.origin) {
+                if (req.method === 'GET' && headers.accept && headers.accept.includes('text/html') && !headers.origin) {
                     let parsed = url.parse(req.url);
                     let file = path.join(base, parsed.pathname);
                     if (!path.extname(file)) {
