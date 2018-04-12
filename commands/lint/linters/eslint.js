@@ -51,6 +51,7 @@ module.exports = function eslint(app, options, profiler) {
             const linter = new Linter({
                 configFile,
                 cwd: paths.cwd,
+                cache: true,
             });
             const report = linter.executeOnFiles(jsFiles);
             profile.end();
@@ -66,6 +67,7 @@ module.exports = function eslint(app, options, profiler) {
             }
             app.log('everything is fine with ESLint.');
         } catch (err) {
+            profile.end();
             task();
             app.log(colors.red('failed to execute ESLint.'));
             return global.Promise.reject(err);

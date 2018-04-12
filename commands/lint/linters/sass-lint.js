@@ -53,6 +53,7 @@ module.exports = function sasslintTask(app, options, profiler) {
             }
             app.log('everything is fine with SassLint.');
         } catch (err) {
+            profile.end();
             task();
             app.log(colors.red('failed to execute SassLint.'));
             return global.Promise.reject(err);
