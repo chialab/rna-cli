@@ -1,3 +1,10 @@
+# NPM
 /node_modules
-/coverage
 npm-debug.log
+yarn-error.log
+
+# LINT
+.eslintcache
+
+# TEST
+/coverage

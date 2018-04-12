@@ -1,11 +1,21 @@
 extends:
   - eslint:recommended
 
+globals:
+  process: true
+
 env:
+  es6: true
+  browser: true
   node: true
 
+plugins:
+  - mocha
+  - babel
+
+parser: babel-eslint
+
 parserOptions:
-  ecmaVersion: 6
   sourceType: module
   ecmaFeatures:
     jsx: true
@@ -25,14 +35,6 @@ rules:
     - SwitchCase: 1
   func-names: 0
   prefer-const: 0
-  keyword-spacing: 1
-  no-multi-spaces: 1
-  block-spacing:
-    - 1
-    - always
-  space-before-blocks:
-    - 1
-    - always
   space-before-function-paren:
     - 1
     - never
@@ -93,6 +95,7 @@ rules:
   no-bitwise: 0
   no-plusplus: 0
   no-unused-vars:
-    - 2
+    - 1
+    - varsIgnorePattern: (IDOM|process)
   no-console:
     - 1
