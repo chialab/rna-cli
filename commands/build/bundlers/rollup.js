@@ -15,6 +15,7 @@ const json = require('rollup-plugin-json');
 const url = require('rollup-plugin-url');
 const jsx = require('rollup-plugin-external-jsx');
 const string = require('rollup-plugin-string');
+const optimize = require('rollup-plugin-optimize-js');
 
 const postcss = require('postcss');
 const autoprefixer = require('autoprefixer');
@@ -145,6 +146,7 @@ function getConfig(app, bundler, options) {
                         comments: /@license/,
                     },
                 }, require('uglify-es').minify) : {},
+                options.optimize ? optimize() : {},
             ],
             onwarn(warning) {
                 let message = warning && warning.message || warning;
