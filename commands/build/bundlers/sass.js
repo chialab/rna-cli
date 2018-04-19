@@ -155,7 +155,11 @@ module.exports = (app, options, profiler) => {
         let profile = profiler.task('sass');
         let task = app.log(`sass... ${colors.grey(`(${options.input})`)}`, true);
         let postCssPlugins = [
-            require('autoprefixer')(options.targets),
+            require('autoprefixer')({
+                browsers: options.targets,
+                grid: true,
+                flexbox: true,
+            }),
             require('postcss-all-unset'),
         ];
         if (options.production) {
