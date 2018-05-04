@@ -51,10 +51,10 @@ function resolver() {
      * @param {string} prev The url of the parent file.
      * @return {ImporterResult} The result of the import.
      */
-    return function nodeResolver(url, prev, done) {
+    return function nodeResolver(url, prev) {
         let mod;
         if (url.match(/^(~|package:)/)) {
-            // some modules use ~ for node_modules import
+            // some modules use ~ or package: for node_modules import
             mod = url.replace(/^(~|package:)/, '');
         } else {
             // generate file alternatives starting from the previous path
@@ -108,24 +108,23 @@ function resolver() {
         if (alreadyResolved.indexOf(url) !== -1) {
             // This file has been resolved already.
             // Skip it in order to avoid duplications.
-            done({
+            return {
                 contents: '',
-            });
-        } else {
-            alreadyResolved.push(url);
-            if (path.extname(url) === '.css') {
-                // if the file has css extension, return its contents.
-                // (sass does not include css file using plain css import, so we have to pass the content).
-                done({
-                    contents: fs.readFileSync(url, 'utf8'),
-                });
-            } else {
-                // return the found url.
-                done({
-                    file: url,
-                });
-            }
+            };
         }
+        alreadyResolved.push(url);
+        if (path.extname(url) === '.css') {
+            // if the file has css extension, return its contents.
+            // (sass does not include css file using plain css import, so we have to pass the content).
+            const contents = fs.readFileSync(url, 'utf8');
+            return {
+                contents,
+            };
+        }
+        // return the found url.
+        return {
+            file: url,
+        };
     };
 }
 
@@ -173,8 +172,8 @@ module.exports = (app, options, profiler) => {
         }
         fs.ensureDirSync(path.dirname(options.output));
         sass.render({
-            file: options.input,
-            outFile: options.output,
+            file: path.relative(paths.cwd, options.input),
+            outFile: path.relative(paths.cwd, options.output),
             sourceMap: options.map !== false,
             sourceMapEmbed: options.map !== false,
             importer: resolver(),

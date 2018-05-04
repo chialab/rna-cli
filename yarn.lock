@@ -7727,13 +7727,13 @@ rollup-plugin-optimize-js@^0.0.4:
   dependencies:
     optimize-js "1.0.3"
 
-rollup-plugin-sass-modules@^1.3.0:
-  version "1.3.0"
-  resolved "https://registry.npmjs.org/rollup-plugin-sass-modules/-/rollup-plugin-sass-modules-1.3.0.tgz#c5d642eb5b98641965085bb216e0222dcd5e42db"
+rollup-plugin-sass-modules@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.npmjs.org/rollup-plugin-sass-modules/-/rollup-plugin-sass-modules-1.4.0.tgz#799a2d14832d97550a3f0a45869a2920474c4418"
   dependencies:
     resolve "^1.4.0"
     rollup-pluginutils "^2.0.1"
-    sass "^1.0.0-beta.3"
+    sass "^1.3.2"
 
 rollup-plugin-string@^2.0.2:
   version "2.0.2"
@@ -7842,13 +7842,9 @@ sass-lint@^1.12.1:
     path-is-absolute "^1.0.0"
     util "^0.10.3"
 
-sass@^1.0.0:
+sass@^1.3.2:
   version "1.3.2"
   resolved "https://registry.npmjs.org/sass/-/sass-1.3.2.tgz#331fea13fb8d32cc3ffb3d1f352c917cfbae1950"
-
-sass@^1.0.0-beta.3:
-  version "1.2.0"
-  resolved "https://registry.npmjs.org/sass/-/sass-1.2.0.tgz#9e557ccc2a00bff22162d8fb38d2ee9303401df6"
 
 sauce-connect-launcher@^1.2.2, sauce-connect-launcher@^1.2.3:
   version "1.2.4"
