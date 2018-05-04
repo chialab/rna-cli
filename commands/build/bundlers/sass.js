@@ -51,11 +51,11 @@ function resolver() {
      * @param {string} prev The url of the parent file.
      * @return {ImporterResult} The result of the import.
      */
-    return function nodeResolver(url, prev) {
+    return function nodeResolver(url, prev, done) {
         let mod;
-        if (url[0] === '~') {
+        if (url.match(/^(~|package:)/)) {
             // some modules use ~ for node_modules import
-            mod = url.substring(1);
+            mod = url.replace(/^(~|package:)/, '');
         } else {
             // generate file alternatives starting from the previous path
             let toCheck = alternatives(path.join(path.dirname(prev), url));
@@ -108,22 +108,24 @@ function resolver() {
         if (alreadyResolved.indexOf(url) !== -1) {
             // This file has been resolved already.
             // Skip it in order to avoid duplications.
-            return {
+            done({
                 contents: '',
-            };
+            });
+        } else {
+            alreadyResolved.push(url);
+            if (path.extname(url) === '.css') {
+                // if the file has css extension, return its contents.
+                // (sass does not include css file using plain css import, so we have to pass the content).
+                done({
+                    contents: fs.readFileSync(url, 'utf8'),
+                });
+            } else {
+                // return the found url.
+                done({
+                    file: url,
+                });
+            }
         }
-        alreadyResolved.push(url);
-        if (path.extname(url) === '.css') {
-            // if the file has css extension, return its contents.
-            // (sass does not include css file using plain css import, so we have to pass the content).
-            return {
-                contents: fs.readFileSync(url, 'utf8'),
-            };
-        }
-        // return the found url.
-        return {
-            file: url,
-        };
     };
 }
 
