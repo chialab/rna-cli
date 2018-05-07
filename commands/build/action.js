@@ -212,42 +212,45 @@ module.exports = (app, options = {}, profiler) => {
                         watchBundle(FILES, WATCHER, bundle);
                     });
                     return WATCHER.watch((event, fp) => {
-                        // find out manifests with changed file dependency.
-                        FILES[fp].forEach((bundle) => {
-                            BUNDLES_QUEUES.tick(bundle, 100)
-                                .then(() => {
-                                    let shouldLint = options.lint !== false;
-                                    if (shouldLint) {
-                                        if (ext.isJSFile(fp)) {
-                                            shouldLint = options['lint-js'] !== false;
-                                        } else if (ext.isStyleFile(fp)) {
-                                            shouldLint = options['lint-styles'] !== false;
-                                        } else {
-                                            shouldLint = false;
-                                        }
-                                    }
-                                    // exec build again using cache.
-                                    REBUILD_QUEUE.add(
-                                        () => app.exec('build', Object.assign(options, {
-                                            arguments: [bundle.input],
-                                            output: bundle.output,
-                                            lint: shouldLint && fp,
-                                            cache: true,
-                                            watch: false,
-                                        }))
-                                    ).then((bundleManifests) => {
-                                        // watch new files for bundles.
-                                        watchBundle(FILES, WATCHER, bundleManifests[0], bundle);
-                                    }).catch ((err) => {
-                                        if (err) {
-                                            app.log(err);
-                                        }
-                                    });
-                                })
-                                .catch(() => {
-                                    // Some other changes requested the rebuild.
-                                });
-                        });
+                        REBUILD_QUEUE.add(() =>
+                            global.Promise.all(
+                                // find out manifests with changed file dependency.
+                                FILES[fp].map((bundle) =>
+                                    BUNDLES_QUEUES.tick(bundle, 100)
+                                        .then(() => {
+                                            let shouldLint = options.lint !== false;
+                                            if (shouldLint) {
+                                                if (ext.isJSFile(fp)) {
+                                                    shouldLint = options['lint-js'] !== false;
+                                                } else if (ext.isStyleFile(fp)) {
+                                                    shouldLint = options['lint-styles'] !== false;
+                                                } else {
+                                                    shouldLint = false;
+                                                }
+                                            }
+                                            // exec build again using cache.
+                                            return app.exec('build', Object.assign(options, {
+                                                arguments: [bundle.input],
+                                                output: bundle.output,
+                                                lint: shouldLint && fp,
+                                                cache: true,
+                                                watch: false,
+                                            })).then((bundleManifests) => {
+                                                // watch new files for bundles.
+                                                watchBundle(FILES, WATCHER, bundleManifests[0], bundle);
+                                            }).catch((err) => {
+                                                if (err) {
+                                                    app.log(err);
+                                                }
+                                            });
+                                        })
+                                        .catch(() =>
+                                            // Some other changes requested the rebuild.
+                                            global.Promise.resolve()
+                                        )
+                                )
+                            )
+                        );
                     });
                 }
                 // resolve build task with the list of generated manifests.
