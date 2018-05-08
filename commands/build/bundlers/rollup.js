@@ -8,7 +8,6 @@ const utils = require('../../../lib/utils.js');
 const BundleManifest = require('../../../lib/bundle.js');
 
 const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel');
-const resolve = require('rollup-plugin-node-resolve');
 const sass = require('rollup-plugin-sass-modules');
 const uglify = require('rollup-plugin-uglify');
 const json = require('rollup-plugin-json');
@@ -103,7 +102,6 @@ function getConfig(app, bundler, options) {
             },
             plugins: [
                 /** PLUGINS THAT HAVE EFFECTS ON IMPORT HANDLING */
-                resolve(),
                 json(),
                 string({
                     include: [
