@@ -27,18 +27,20 @@ function getBabelConfig(options) {
     }
 
     const plugins = [
+        require('babel-plugin-transform-inline-environment-variables'),
         [require('@babel/plugin-transform-template-literals'), {
             loose: true,
         }],
-        [require('@babel/plugin-transform-react-jsx'), {
-            pragma: 'IDOM.h',
+        [require('../plugins/babel-plugin-resolve/babel-plugin-resolve.js'), {
+            exclude: ['rollupPluginBabelHelpers', 'rollupCommonGlobal'],
         }],
-        require('babel-plugin-transform-inline-environment-variables'),
-        [require('../plugins/babel-external-jsx/babel-external-jsx.js'), {
+        [require('../plugins/babel-plugin-external-jsx/babel-plugin-external-jsx.js'), {
             // Required to be specified
             include: /.jsx$/,
-            // import header
-            header: 'import { IDOM } from \'@dnajs/idom\';',
+        }],
+        [require('../plugins/babel-plugin-jsx/babel-plugin-jsx.js'), {
+            pragma: 'IDOM.h',
+            moduleName: '@dnajs/idom',
         }],
     ];
     if (options.coverage) {
