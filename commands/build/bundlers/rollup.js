@@ -13,7 +13,6 @@ const sass = require('rollup-plugin-sass-modules');
 const uglify = require('rollup-plugin-uglify');
 const json = require('rollup-plugin-json');
 const url = require('rollup-plugin-url');
-const jsx = require('rollup-plugin-external-jsx');
 const string = require('rollup-plugin-string');
 const optimize = require('rollup-plugin-optimize-js');
 
@@ -36,6 +35,12 @@ function getBabelConfig(options) {
             pragma: 'IDOM.h',
         }],
         require('babel-plugin-transform-inline-environment-variables'),
+        [require('../plugins/babel-external-jsx/babel-external-jsx.js'), {
+            // Required to be specified
+            include: /.jsx$/,
+            // import header
+            header: 'import { IDOM } from \'@dnajs/idom\';',
+        }],
     ];
     if (options.coverage) {
         plugins.push(
@@ -131,12 +136,6 @@ function getConfig(app, bundler, options) {
                         sourceMap: options.map !== false,
                         sourceMapEmbed: options.map !== false,
                     },
-                }),
-                jsx({
-                    // Required to be specified
-                    include: '**/*.jsx',
-                    // import header
-                    header: 'import { IDOM } from \'@dnajs/idom\';',
                 }),
 
                 /** PLUGINS THAT HAVE EFFECTS ON TRANSPILING AND CODE IN GENERAL */
