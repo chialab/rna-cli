@@ -178,10 +178,13 @@ function timeReport(profile, bundle) {
     let timings = bundle.getTimings();
     let tasks = {
         treeshaking: 0,
+        sourcemaps: 0,
     };
     Object.keys(timings).forEach((key) => {
         if (key.match(/treeshaking/)) {
             tasks.treeshaking += timings[key];
+        } else if (key.match(/sourcemap/)) {
+            tasks.sourcemaps += timings[key];
         } else if (key.match(/plugin/)) {
             let match = key.match(/plugin\s*(\d*)(?:\s*\(([\w-_]*)\))?/i);
             let name = match[2] || match[1];
