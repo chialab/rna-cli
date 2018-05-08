@@ -36,7 +36,7 @@ function getBabelConfig(options) {
         }],
         [require('../plugins/babel-plugin-external-jsx/babel-plugin-external-jsx.js'), {
             // Required to be specified
-            include: /.jsx$/,
+            include: [/.jsx$/],
         }],
         [require('../plugins/babel-plugin-jsx/babel-plugin-jsx.js'), {
             pragma: 'IDOM.h',
