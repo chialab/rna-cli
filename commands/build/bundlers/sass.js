@@ -116,10 +116,10 @@ function resolver() {
         if (path.extname(url) === '.css') {
             // if the file has css extension, return its contents.
             // (sass does not include css file using plain css import, so we have to pass the content).
-            const contents = fs.readFileSync(url, 'utf8');
-            return {
-                contents,
-            };
+            const sassUrl = path.join(path.dirname(url), `${path.basename(url, path.extname(url))}.scss`);
+            fs.moveSync(url, sassUrl);
+            url = sassUrl;
+            setTimeout(() => fs.removeSync(sassUrl));
         }
         // return the found url.
         return {
@@ -155,57 +155,74 @@ module.exports = (app, options, profiler) => {
     return new global.Promise((resolve, reject) => {
         let profile = profiler.task('sass');
         let task = app.log(`sass... ${colors.grey(`(${options.input})`)}`, true);
-        let postCssPlugins = [
-            require('autoprefixer')({
-                browsers: options.targets,
-                grid: true,
-                flexbox: true,
-            }),
-            require('postcss-all-unset'),
-        ];
-        if (options.production) {
-            postCssPlugins.push(require('cssnano')({
-                discardUnused: false,
-                reduceIdents: false,
-                zindex: false,
-            }));
-        }
         fs.ensureDirSync(path.dirname(options.output));
-        sass.render({
-            file: path.relative(paths.cwd, options.input),
-            outFile: path.relative(paths.cwd, options.output),
-            sourceMap: options.map !== false,
-            sourceMapEmbed: options.map !== false,
-            importer: resolver(),
-        }, (err, sassResult) => {
+        try {
+            const sassResult = sass.renderSync({
+                file: options.input,
+                outFile: options.output,
+                sourceMap: options.map !== false ? true : false,
+                sourceMapContents: true,
+                sourceMapEmbed: false,
+                importer: resolver(),
+            });
+            profile.end();
+            profile = profiler.task('postcss');
+            let postCssPlugins = [
+                require('autoprefixer')({
+                    browsers: options.targets,
+                    grid: true,
+                    flexbox: true,
+                }),
+                require('postcss-all-unset'),
+            ];
+            if (options.production) {
+                postCssPlugins.push(require('cssnano')({
+                    discardUnused: false,
+                    reduceIdents: false,
+                    zindex: false,
+                }));
+            }
+            postcss(postCssPlugins)
+                .process(sassResult.css.toString(), {
+                    from: options.input,
+                    to: options.output,
+                    map: options.map !== false ? {
+                        inline: false,
+                        prev: JSON.parse(sassResult.map.toString()),
+                        sourcesContent: true,
+                    } : false,
+                })
+                .then((result) => {
+                    fs.writeFileSync(options.output, result.css);
+                    if (options.map !== false && result.map) {
+                        fs.writeFileSync(`${options.output}.map`, result.map);
+                    }
+                    app.log(`${colors.bold(colors.green('sass done!'))} ${colors.grey(`(${options.output})`)}`);
+                    task();
+                    profile.end();
+                    let manifest = new BundleManifest(options.input, options.output);
+                    if (sassResult.stats && sassResult.stats.includedFiles) {
+                        manifest.addFile(...sassResult.stats.includedFiles);
+                    }
+                    resolve(manifest);
+                })
+                .catch((err) => {
+                    task();
+                    profile.end();
+                    if (err) {
+                        app.log(err);
+                        app.log(colors.red(`postcss error ${options.name}`));
+                    }
+                    reject();
+                });
+        } catch (err) {
             task();
+            profile.end();
             if (err) {
                 app.log(err);
                 app.log(colors.red(`sass error ${options.name}`));
-                reject();
-            } else {
-                profile.end();
-                profile = profiler.task('postcss');
-                postcss(postCssPlugins)
-                    .process(sassResult.css.toString(), {
-                        from: options.input,
-                        to: options.output,
-                        map: options.map !== false,
-                    })
-                    .then((result) => {
-                        fs.writeFileSync(options.output, result.css);
-                        if (options.map !== false && result.map) {
-                            fs.writeFileSync(`${options.output}.map`, result.map);
-                        }
-                        app.log(`${colors.bold(colors.green('sass done!'))} ${colors.grey(`(${options.output})`)}`);
-                        profile.end();
-                        let manifest = new BundleManifest(options.input, options.output);
-                        if (sassResult.stats && sassResult.stats.includedFiles) {
-                            manifest.addFile(...sassResult.stats.includedFiles);
-                        }
-                        resolve(manifest);
-                    });
             }
-        });
+            reject();
+        }
     });
 };
