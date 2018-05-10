@@ -36,12 +36,16 @@ function jsx({ types, parse }) {
 
                 // detected the first level specifier to use for JSX
                 let node = parse(pragma).program.body[0];
-                let specifier = node.name;
+                let specifier;
                 if (node.type === 'ExpressionStatement') {
-                    node = node.expression;
-                    if (node.type === 'MemberExpression') {
-                        specifier = node.object.name;
+                    if (node.expression.type === 'MemberExpression') {
+                        specifier = node.expression.object.name;
+                    } else if (node.expression.type === 'Identifier') {
+                        specifier = node.expression.name;
                     }
+                }
+                if (!specifier) {
+                    return;
                 }
                 // check if the specifier is already defined
                 if (this.program.scope.hasBinding(specifier)) {

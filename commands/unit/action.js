@@ -279,11 +279,13 @@ module.exports = (app, options = {}) => {
     const unitCode = `${files.map((entry) => `import '${entry.file.path}';`).join('\n')}`;
     fs.writeFileSync(tempSource, unitCode);
     return app.exec('build', { // Build sources.
-        arguments: [tempSource],
-        coverage: options.coverage,
-        output: tempUnit,
-        targets: options.targets,
-        map: 'inline',
+        'arguments': [tempSource],
+        'coverage': options.coverage,
+        'output': tempUnit,
+        'targets': options.targets,
+        'map': 'inline',
+        'jsx.pragma': options['jsx.pragma'],
+        'jsx.module': options['jsx.module'],
     }).then(() => { // Test built sources.
         let promise = global.Promise.resolve();
         taskEnvironments.forEach((taskEnvName) => {

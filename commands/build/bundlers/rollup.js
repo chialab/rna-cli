@@ -40,8 +40,8 @@ function getBabelConfig(options) {
             include: [/.jsx$/],
         }],
         [require('../plugins/babel-plugin-jsx/babel-plugin-jsx.js'), {
-            pragma: 'IDOM.h',
-            moduleName: '@dnajs/idom',
+            pragma: options['jsx.pragma'] || 'IDOM.h',
+            moduleName: options['jsx.module'] || '@dnajs/idom',
         }],
     ];
     if (options.coverage) {
