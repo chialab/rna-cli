@@ -59,7 +59,7 @@
     "lerna": "^2.4.0",
     "md5-file": "^3.2.3",
     "mocha": "^4.0.1",
-    "nightwatch": "^1.0.0",
+    "nightwatch": "0.9.19",
     "npm-which": "^3.0.1",
     "postcss-all-unset": "^1.1.0",
     "resolve": "^1.5.0",
