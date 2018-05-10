@@ -187,14 +187,14 @@ module.exports = (app, options, profiler) => {
                     from: options.input,
                     to: options.output,
                     map: options.map !== false ? {
-                        inline: false,
+                        inline: options.map === 'inline',
                         prev: JSON.parse(sassResult.map.toString()),
                         sourcesContent: true,
                     } : false,
                 })
                 .then((result) => {
                     fs.writeFileSync(options.output, result.css);
-                    if (options.map !== false && result.map) {
+                    if (options.map !== false && options.map !== 'inline' && result.map) {
                         fs.writeFileSync(`${options.output}.map`, result.map);
                     }
                     app.log(`${colors.bold(colors.green('sass done!'))} ${colors.grey(`(${options.output})`)}`);
