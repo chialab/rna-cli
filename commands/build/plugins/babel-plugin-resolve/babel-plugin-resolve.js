@@ -62,10 +62,6 @@ function importResolve({ types }) {
             return;
         }
         let value = source.node.value;
-        if (RELATIVE_PATH.test(value)) {
-            // relative paths are ok
-            return;
-        }
         if (include.length && !filter(include, value)) {
             // excluded by plugin options
             return;
@@ -73,6 +69,24 @@ function importResolve({ types }) {
         if (exclude.length && filter(exclude, value)) {
             // excluded by plugin options
             return;
+        }
+        if (resolve.isCore(value)) {
+            // core nodejs modules
+            return;
+        }
+        if (RELATIVE_PATH.test(value)) {
+            value = path.resolve(dirname, value);
+            if (fs.existsSync(value)) {
+                let stats = fs.statSync(value);
+                if (stats.isDirectory()) {
+                    let pkg = path.join(value, 'package.json');
+                    if (fs.existsSync(pkg)) {
+                        value = require(pkg).name;
+                    } else {
+                        value = path.join(value, 'index.js');
+                    }
+                }
+            }
         }
         try {
             // try to detect module name
@@ -85,6 +99,12 @@ function importResolve({ types }) {
             if (parts.length) {
                 // file request
                 value = resolve.sync(value, { basedir: dirname });
+                if (fs.existsSync(value)) {
+                    let stats = fs.statSync(value);
+                    if (stats.isDirectory()) {
+                        value = path.join(value, 'index.js');
+                    }
+                }
             } else {
                 // module request
                 let pkgName = resolve.sync(`${modName}/package.json`, { basedir: dirname });
@@ -99,9 +119,9 @@ function importResolve({ types }) {
                     value = resolve.sync(`${modName}/${pkg.module}`, { basedir: dirname });
                     found = fs.existsSync(value);
                 }
-                // handle `js:next` field
-                if (opts.jsNext !== false && pkg.hasOwnProperty('js:next') && !found) {
-                    value = resolve.sync(`${modName}/${pkg['js:next']}`, { basedir: dirname });
+                // handle `jsnext:main` field
+                if (opts.jsNext !== false && pkg.hasOwnProperty('jsnext:main') && !found) {
+                    value = resolve.sync(`${modName}/${pkg['jsnext:main']}`, { basedir: dirname });
                     found = fs.existsSync(value);
                 }
                 // handle `main` field
@@ -109,15 +129,22 @@ function importResolve({ types }) {
                     value = resolve.sync(`${modName}/${pkg.main}`, { basedir: dirname });
                     found = fs.existsSync(value);
                 }
+                if (!found) {
+                    value = resolve.sync(`${modName}/index.js`, { basedir: dirname });
+                    found = fs.existsSync(value);
+                }
                 if (found) {
                     CACHE[modName] = value;
                 }
             }
             value = path.relative(dirname, value);
+            if (value[0] !== '.') {
+                value = `./${value}`;
+            }
             source.replaceWith(
                 types.stringLiteral(value)
             );
-        } catch(err) {
+        } catch (err) {
             //
         }
     }
