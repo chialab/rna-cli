@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const rollup = require('rollup');
+const resolve = require('resolve');
 const paths = require('../../../lib/paths.js');
 const importer = require('../../../lib/import.js');
 const utils = require('../../../lib/utils.js');
@@ -168,6 +169,9 @@ function getConfig(app, bundler, options) {
                 if (message && options.verbose || whitelisted()) {
                     app.log(colors.yellow(`⚠️  ${message}`));
                 }
+            },
+            external(id) {
+                return resolve.isCore(id);
             },
             perf: app.options.profile,
         };
