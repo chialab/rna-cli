@@ -1,9 +1,10 @@
+const path = require('path');
 const rollupUtils = require('rollup-pluginutils');
 const babelCore = require('@babel/core');
 const babelModuleImports = require('@babel/helper-module-imports');
 
-const BABEL_HELPERS = 'rollupPluginBabelHelpers';
-const CJS_MODULES = {};
+const BABEL_HELPERS = '\0rollupPluginBabelHelpers';
+const CJS_MODULES = [];
 
 function helperPlugin() {
     return {
@@ -17,6 +18,14 @@ function helperPlugin() {
             });
         },
     };
+}
+
+function createScope(id) {
+    return `\0${id}.scoped`;
+}
+
+function createAlias(id) {
+    return `\0${id}.common`;
 }
 
 module.exports = function(options = {}) {
@@ -33,9 +42,25 @@ module.exports = function(options = {}) {
     return {
         name: 'babel',
 
-        resolveId(id) {
+        resolveId(id, importer) {
             if (id === BABEL_HELPERS) return id;
-            if (id in CJS_MODULES) return id;
+
+            let filename = id;
+            if (importer) {
+                filename = path.resolve(path.dirname(importer), id);
+                if (!path.extname(id)) {
+                    filename += '.js';
+                }
+            }
+
+            for (let node of CJS_MODULES) {
+                if (node.id === filename) {
+                    return node.alias;
+                }
+                if (node.scope === id) {
+                    return id;
+                }
+            }
         },
 
         load(id) {
@@ -43,26 +68,44 @@ module.exports = function(options = {}) {
                 return babelCore.buildExternalHelpers(null, 'module');
             }
 
-            if (id in CJS_MODULES) {
-                return '';
+            for (let node of CJS_MODULES) {
+                if (node.alias === id) {
+                    return `import Mod from '${node.scope}'; export default Mod.exports;`;
+                }
+                if (node.scope === id) {
+                    return 'const module = { exports: {} }; export default module;';
+                }
             }
 
             return;
         },
 
         transform(code, id) {
-            if (id in CJS_MODULES) {
-                return CJS_MODULES[id];
-            }
             if (!filter(id)) return null;
             if (id === BABEL_HELPERS) return null;
+
+            for (let node of CJS_MODULES) {
+                if (node.alias === id) {
+                    return {
+                        code,
+                        map: {},
+                    };
+                }
+            }
+
+            const extraPlugins = [
+                helperPlugin,
+                [require('../babel-plugin-transform-commonjs/babel-plugin-transform-commonjs.js'), {
+                    scope: (program) => createScope(program.hub.file.opts.filename),
+                }],
+            ];
 
             let localOpts = Object.assign({
                 filename: id,
                 sourceMap: true,
             }, options, {
                 ast: true,
-                plugins: (options.plugins || []).concat([helperPlugin]),
+                plugins: (options.plugins || []).concat(extraPlugins),
             });
 
             if (filterPolyfills(id)) {
@@ -72,22 +115,16 @@ module.exports = function(options = {}) {
             }
 
             const transformed = babelCore.transform(code, localOpts);
-
-            if (code.match(/\b(?:module|exports)\b/) && !(id in CJS_MODULES)) {
-                id = `${id}.commonjs`;
-                CJS_MODULES[id] = {
-                    code: transformed.code,
-                    map: transformed.map,
-                };
-                const body = transformed.ast.program.body;
-                let result = `export * from '${id}';`;
-                if (body.find((node) => node.type === 'ExportDefaultDeclaration')) {
-                    result += `\nimport Mod from '${id}';`;
-                    result += '\nexport default Mod;';
+            const body = transformed.ast.program.body;
+            for (let child of body) {
+                if (child.__scope) {
+                    CJS_MODULES.push({
+                        id,
+                        scope: createScope(id),
+                        alias: createAlias(id),
+                    });
+                    break;
                 }
-                return {
-                    code: result,
-                };
             }
 
             return {

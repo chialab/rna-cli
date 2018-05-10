@@ -43,7 +43,6 @@ function getBabelConfig(options) {
             pragma: 'IDOM.h',
             moduleName: '@dnajs/idom',
         }],
-        require('../plugins/babel-plugin-transform-commonjs/babel-plugin-transform-commonjs.js'),
     ];
     if (options.coverage) {
         plugins.push(

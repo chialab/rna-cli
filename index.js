@@ -2,7 +2,7 @@
 
 const CLI = require('./lib/cli.js');
 
-const program = new CLI('@chialab/rna-cli').version(require('./package.json').version)
+const program = new CLI('@chialab/rna-cli').version(require('./package.json').version);
 
 require('./commands/help/index.js')(program);
 require('./commands/start/index.js')(program);

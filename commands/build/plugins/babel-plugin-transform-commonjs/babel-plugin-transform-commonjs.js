@@ -10,18 +10,9 @@ function renameRequire(path) {
 function transformCommon({ types }) {
     return {
         visitor: {
-            Program(program) {
+            Program(program, state) {
                 const body = program.get('body');
-                // check if the file has not ES6 imports/exports. Do not handle mixed mode.
-                for (const child of body) {
-                    if (types.isImportDeclaration(child) || types.isExportDeclaration(child)) {
-                        // ES6 import/export found, exit.
-                        return;
-                    }
-                }
-
-                // setup the scope of the module.
-                const scope = program.scope.generateUidIdentifier('scope');
+                const opts = state.opts || {};
 
                 program.traverse({
                     FunctionExpression: renameRequire,
@@ -54,56 +45,85 @@ function transformCommon({ types }) {
                         // replace the require call with the imported value.
                         path.replaceWith(id);
                         // create an ES6 import declaration.
-                        imports.push(
-                            types.importDeclaration(
-                                [types.importDefaultSpecifier(id)],
-                                types.stringLiteral(modName)
-                            )
+                        const decl = types.importDeclaration(
+                            [types.importDefaultSpecifier(id)],
+                            types.stringLiteral(modName)
                         );
+                        imports.push(decl);
                     },
                 });
 
-                // setup the module scope variable as `{ exports: {} }`.
-                const assignment = types.variableDeclaration(
-                    'const',
-                    [
-                        types.variableDeclarator(
-                            scope,
-                            types.objectExpression([
-                                types.objectProperty(types.identifier('exports'), types.objectExpression([])),
-                            ])
-                        ),
-                    ]
-                );
+                if (imports.length === 0 && !('module' in program.scope.globals) &&  !('exports' in program.scope.globals)) {
+                    // not commonjs module
+                    return;
+                }
+
+                // setup the scope of the module.
+                let scopeOption = opts.scope;
+                if (typeof scopeOption === 'function') {
+                    scopeOption = scopeOption(program, state);
+                }
+                const scope = scopeOption !== false ? program.scope.generateUidIdentifier('scope') : types.identifier('module');
 
                 // wrap the body of the module in order to usce the scope variable.
                 // `(function(module, exports) { <body> }(scope, scope.exports))`
-                const wrap = types.expressionStatement(
-                    types.callExpression(
-                        types.functionExpression(
-                            null,
-                            [types.identifier('module'), types.identifier('exports')],
-                            types.blockStatement(program.node.body.slice(0))
-                        ),
-                        [scope, types.memberExpression(scope, types.identifier('exports'))]
-                    )
-                );
+                if (scopeOption !== false) {
+                    let assignment;
+                    if (typeof scopeOption === 'string') {
+                        assignment = types.importDeclaration(
+                            [
+                                types.importDefaultSpecifier(scope),
+                            ],
+                            types.stringLiteral(scopeOption)
+                        );
+                    } else {
+                        // setup the module scope variable as `{ exports: {} }`.
+                        assignment = types.variableDeclaration(
+                            'const',
+                            [
+                                types.variableDeclarator(
+                                    scope,
+                                    types.objectExpression([
+                                        types.objectProperty(types.identifier('exports'), types.objectExpression([])),
+                                    ])
+                                ),
+                            ]
+                        );
+                    }
+
+                    assignment.__scope = true;
+
+                    const wrap = types.expressionStatement(
+                        types.callExpression(
+                            types.functionExpression(
+                                null,
+                                [types.identifier('module'), types.identifier('exports')],
+                                types.blockStatement(body.map((child) => {
+                                    if (child.isImportDeclaration()) {
+                                        return;
+                                    }
+                                    let node = child.node;
+                                    child.remove();
+                                    return node;
+                                }).filter(Boolean))
+                            ),
+                            [scope, types.memberExpression(scope, types.identifier('exports'))]
+                        )
+                    );
+
+                    program.unshiftContainer('body', assignment);
+                    program.pushContainer('body', wrap);
+                }
 
                 // create the export declaration.
-                const exportDecl = types.exportDefaultDeclaration(
+                program.pushContainer('body', types.exportDefaultDeclaration(
                     types.memberExpression(
                         scope,
                         types.identifier('exports')
                     )
-                );
+                ));
 
-                // remove old body.
-                body.forEach((path) => path.remove());
-                // add new body declarations.
-                imports.forEach((declaration) => program.pushContainer('body', declaration));
-                program.pushContainer('body', assignment);
-                program.pushContainer('body', wrap);
-                program.pushContainer('body', exportDecl);
+                imports.reverse().forEach((declaration) => program.unshiftContainer('body', declaration));
             },
         },
     };
