@@ -102,9 +102,9 @@ module.exports = function(options = {}) {
 
             let localOpts = Object.assign({
                 filename: id,
-                sourceMap: true,
             }, options, {
                 ast: true,
+                sourceMap: true,
                 plugins: (options.plugins || []).concat(extraPlugins),
             });
 
@@ -129,6 +129,7 @@ module.exports = function(options = {}) {
 
             return {
                 code: transformed.code,
+                // ast: transformed.ast.program,
                 map: transformed.map,
             };
         },

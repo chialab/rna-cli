@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const resolve = require('resolve');
 
 /**
  * Detect relative paths (strings which start with './' or '../')
@@ -32,16 +31,35 @@ function filter(list, fileName) {
 }
 
 /**
+ * Check if module is core.
+ * @private
+ *
+ * @param {string} name The module name/
+ * @return {Boolean}
+ */
+function isCore(name) {
+    try {
+        if (require.resolve(name) === name) {
+            // core nodejs modules
+            return true;
+        }
+    } catch (err) {
+        //
+    }
+    return false;
+}
+
+/**
+ * Cache module imports.
+ * @type {Object}
+ * @private
+ */
+const CACHE = {};
+
+/**
  * Babel plugin for import and export source replacements with relative path in `node_modules`.
  */
 function importResolve({ types }) {
-    /**
-     * Cache module imports.
-     * @type {Object}
-     * @private
-     */
-    const CACHE = {};
-
     /**
      * Check for source to replace.
      * @private
@@ -70,71 +88,59 @@ function importResolve({ types }) {
             // excluded by plugin options
             return;
         }
-        if (resolve.isCore(value)) {
-            // core nodejs modules
-            return;
-        }
-        if (RELATIVE_PATH.test(value)) {
-            value = path.resolve(dirname, value);
-            if (fs.existsSync(value)) {
-                let stats = fs.statSync(value);
-                if (stats.isDirectory()) {
-                    let pkg = path.join(value, 'package.json');
-                    if (fs.existsSync(pkg)) {
-                        value = require(pkg).name;
-                    } else {
-                        value = path.join(value, 'index.js');
-                    }
-                }
-            }
-        }
         try {
-            // try to detect module name
-            let parts = value.split(/[/\\]/);
-            let modName = parts.shift();
-            if (modName[0] === '@') {
-                // scope module
-                modName += `/${parts.shift()}`;
-            }
-            if (parts.length) {
-                // file request
-                value = resolve.sync(value, { basedir: dirname });
-                if (fs.existsSync(value)) {
-                    let stats = fs.statSync(value);
-                    if (stats.isDirectory()) {
-                        value = path.join(value, 'index.js');
-                    }
-                }
+            if (RELATIVE_PATH.test(value)) {
+                value = require.resolve(value, { paths: [dirname] });
             } else {
-                // module request
-                let pkgName = resolve.sync(`${modName}/package.json`, { basedir: dirname });
-                let pkg = require(pkgName);
-                let found = false;
-                if (CACHE[modName]) {
-                    value = CACHE[modName];
-                    found = true;
+                if (isCore(value)) {
+                    // core nodejs modules
+                    return;
                 }
-                // handle `module` field
-                if (opts.module !== false && pkg.hasOwnProperty('module') && !found) {
-                    value = resolve.sync(`${modName}/${pkg.module}`, { basedir: dirname });
-                    found = fs.existsSync(value);
+                // try to detect module name
+                let parts = value.split(/[/\\]/);
+                let modName = parts.shift();
+                if (modName[0] === '@') {
+                    // scope module
+                    modName += `/${parts.shift()}`;
                 }
-                // handle `jsnext:main` field
-                if (opts.jsNext !== false && pkg.hasOwnProperty('jsnext:main') && !found) {
-                    value = resolve.sync(`${modName}/${pkg['jsnext:main']}`, { basedir: dirname });
-                    found = fs.existsSync(value);
-                }
-                // handle `main` field
-                if (opts.main !== false && pkg.hasOwnProperty('main') && !found) {
-                    value = resolve.sync(`${modName}/${pkg.main}`, { basedir: dirname });
-                    found = fs.existsSync(value);
-                }
-                if (!found) {
-                    value = resolve.sync(`${modName}/index.js`, { basedir: dirname });
-                    found = fs.existsSync(value);
-                }
-                if (found) {
-                    CACHE[modName] = value;
+                if (parts.length) {
+                    // file request
+                    value = require.resolve(value, { paths: [dirname] });
+                } else {
+                    // module request
+                    let pkgName = require.resolve(`${modName}/package.json`, { paths: [dirname] });
+                    if (!pkgName) {
+                        return;
+                    }
+                    if (CACHE[pkgName]) {
+                        value = CACHE[pkgName];
+                    } else {
+                        let pkgDirname = path.dirname(pkgName);
+                        let pkg = JSON.parse(fs.readFileSync(pkgName));
+                        let found = false;
+                        // handle `module` field
+                        if (opts.module !== false && pkg.hasOwnProperty('module') && !found) {
+                            value = require.resolve(path.join(pkgDirname, pkg.module));
+                            found = !!value;
+                        }
+                        // handle `jsnext:main` field
+                        if (opts.jsNext !== false && pkg.hasOwnProperty('jsnext:main') && !found) {
+                            value = require.resolve(path.join(pkgDirname, pkg['jsnext:main']));
+                            found = !!value;
+                        }
+                        // handle `main` field
+                        if (opts.main !== false && pkg.hasOwnProperty('main') && !found) {
+                            value = require.resolve(path.join(pkgDirname, pkg.main));
+                            found = !!value;
+                        }
+                        if (!found) {
+                            value = require.resolve(pkgDirname);
+                            found = !!value;
+                        }
+                        if (found) {
+                            CACHE[pkgName] = value;
+                        }
+                    }
                 }
             }
             value = path.relative(dirname, value);
