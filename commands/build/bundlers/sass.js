@@ -34,6 +34,8 @@ function alternatives(url) {
     return res;
 }
 
+let tmpFiles;
+
 /**
  * @typedef {Object} ImporterResult
  * @property {string} [file] The url of the path to import.
@@ -44,6 +46,8 @@ function alternatives(url) {
  * Create a scoped SASS resolver.
  */
 function resolver() {
+    tmpFiles = [];
+
     const alreadyResolved = [];
     /**
      * Resolve the file path of an imported style.
@@ -117,15 +121,28 @@ function resolver() {
             // if the file has css extension, return its contents.
             // (sass does not include css file using plain css import, so we have to pass the content).
             const sassUrl = path.join(path.dirname(url), `${path.basename(url, path.extname(url))}.scss`);
-            fs.moveSync(url, sassUrl);
+            fs.copySync(url, sassUrl);
             url = sassUrl;
-            setTimeout(() => fs.removeSync(sassUrl));
+            tmpFiles.push(sassUrl);
         }
         // return the found url.
         return {
             file: url,
         };
     };
+}
+
+/**
+ * Remove temporary files.
+ * @return {void}
+ */
+function cleanTmpFile() {
+    if (tmpFiles) {
+        tmpFiles.forEach((tmp) => {
+            fs.removeSync(tmp);
+        });
+        tmpFiles = [];
+    }
 }
 
 /**
@@ -198,6 +215,7 @@ module.exports = (app, options, profiler) => {
                         fs.writeFileSync(`${options.output}.map`, result.map);
                     }
                     app.log(`${colors.bold(colors.green('sass done!'))} ${colors.grey(`(${options.output})`)}`);
+                    cleanTmpFile();
                     task();
                     profile.end();
                     let manifest = new BundleManifest(options.input, options.output);
@@ -207,20 +225,22 @@ module.exports = (app, options, profiler) => {
                     resolve(manifest);
                 })
                 .catch((err) => {
+                    cleanTmpFile();
                     task();
                     profile.end();
                     if (err) {
                         app.log(err);
-                        app.log(colors.red(`postcss error ${options.name}`));
+                        app.log(`${colors.red('postcss error')} ${colors.grey(`(${options.output})`)}`);
                     }
                     reject();
                 });
         } catch (err) {
+            cleanTmpFile();
             task();
             profile.end();
             if (err) {
                 app.log(err);
-                app.log(colors.red(`sass error ${options.name}`));
+                app.log(`${colors.red('sass error')} ${colors.grey(`(${options.output})`)}`);
             }
             reject();
         }
