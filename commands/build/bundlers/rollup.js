@@ -13,7 +13,7 @@ const sass = require('rollup-plugin-sass-modules');
 const uglify = require('rollup-plugin-uglify');
 const json = require('rollup-plugin-json');
 const url = require('rollup-plugin-url');
-const string = require('rollup-plugin-string');
+const string = require('../plugins/rollup-plugin-string/rollup-plugin-string');
 const optimize = require('rollup-plugin-optimize-js');
 
 const postcss = require('postcss');
@@ -33,7 +33,7 @@ function getBabelConfig(options) {
             loose: true,
         }],
         [require('../plugins/babel-plugin-resolve/babel-plugin-resolve.js'), {
-            exclude: ['rollupPluginBabelHelpers', 'rollupCommonGlobal'],
+            exclude: ['\0rollupPluginBabelHelpers', 'rollupCommonGlobal'],
         }],
         [require('../plugins/babel-plugin-external-jsx/babel-plugin-external-jsx.js'), {
             // Required to be specified
@@ -55,7 +55,7 @@ function getBabelConfig(options) {
     }
 
     return {
-        include: '**/*.{mjs,js,jsx}',
+        include: /\.(mjs|js|jsx)$/,
         babelrc: false,
         compact: false,
         presets: [
@@ -108,14 +108,14 @@ function getConfig(app, bundler, options) {
                 json(),
                 string({
                     include: [
-                        '**/*.{html,txt,svg,md}',
+                        /\.(html|txt|svg|md)$/,
                     ],
                 }),
                 url({
                     limit: 10 * 1000 * 1024,
                     exclude: [],
                     include: [
-                        '**/*.{woff,ttf,eot,gif,png,jpg}',
+                        /\.(woff|ttf|eot|gif|png|jpg)$/,
                     ],
                 }),
                 sass({
@@ -127,7 +127,7 @@ function getConfig(app, bundler, options) {
                         ).process(css).then(result => result.css),
                     exclude: [],
                     include: [
-                        '**/*.{css,scss,sass}',
+                        /\.(css|scss|sass)$/,
                     ],
                     options: {
                         outFile: options['external-css'] && path.join(
