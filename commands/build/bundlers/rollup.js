@@ -33,6 +33,7 @@ function getBabelConfig(options) {
             loose: true,
         }],
         [require('../plugins/babel-plugin-resolve/babel-plugin-resolve.js'), {
+            modulesPaths: [path.join(paths.cwd, 'node_modules')],
             exclude: ['\0rollupPluginBabelHelpers', 'rollupCommonGlobal'],
         }],
         [require('../plugins/babel-plugin-external-jsx/babel-plugin-external-jsx.js'), {

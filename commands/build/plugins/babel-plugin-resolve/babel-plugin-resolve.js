@@ -72,6 +72,7 @@ function importResolve({ types }) {
         const filename = importDecl.hub.file.opts.filename;
         const dirname = path.dirname(filename);
         const opts = state.opts;
+        const nodeModules = (opts.modulesPaths || []).concat([dirname]);
         const include = opts.include || [];
         const exclude = opts.exclude || [];
         const source = importDecl.get('source');
@@ -90,7 +91,7 @@ function importResolve({ types }) {
         }
         try {
             if (RELATIVE_PATH.test(value)) {
-                value = require.resolve(value, { paths: [dirname] });
+                value = require.resolve(value, { paths: nodeModules });
             } else {
                 if (isCore(value)) {
                     // core nodejs modules
@@ -105,10 +106,10 @@ function importResolve({ types }) {
                 }
                 if (parts.length) {
                     // file request
-                    value = require.resolve(value, { paths: [dirname] });
+                    value = require.resolve(value, { paths: nodeModules });
                 } else {
                     // module request
-                    let pkgName = require.resolve(`${modName}/package.json`, { paths: [dirname] });
+                    let pkgName = require.resolve(`${modName}/package.json`, { paths: nodeModules });
                     if (!pkgName) {
                         return;
                     }
