@@ -35,7 +35,6 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
         tunnel: options.tunnel,
         logFileChanges: false,
         open: false,
-        xip: true,
         notify: !!options.watch,
         injectChanges: !!options.watch,
         middleware: !options.directory && [
