@@ -13,6 +13,9 @@ module.exports = (program) => {
         .option('[--watch]', 'Should watch server directory.')
         .option('[--tunnel]', 'Create a tunnel for the server')
         .option('[--directory]', 'Should list directories.')
-        .option('[--https]', 'Path to server https key.')
+        .option('[--https.key]', 'Path to server https key.')
+        .option('[--https.cert]', 'Path to server https certificate.')
+        .option('[--https]', 'Path to server https key. [⛔️  deprecated, use --https.key]')
+        .option('[--cert]', 'Path to server https certificate. [⛔️  deprecated, use --https.cert]')
         .action(require('path').resolve(__dirname, './action.js'));
 };

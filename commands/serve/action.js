@@ -73,10 +73,10 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
             },
         };
     }
-    if (options.https) {
+    if (options.https || options['https.key']) {
         config.https = {
-            key: options.https,
-            cert: options.cert || path.join(path.dirname(options.https), 'cert.pem'),
+            key: options['https.key'] || options.https,
+            cert: options['https.cert'] || options.cert || path.join(path.dirname(options['https.key'] || options.https), 'cert.pem'),
         };
     }
     if (options.port) {
