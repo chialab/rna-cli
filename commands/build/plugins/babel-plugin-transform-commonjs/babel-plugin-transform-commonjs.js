@@ -14,6 +14,13 @@ function transformCommon({ types }) {
                 const body = program.get('body');
                 const opts = state.opts || {};
 
+                for (let i = 0, len = body.length; i < len; i++) {
+                    const item = body[i];
+                    if (item.isImportDeclaration() || item.isExportDeclaration()) {
+                        return;
+                    }
+                }
+
                 program.traverse({
                     FunctionExpression: renameRequire,
                     FunctionDeclaration: renameRequire,

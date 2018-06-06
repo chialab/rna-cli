@@ -72,7 +72,7 @@ function importResolve({ types }) {
         const filename = importDecl.hub.file.opts.filename;
         const dirname = path.dirname(filename);
         const opts = state.opts;
-        const nodeModules = (opts.modulesPaths || []).concat([dirname]);
+        const nodeModules = [dirname].concat(opts.modulesPaths || []);
         const include = opts.include || [];
         const exclude = opts.exclude || [];
         const source = importDecl.get('source');
