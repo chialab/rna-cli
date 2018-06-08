@@ -5,6 +5,73 @@ const inquirer = require('inquirer');
 const cwd = require('../../lib/paths.js').cwd;
 const Proteins = require('@chialab/proteins');
 
+const FAVICONS = {
+    FAVICON_16x16: {
+        name: 'favicon-16x16.png',
+        size: 16,
+    },
+    FAVICON_32x32: {
+        name: 'favicon-32x32.png',
+        size: 32,
+    },
+    FAVICON_192x192: {
+        name: 'favicon-192x192.png',
+        size: 192,
+    },
+    FAVICON_48x48: {
+        name: 'favicon-48x48.png',
+        size: 48,
+    },
+};
+
+const MANIFEST_ICONS = {
+    ANDROID_CHROME_36x36: {
+        name: 'android-chrome-36x36.png',
+        size: 36,
+    },
+    ANDROID_CHROME_48x48: {
+        name: 'android-chrome-48x48.png',
+        size: 48,
+    },
+    ANDROID_CHROME_72x72: {
+        name: 'android-chrome-72x72.png',
+        size: 72,
+    },
+    ANDROID_CHROME_96x96: {
+        name: 'android-chrome-96x96.png',
+        size: 96,
+    },
+    ANDROID_CHROME_144x144: {
+        name: 'android-chrome-144x144.png',
+        size: 144,
+    },
+    ANDROID_CHROME_192x192: {
+        name: 'android-chrome-192x192.png',
+        size: 192,
+    },
+    ANDROID_CHROME_256x256: {
+        name: 'android-chrome-256x256.png',
+        size: 256,
+    },
+    ANDROID_CHROME_384x384: {
+        name: 'android-chrome-384x384.png',
+        size: 384,
+    },
+    ANDROID_CHROME_512x512: {
+        name: 'android-chrome-512x512.png',
+        size: 512,
+    },
+};
+
+const APPLE_ICONS = {
+    APPLE_TOUCH_ICON: {
+        name: 'apple-touch-icon.png',
+        size: 180,
+        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        gutter: 30,
+    },
+};
+
 /**
  * Setup manifest default fields.
  * @param {Object} manifest The original manifest object.
@@ -34,81 +101,43 @@ function defaults(manifest, json = {}) {
  * @return {Promise}
  */
 function generateIcons(manifest, index, icon, output) {
-    const api = require('rfg-api').init();
-    // for request configuration, @see https://realfavicongenerator.net/api/non_interactive_api
-    let request = {
-        api_key: 'ca03a9fa1d054e0fd389f5ba6575e5a68c75b76c',
-        master_picture: {
-            type: 'inline',
-            content: api.fileToBase64Sync(icon),
-        },
-        files_location: {
-            type: 'path',
-            path: 'icons',
-        },
-        favicon_design: {
-            desktop_browser: {},
-            ios: {
-                picture_aspect: 'background_and_margin',
-                background_color: (manifest && (manifest.background_color || manifest.theme_color)) || '#fff',
-                margin: '14%',
-                assets: {
-                    ios6_and_prior_icons: false,
-                    ios7_and_later_icons: false,
-                    precomposed_icons: true,
-                    declare_only_default_icon: false,
-                },
-            },
-            android_chrome: {
-                picture_aspect: 'no_change',
-                manifest: manifest ? { existing_manifest: JSON.stringify(manifest, null, 2) } : {},
-                assets: {
-                    legacy_icon: true,
-                    low_resolution_icons: true,
-                },
-            },
-        },
-        settings: {
-            scaling_algorithm: 'Mitchell',
-            error_on_image_too_small: false,
-        },
-    };
-    return new global.Promise((resolve, reject) => {
-        api.generateFavicon(request, output, (err, res) => {
-            if (err) {
-                return reject(err);
-            }
-            // update manifest
-            let apiManifest = path.join(output, 'site.webmanifest');
-            let newManifest = path.join(output, 'manifest.json');
-            fs.moveSync(apiManifest, newManifest);
-            manifest.icons = require(newManifest).icons;
-            fs.unlinkSync(newManifest);
-            // update index links
-            if (index) {
-                // `res.favicon.overlapping_markups` contains a list of selectors of elements to update/replace
-                if (res.favicon.overlapping_markups) {
-                    res.favicon.overlapping_markups
-                        // sanitize selectors
-                        .map((selector) => selector.replace(',sizes', '][sizes'))
-                        // remove old elements
-                        .forEach((selector) => {
-                            let toRemove = index.querySelectorAll(selector) || [];
-                            toRemove.forEach((elem) => {
-                                elem.parentNode.removeChild(elem);
-                            });
-                        });
-                }
-                // `res.favicon.html_code` contains new html code for icons references
-                if (res.favicon.html_code) {
-                    index.head.innerHTML += res.favicon.html_code
-                        // change manifest reference
-                        .replace('href="icons/site.webmanifest"', 'href="manifest.json"');
-                }
-            }
-            return resolve();
-        });
+    const generator = require('./lib/icons.js');
+    const iconsPath = path.join(output, 'icons');
+    // create or empty the icons path.
+    fs.ensureDirSync(iconsPath);
+    fs.emptyDirSync(iconsPath);
+
+    // remove old favicons
+    index.querySelectorAll('[rel="icon"], [rel="shortcut icon"], [rel="apple-touch-icon"]').forEach((elem) => {
+        elem.parentNode.removeChild(elem);
     });
+
+    return Promise.all([
+        generator(icon, iconsPath, MANIFEST_ICONS)
+            .then((icons) => {
+                // update manifest icons
+                manifest.icons = icons.map((file) => ({
+                    src: path.relative(output, file.src),
+                    sizes: `${file.size}x${file.size}`,
+                    type: 'image/png',
+                }));
+            }),
+        generator(icon, iconsPath, FAVICONS)
+            .then((favicons) => {
+                // update favicons
+                favicons.forEach((file) => {
+                    index.head.innerHTML += `<link rel="icon" type="image/png" sizes="${file.size}x${file.size}" href="${path.relative(output, file.src)}">`;
+                });
+                index.head.innerHTML += `<link rel="shortcut icon" href="${path.relative(output, favicons[favicons.length - 1].src)}">`;
+            }),
+        generator(icon, iconsPath, APPLE_ICONS)
+            .then((appleIcons) => {
+                // update apple icons
+                appleIcons.forEach((file) => {
+                    index.head.innerHTML += `<link rel="apple-touch-icon" sizes="${file.size}x${file.size}" href="${path.relative(output, file.src)}">`;
+                });
+            }),
+    ]);
 }
 
 module.exports = function(app, options = {}) {
@@ -248,21 +277,17 @@ module.exports = function(app, options = {}) {
             if (options.icon) {
                 // generate icons.
                 const icon = path.resolve(cwd, options.icon);
-                const iconsPath = path.join(dir, 'icons');
                 if (!fs.existsSync(icon)) {
                     // provided icons does not exists.
                     app.log(`${colors.red('icon file not found.')} ${colors.grey(`(${icon})`)}`);
                     return global.Promise.reject();
                 }
-                // create or empty the icons path.
-                fs.ensureDirSync(iconsPath);
-                fs.emptyDirSync(iconsPath);
                 // exec the request.
                 let task = app.log('generating icons...', true);
-                generatingIcons = generateIcons(manifest, index, icon, iconsPath)
+                generatingIcons = generateIcons(manifest, index, icon, dir)
                     .then(() => {
                         task();
-                        app.log(`${colors.bold(colors.green('icons generated!'))} ${colors.grey(`(${iconsPath})`)}`);
+                        app.log(`${colors.bold(colors.green('icons generated!'))} ${colors.grey(`(${dir}/icons)`)}`);
                         return global.Promise.resolve();
                     }).catch((err) => {
                         task();
