@@ -28,44 +28,26 @@ function getBabelConfig(options) {
     }
 
     const plugins = [
-        require('babel-plugin-transform-inline-environment-variables'),
-        [require('@babel/plugin-transform-template-literals'), {
-            loose: true,
-        }],
         [require('../plugins/babel-plugin-resolve/babel-plugin-resolve.js'), {
             modulesPaths: [path.join(paths.cwd, 'node_modules')],
             exclude: ['\0rollupPluginBabelHelpers', 'rollupCommonGlobal'],
         }],
-        [require('../plugins/babel-plugin-external-jsx/babel-plugin-external-jsx.js'), {
-            // Required to be specified
-            include: [/.jsx$/],
-        }],
-        [require('../plugins/babel-plugin-jsx/babel-plugin-jsx.js'), {
-            pragma: options['jsx.pragma'] || 'IDOM.h',
-            moduleName: options['jsx.module'] || '@dnajs/idom',
-        }],
     ];
-    if (options.coverage) {
-        plugins.push(
-            [
-                require('babel-plugin-istanbul'), {
-                    exclude: ['**.jsx'],
-                },
-            ]
-        );
-    }
 
     return {
         include: /\.(mjs|js|jsx)$/,
         babelrc: false,
         compact: false,
         presets: [
-            [require('@babel/preset-env'), {
+            [require('@chialab/babel-preset'), {
                 targets: {
                     browsers: options.targets,
                 },
                 useBuiltIns: options.polyfill ? 'usage' : 'entry',
                 modules: false,
+                coverage: options.coverage,
+                pragma: options['jsx.pragma'] || 'IDOM.h',
+                pragmaModule: options['jsx.module'] || '@dnajs/idom',
             }],
         ],
         plugins,
@@ -125,7 +107,11 @@ function getConfig(app, bundler, options) {
                             [
                                 autoprefixer(options.targets),
                             ]
-                        ).process(css).then(result => result.css),
+                        ).process(css, {
+                            // disable sourcemaps warning
+                            // TODO: add sourcemaps support
+                            from: undefined,
+                        }).then(result => result.css),
                     exclude: [],
                     include: [
                         /\.(css|scss|sass)$/,
