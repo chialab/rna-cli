@@ -23,9 +23,4 @@ require('./commands/documentation/index.js')(program);
 require('./commands/run/index.js')(program);
 require('./commands/upgrade/index.js')(program);
 
-/** DEPRECATED COMMANDS */
-require('./commands/__deprecated/watch/index.js')(program);
-require('./commands/__deprecated/icons/index.js')(program);
-require('./commands/__deprecated/bootstrap/index.js')(program);
-
 program.start();
