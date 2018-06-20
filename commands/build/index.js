@@ -37,7 +37,5 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
         .option('[--jsx.module]', 'The module to auto import for JSX pragma.')
         .option('[--polyfill]', 'Auto add polyfills. [⚠️  experimental]')
         .option('[--optimize]', 'Run OptimizeJS after bundle. [⚠️  experimental]')
-        .option('[--no-transpile]', 'Skip Babel task. [⛔️  deprecated, use --targets]')
-        .option('[--external-css]', 'Split out css files from bundle. [⛔️  deprecated, use different entrypoint]')
         .action(require('path').resolve(__dirname, './action.js'));
 };
