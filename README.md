@@ -26,9 +26,9 @@ $ docker run chialab/rna-cli rna --version
 
 * [x] **help** - Show CLI help
 * [x] **setup** - Setup a new project.
+* [x] **install** - Sync project dependencies.
 * [x] **add** - Add a project dependency.
 * [x] **remove** - Remove a project dependency.
-* [x] **bootstrap** - Sync project dependencies.
 * [x] **lint** - Lint your source files.
 * [x] **build** - Build the project.
 * [x] **manifest** - Generate webapp manifest.
@@ -36,7 +36,6 @@ $ docker run chialab/rna-cli rna --version
 * [x] **watch** - Watch project files.
 * [x] **serve** - Setup a server for your project.
 * [x] **unit** - Run project unit tests.
-* [x] **e2e** - Run project e2e tests.
 * [x] **publish** - Publish to NPM.
 * [ ] **cdn** - Publish to CDN.
 * [x] **documentation** - Generate API references.

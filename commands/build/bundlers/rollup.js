@@ -131,10 +131,6 @@ function getConfig(app, bundler, options) {
                         /\.(css|scss|sass)$/,
                     ],
                     options: {
-                        outFile: options['external-css'] && path.join(
-                            path.dirname(options.output),
-                            `${path.basename(options.output, path.extname(options.output))}.css`
-                        ),
                         sourceMap: options.map !== false,
                         sourceMapEmbed: options.map !== false,
                     },

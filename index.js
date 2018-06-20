@@ -17,15 +17,9 @@ require('./commands/manifest/index.js')(program);
 require('./commands/sw/index.js')(program);
 require('./commands/serve/index.js')(program);
 require('./commands/unit/index.js')(program);
-require('./commands/e2e/index.js')(program);
 require('./commands/publish/index.js')(program);
 require('./commands/documentation/index.js')(program);
 require('./commands/run/index.js')(program);
 require('./commands/upgrade/index.js')(program);
-
-/** DEPRECATED COMMANDS */
-require('./commands/__deprecated/watch/index.js')(program);
-require('./commands/__deprecated/icons/index.js')(program);
-require('./commands/__deprecated/bootstrap/index.js')(program);
 
 program.start();

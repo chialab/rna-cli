@@ -189,6 +189,7 @@ module.exports = (app, options, profiler) => {
                     browsers: options.targets,
                     grid: true,
                     flexbox: true,
+                    remove: false,
                 }),
                 require('postcss-all-unset'),
             ];
