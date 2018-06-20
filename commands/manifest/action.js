@@ -108,9 +108,11 @@ function generateIcons(manifest, index, icon, output) {
     fs.emptyDirSync(iconsPath);
 
     // remove old favicons
-    index.querySelectorAll('[rel="icon"], [rel="shortcut icon"], [rel="apple-touch-icon"]').forEach((elem) => {
-        elem.parentNode.removeChild(elem);
-    });
+    if (index) {
+        index.querySelectorAll('[rel="icon"], [rel="shortcut icon"], [rel="apple-touch-icon"]').forEach((elem) => {
+            elem.parentNode.removeChild(elem);
+        });
+    }
 
     return Promise.all([
         generator(icon, iconsPath, MANIFEST_ICONS)
@@ -125,17 +127,21 @@ function generateIcons(manifest, index, icon, output) {
         generator(icon, iconsPath, FAVICONS)
             .then((favicons) => {
                 // update favicons
-                favicons.forEach((file) => {
-                    index.head.innerHTML += `<link rel="icon" type="image/png" sizes="${file.size}x${file.size}" href="${path.relative(output, file.src)}">`;
-                });
-                index.head.innerHTML += `<link rel="shortcut icon" href="${path.relative(output, favicons[favicons.length - 1].src)}">`;
+                if (index) {
+                    favicons.forEach((file) => {
+                        index.head.innerHTML += `<link rel="icon" type="image/png" sizes="${file.size}x${file.size}" href="${path.relative(output, file.src)}">`;
+                    });
+                    index.head.innerHTML += `<link rel="shortcut icon" href="${path.relative(output, favicons[favicons.length - 1].src)}">`;
+                }
             }),
         generator(icon, iconsPath, APPLE_ICONS)
             .then((appleIcons) => {
                 // update apple icons
-                appleIcons.forEach((file) => {
-                    index.head.innerHTML += `<link rel="apple-touch-icon" sizes="${file.size}x${file.size}" href="${path.relative(output, file.src)}">`;
-                });
+                if (index) {
+                    appleIcons.forEach((file) => {
+                        index.head.innerHTML += `<link rel="apple-touch-icon" sizes="${file.size}x${file.size}" href="${path.relative(output, file.src)}">`;
+                    });
+                }
             }),
     ]);
 }
@@ -147,6 +153,11 @@ module.exports = function(app, options = {}) {
         return global.Promise.reject();
     }
     let dir = path.resolve(cwd, options.arguments[0]);
+    if (!fs.statSync(dir).isDirectory()) {
+        // the webapp path is not a directory.
+        app.log(colors.red('webapp path is not a directory.'));
+        return global.Promise.reject();
+    }
     // default manifest path.
     let manifestPath = path.join(dir, 'manifest.json');
     if (options.output) {
@@ -183,13 +194,21 @@ module.exports = function(app, options = {}) {
     // collect index data if provided by flag.
     let index;
     let indexPath;
-    if (options.index) {
-        // create a fake DOM document for the index.html
-        const JSDOM = require('jsdom').JSDOM;
+    const JSDOM = require('jsdom').JSDOM;
+    // create a fake DOM document for the index.html
+    if (typeof options.index === 'string') {
         indexPath = path.resolve(cwd, options.index);
         index = new JSDOM(
             fs.readFileSync(indexPath)
         ).window.document;
+    } else if (options.index !== false) {
+        // try to auto detect index.html
+        indexPath = path.resolve(cwd, 'index.html');
+        if (fs.existsSync(indexPath)) {
+            index = new JSDOM(
+                fs.readFileSync(indexPath)
+            ).window.document;
+        }
     }
 
     // set manifest defaults
@@ -275,6 +294,11 @@ module.exports = function(app, options = {}) {
         .then(() => {
             let generatingIcons = global.Promise.resolve();
             if (options.icon) {
+                if (typeof options.icon !== 'string') {
+                    // the webapp path is not a directory.
+                    app.log(colors.red('missing icon path.'));
+                    return global.Promise.reject();
+                }
                 // generate icons.
                 const icon = path.resolve(cwd, options.icon);
                 if (!fs.existsSync(icon)) {
