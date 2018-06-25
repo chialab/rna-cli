@@ -10,17 +10,14 @@ const manager = require('../../lib/package-manager.js');
 module.exports = (app) =>
     app.checkUpdate()
         .then((version) =>
-            manager.globalUninstall(app.pkg)
-                .then(() =>
-                    manager.global(app.pkg)
-                        .then(() => {
-                            app.log(colors.green(`Updated to version ${version}!`));
-                            return global.Promise.resolve();
-                        })
-                        .catch((err) => {
-                            app.log(colors.red(`Error updating to version ${version}!`));
-                            return global.Promise.reject(err);
-                        })
-                )
+            manager.global(app.pkg)
+                .then(() => {
+                    app.log(colors.green(`Updated to version ${version}!`));
+                    return global.Promise.resolve();
+                })
+                .catch((err) => {
+                    app.log(colors.red(`Error updating to version ${version}!`));
+                    return global.Promise.reject(err);
+                })
         )
         .catch(() => global.Promise.resolve());
