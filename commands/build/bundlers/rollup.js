@@ -2,14 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const rollup = require('rollup');
-const resolve = require('resolve');
 const paths = require('../../../lib/paths.js');
 const importer = require('../../../lib/import.js');
 const utils = require('../../../lib/utils.js');
 const BundleManifest = require('../../../lib/bundle.js');
 
 const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel');
-const sass = require('rollup-plugin-sass-modules');
+const sass = require('../plugins/rollup-plugin-sass-modules/rollup-plugin-sass-modules');
 const uglify = require('rollup-plugin-uglify');
 const json = require('rollup-plugin-json');
 const url = require('rollup-plugin-url');
@@ -154,7 +153,15 @@ function getConfig(app, bundler, options) {
                 }
             },
             external(id) {
-                return resolve.isCore(id);
+                try {
+                    if (id && !path.isAbsolute(id) && require.resolve(id, { paths: [paths.cwd] }) === id) {
+                        // core nodejs modules
+                        return true;
+                    }
+                } catch (err) {
+                    //
+                }
+                return false;
             },
             perf: app.options.profile,
         };
