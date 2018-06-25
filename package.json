@@ -68,7 +68,7 @@
     "rollup-plugin-sass-modules": "1.4.0",
     "rollup-plugin-uglify": "3.0.0",
     "rollup-plugin-url": "1.3.0",
-    "sass": "^1.3.2",
+    "sass": "1.6.2",
     "sass-lint": "^1.12.1",
     "sauce-connect-launcher": "^1.2.3",
     "sharp": "^0.20.3",

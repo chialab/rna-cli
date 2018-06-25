@@ -7454,7 +7454,7 @@ sass-lint@^1.12.1:
     path-is-absolute "^1.0.0"
     util "^0.10.3"
 
-sass@^1.3.2:
+sass@1.6.2, sass@^1.3.2:
   version "1.6.2"
   resolved "https://registry.npmjs.org/sass/-/sass-1.6.2.tgz#665cadcbd853e9e497cbd298de645440a992cd1a"
   dependencies:
