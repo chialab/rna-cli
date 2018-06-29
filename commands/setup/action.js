@@ -19,7 +19,7 @@ module.exports = (app, options) => {
         .then(() => require('./tasks/directories.js')(app, options))
         .then(() => require('./tasks/config.js')(app, options))
         .then(() => require('./tasks/eslint.js')(app, options))
-        .then(() => require('./tasks/sasslint.js')(app, options))
+        .then(() => require('./tasks/stylelint.js')(app, options))
         .then(() => require('./tasks/license.js')(app, options))
         .then(() => require('./tasks/readme.js')(app, options));
 };

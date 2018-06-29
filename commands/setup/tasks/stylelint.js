@@ -5,7 +5,7 @@ const paths = require('../../../lib/paths.js');
 const configurator = require('../../../lib/configurator.js');
 
 /**
- * Ensure SASS Lint configuration file is present.
+ * Ensure stylelint configuration file is present.
  *
  * @param {CLI} app CLI.
  * @param {Object} options Options.
@@ -14,21 +14,21 @@ const configurator = require('../../../lib/configurator.js');
 module.exports = (app, options) => {
     if (options.linting !== false) {
         const cwd = paths.cwd;
-        let sasslintConfig = path.join(cwd, '.sass-lint.yml');
-        let isNew = !fs.existsSync(sasslintConfig);
+        let stylelintConfig = path.join(cwd, '.stylelintrc');
+        let isNew = !fs.existsSync(stylelintConfig);
         let content = fs.readFileSync(
-            path.join(paths.cli, './configs/lint/sass-lint.yml'),
+            path.join(paths.cli, './configs/lint/stylelintrc.yml'),
             'utf8'
         );
 
-        // "Append" configuration to `.sass-lint.yml`.
-        configurator(sasslintConfig, content, '# RNA');
+        // "Append" configuration to `.stylelintrc`.
+        configurator(stylelintConfig, content, '# RNA');
 
         if (isNew) {
-            app.log(`${colors.green('.sass-lint.yml created.')} ${colors.grey(`(${sasslintConfig})`)}`);
+            app.log(`${colors.green('.stylelintrc created.')} ${colors.grey(`(${stylelintConfig})`)}`);
         } else {
-            app.log(`${colors.green('.sass-lint.yml updated.')} ${colors.grey(`(${sasslintConfig})`)}`);
+            app.log(`${colors.green('.stylelintrc updated.')} ${colors.grey(`(${stylelintConfig})`)}`);
         }
     }
     return global.Promise.resolve();
-}
+};

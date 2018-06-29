@@ -1,0 +1,125 @@
+ignoreFiles:
+  - node_modules/**/*
+  - packages/**/node_modules/**/*
+  - dist/**/*
+  - public/**/*
+
+indentation:
+    - 4
+    - severity: warning
+
+rules:
+    color-no-invalid-hex:
+        - true
+        - severity: error
+    font-family-no-duplicate-names:
+        - true
+        - severity: warning
+    font-family-no-missing-generic-family-keyword:
+        - true
+        - severity: warning
+    function-calc-no-unspaced-operator:
+        - true
+        - severity: error
+    function-linear-gradient-no-nonstandard-direction:
+        - true
+        - severity: warning
+    string-no-newline:
+        - true
+        - severity: error
+    unit-no-unknown:
+        - true
+        - severity: error
+    property-no-unknown:
+        - true
+        - severity: error
+    keyframe-declaration-no-important:
+        - true
+        - severity: warning
+    declaration-block-no-duplicate-properties:
+        - true
+        - severity: warning
+    declaration-block-no-shorthand-property-overrides:
+        - true
+        - severity: warning
+    block-no-empty:
+        - true
+        - severity: warning
+    selector-pseudo-class-no-unknown:
+        - true
+        - severity: error
+    selector-pseudo-element-no-unknown:
+        - true
+        - severity: error
+    selector-type-no-unknown:
+        - false
+    media-feature-name-no-unknown:
+        - true
+        - severity: error
+    at-rule-no-unknown:
+        -
+            - true
+            - ignoreAtRules:
+                - mixin
+                - include
+        - severity: error
+    comment-no-empty:
+        - true
+        - severity: warning
+    no-descending-specificity:
+        - true
+        - severity: warning
+    no-duplicate-at-import-rules:
+        - true
+        - severity: warning
+    no-duplicate-selectors:
+        - true
+        - severity: warning
+    no-empty-source:
+        - true
+        - severity: warning
+    no-extra-semicolons:
+        - true
+        - severity: warning
+    no-invalid-double-slash-comments:
+        - true
+        - severity: warning
+    color-named:
+        -
+            - 'never'
+    color-no-hex: false
+    function-url-no-scheme-relative: false
+    keyframes-name-pattern: false
+    time-min-milliseconds:
+        -
+            - 0.0001
+        - severity: warning
+    shorthand-property-no-redundant-values: false
+    value-no-vendor-prefix:
+        - true
+        - severity: warning
+    custom-property-pattern: false
+    property-no-vendor-prefix:
+        -
+            - true
+            - ignoreProperties:
+                - -webkit-overflow-scrolling
+                - -webkit-line-clamp
+        - severity: warning
+    declaration-block-no-redundant-longhand-properties: false
+    declaration-no-important:
+        - true
+        - severity: warning
+    declaration-block-single-line-max-declarations:
+        - 1
+        - severity: warning
+    selector-max-empty-lines:
+        -
+            - 0
+        - severity: warning
+    media-feature-name-no-vendor-prefix:
+        - true
+        - severity: warning
+    at-rule-no-vendor-prefix:
+        - true
+        - severity: warning
