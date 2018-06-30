@@ -72,7 +72,7 @@ module.exports = function stylelintTask(app, options, profiler) {
                         severity: warn.severity === 'error' ? 2 : 1,
                         line: warn.line,
                         column: warn.column,
-                        message: warn.text,
+                        message: warn.text.replace(/\s\([a-z-]*\)/, ''),
                     };
                 });
                 errorCount += fileErrorCount;
