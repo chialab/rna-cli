@@ -15,8 +15,7 @@ rules:
 
     # https://stylelint.io/user-guide/rules/color-named
     # Require (where possible) or disallow named colors.
-    color-named:
-        - never
+    color-named: false
 
     # https://stylelint.io/user-guide/rules/color-no-hex
     # Disallow hex colors.
@@ -410,7 +409,7 @@ rules:
     # https://stylelint.io/user-guide/rules/declaration-block-semicolon-space-after
     # Require a single space or disallow whitespace after the semicolons of declaration blocks.
     declaration-block-semicolon-space-after:
-        - always
+        - always-single-line
         - severity: warning
 
     # https://stylelint.io/user-guide/rules/declaration-block-semicolon-space-before
@@ -569,7 +568,12 @@ rules:
 
     # https://stylelint.io/user-guide/rules/selector-no-qualifying-type
     # Disallow qualifying a selector by type.
-    selector-no-qualifying-type: false
+    selector-no-qualifying-type:
+        - false
+        - ingore:
+            - attribute
+            - class
+            - id
 
     # https://stylelint.io/user-guide/rules/selector-no-vendor-prefix
     # Disallow vendor prefixes for selectors.
@@ -611,7 +615,7 @@ rules:
         - never
         - severity: warning
 
-    # https://stylelint.io/user-guide/rules/selector-attribute-quotes
+    # https://stylelint.io/user-guide/rules/selector-attribute-quotesquotes
     # Require or disallow quotes for attribute values.
     selector-attribute-quotes:
         - always
@@ -697,7 +701,6 @@ rules:
         - always-multi-line
         - except:
             - after-single-line-comment
-            - inside-block-and-after-rule
             - first-nested
 
     ### Media features
@@ -921,7 +924,7 @@ rules:
 
     # https://stylelint.io/user-guide/rules/max-nesting-depth
     # Limit the depth of nesting.
-    max-nesting-depth: false
+    max-nesting-depth: 10
 
     # https://stylelint.io/user-guide/rules/no-unknown-animations
     # Disallow unknown animations.
