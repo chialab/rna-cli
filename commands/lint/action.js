@@ -64,8 +64,8 @@ module.exports = (app, options, profiler) => {
             if (eslintRes) {
                 res.push(eslintRes);
             }
-            const sasslintTask = options.styles !== false ? require('./linters/sass-lint.js') : () => global.Promise.resolve();
-            return sasslintTask(app, { warnings: options.warnings, files: filterStyleFiles(entries) }, profiler)
+            const stylelintTask = options.styles !== false ? require('./linters/stylelint.js') : () => global.Promise.resolve();
+            return stylelintTask(app, { warnings: options.warnings, files: filterStyleFiles(entries) }, profiler)
                 .then((sassRes) => {
                     if (sassRes) {
                         res.push(sassRes);
