@@ -70,6 +70,12 @@ const APPLE_ICONS = {
         background: { r: 255, g: 255, b: 255, alpha: 255 },
         gutter: 30,
     },
+    APPLE_TOUCH_ICON_IPAD: {
+        name: 'apple-touch-icon-ipad.png',
+        size: 167,
+        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        gutter: 30,
+    },
 };
 
 /**
@@ -138,6 +144,7 @@ function generateIcons(manifest, index, icon, output) {
             .then((appleIcons) => {
                 // update apple icons
                 if (index) {
+                    index.head.innerHTML += `<link rel="apple-touch-icon" href="${path.relative(output, appleIcons[0].src)}">`;
                     appleIcons.forEach((file) => {
                         index.head.innerHTML += `<link rel="apple-touch-icon" sizes="${file.size}x${file.size}" href="${path.relative(output, file.src)}">`;
                     });
@@ -325,11 +332,22 @@ module.exports = function(app, options = {}) {
             if (options.scope) {
                 manifest.scope = options.scope;
             }
-            if (manifest.scope && index) {
-                // update index <base> using manifest.scope
-                let base = index.querySelector('base') || index.createElement('base');
-                base.setAttribute('href', manifest.scope);
-                index.head.appendChild(base);
+            if (index) {
+                if (manifest.scope) {
+                    // update index <base> using manifest.scope
+                    let base = index.querySelector('base') || index.createElement('base');
+                    base.setAttribute('href', manifest.scope);
+                    index.head.appendChild(base);
+                }
+                // update index meta title
+                let meta = index.querySelector('meta[name="apple-mobile-web-app-title"]') || index.createElement('meta');
+                meta.setAttribute('name', 'apple-mobile-web-app-title');
+                meta.setAttribute('content', manifest.name || manifest.short_name);
+                index.head.appendChild(meta);
+                // update index title
+                let title = index.querySelector('title') || index.createElement('title');
+                title.innerHTML = manifest.name || manifest.short_name;
+                index.head.appendChild(title);
             }
             // write the new manifest file.
             fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
