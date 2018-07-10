@@ -892,9 +892,7 @@ rules:
 
     # https://stylelint.io/user-guide/rules/no-descending-specificity
     # Disallow selectors of lower specificity from coming after overriding selectors of higher specificity.
-    no-descending-specificity:
-        - true
-        - severity: warning
+    # no-descending-specificity: false
 
     # https://stylelint.io/user-guide/rules/no-duplicate-at-import-rules
     # Disallow duplicate @import rules within a stylesheet.
