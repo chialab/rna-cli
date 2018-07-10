@@ -11,11 +11,11 @@ const paths = require('../../../lib/paths.js');
  * @returns {string}
  */
 function getConfig() {
-    let localConf = path.join(paths.cwd, '.stylelintrc.yml');
+    let localConf = path.join(paths.cwd, '.stylelintrc');
     if (fs.existsSync(localConf)) {
         return localConf;
     }
-    return path.join(paths.cli, 'configs/lint/stylelintrc.yml');
+    return path.join(paths.cli, 'configs/lint/stylelintrc');
 }
 
 /**

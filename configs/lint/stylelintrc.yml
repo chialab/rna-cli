@@ -18,11 +18,11 @@ rules:
 
     # https://stylelint.io/user-guide/rules/color-named
     # Require (where possible) or disallow named colors.
-    color-named: false
+    # color-named: false
 
     # https://stylelint.io/user-guide/rules/color-no-hex
     # Disallow hex colors.
-    color-no-hex: false
+    # color-no-hex: false
 
     # https://stylelint.io/user-guide/rules/color-hex-case
     # Specify lowercase or uppercase for hex colors (Autofixable).
@@ -32,7 +32,7 @@ rules:
 
     # https://stylelint.io/user-guide/rules/color-hex-length
     # Specify short or long notation for hex colors (Autofixable).
-    color-hex-length: false
+    # color-hex-length: false
 
     ### Fonts
 
@@ -56,7 +56,7 @@ rules:
 
     # https://stylelint.io/user-guide/rules/font-weight-notation
     # Require numeric or named (where possible) font-weight values.
-    font-weight-notation: false
+    # font-weight-notation: false
 
     ### Functions
 
@@ -74,27 +74,27 @@ rules:
 
     # https://stylelint.io/user-guide/rules/function-url-no-scheme-relative
     # Disallow scheme-relative urls.
-    function-url-no-scheme-relative: false
+    # function-url-no-scheme-relative: false
 
     # https://stylelint.io/user-guide/rules/function-url-scheme-blacklist
     # Specify a blacklist of disallowed url schemes.
-    function-url-scheme-blacklist: false
+    # function-url-scheme-blacklist: false
 
     # https://stylelint.io/user-guide/rules/function-url-scheme-whitelist
     # Specify a whitelist of allowed url schemes.
-    function-url-scheme-whitelist: false
+    # function-url-scheme-whitelist: false
 
     # https://stylelint.io/user-guide/rules/function-blacklist
     # Specify a blacklist of disallowed functions.
-    function-blacklist: false
+    # function-blacklist: false
 
     # https://stylelint.io/user-guide/rules/function-whitelist
     # Specify a whitelist of allowed functions.
-    function-whitelist: false
+    # function-whitelist: false
 
     # https://stylelint.io/user-guide/rules/function-comma-newline-after
     # Require a newline or disallow whitespace after the commas of functions.
-    function-comma-newline-after: false
+    # function-comma-newline-after: false
 
     # https://stylelint.io/user-guide/rules/function-comma-newline-before
     # Require a newline or disallow whitespace before the commas of functions.
@@ -168,11 +168,11 @@ rules:
 
     # https://stylelint.io/user-guide/rules/number-max-precision
     # Limit the number of decimal places allowed in numbers.
-    number-max-precision: false
+    # number-max-precision: false
 
     # https://stylelint.io/user-guide/rules/number-leading-zero
     # Require or disallow a leading zero for fractional numbers less than 1 (Autofixable).
-    number-leading-zero: false
+    # number-leading-zero: false
 
     # https://stylelint.io/user-guide/rules/number-no-trailing-zeros
     # Disallow trailing zeros in numbers (Autofixable).
@@ -190,11 +190,11 @@ rules:
 
     # https://stylelint.io/user-guide/rules/unit-blacklist
     # Specify a blacklist of disallowed units.
-    unit-blacklist: false
+    # unit-blacklist: false
 
     # https://stylelint.io/user-guide/rules/unit-whitelist
     # Specify a whitelist of allowed units.
-    unit-whitelist: false
+    # unit-whitelist: false
 
     # https://stylelint.io/user-guide/rules/length-zero-no-unit
     # Disallow units for zero lengths (Autofixable).
@@ -218,19 +218,19 @@ rules:
 
     # https://stylelint.io/user-guide/rules/shorthand-property-no-redundant-values
     # Disallow redundant values in shorthand properties (Autofixable).
-    shorthand-property-no-redundant-values: false
+    # shorthand-property-no-redundant-values: false
 
     # https://stylelint.io/user-guide/rules/custom-property-pattern
     # Specify a pattern for custom properties.
-    custom-property-pattern: false
+    # custom-property-pattern: false
 
     # https://stylelint.io/user-guide/rules/property-blacklist
     # Specify a blacklist of disallowed properties.
-    property-blacklist: false
+    # property-blacklist: false
 
     # https://stylelint.io/user-guide/rules/property-whitelist
     # Specify a whitelist of allowed properties.
-    property-whitelist: false
+    # property-whitelist: false
 
     # https://stylelint.io/user-guide/rules/property-no-vendor-prefix
     # Disallow vendor prefixes for properties.
@@ -239,11 +239,11 @@ rules:
         - ignoreProperties:
             - -webkit-overflow-scrolling
             - -webkit-line-clamp
-        - severity: warning
+          severity: warning
 
     # https://stylelint.io/user-guide/rules/custom-property-empty-line-before
     # Require or disallow an empty line before custom properties (Autofixable).
-    custom-property-empty-line-before: false
+    # custom-property-empty-line-before: false
 
     # https://stylelint.io/user-guide/rules/property-case
     # Specify lowercase or uppercase for properties.
@@ -305,7 +305,7 @@ rules:
 
     # https://stylelint.io/user-guide/rules/keyframes-name-pattern
     # Specify a pattern for keyframe names.
-    keyframes-name-pattern: false
+    # keyframes-name-pattern: false
 
     ### Time
 
@@ -337,7 +337,7 @@ rules:
 
     # https://stylelint.io/user-guide/rules/declaration-block-no-redundant-longhand-properties
     # Disallow longhand properties that can be combined into one shorthand property.
-    declaration-block-no-redundant-longhand-properties: false
+    # declaration-block-no-redundant-longhand-properties: false
 
     # https://stylelint.io/user-guide/rules/declaration-no-important
     # Disallow !important within declarations.
@@ -353,19 +353,19 @@ rules:
 
     # https://stylelint.io/user-guide/rules/declaration-property-unit-blacklist
     # Specify a blacklist of disallowed property and unit pairs within declarations.
-    declaration-property-unit-blacklist: false
+    # declaration-property-unit-blacklist: false
 
     # https://stylelint.io/user-guide/rules/declaration-property-unit-whitelist
     # Specify a whitelist of allowed property and unit pairs within declarations.
-    declaration-property-unit-whitelist: false
+    # declaration-property-unit-whitelist: false
 
     # https://stylelint.io/user-guide/rules/declaration-property-value-blacklist
     # Specify a blacklist of disallowed property and value pairs within declarations.
-    declaration-property-value-blacklist: false
+    # declaration-property-value-blacklist: false
 
     # https://stylelint.io/user-guide/rules/declaration-property-value-whitelist
     # Specify a whitelist of allowed property and value pairs within declarations.
-    declaration-property-value-whitelist: false
+    # declaration-property-value-whitelist: false
 
     # https://stylelint.io/user-guide/rules/declaration-bang-space-after
     # Require a single space or disallow whitespace after the bang of declarations.
@@ -381,7 +381,7 @@ rules:
 
     # https://stylelint.io/user-guide/rules/declaration-colon-newline-after
     # Require a newline or disallow whitespace after the colon of declarations.
-    declaration-colon-newline-after: false
+    # declaration-colon-newline-after: false
 
     # https://stylelint.io/user-guide/rules/declaration-colon-space-after
     # Require a single space or disallow whitespace after the colon of declarations.
@@ -397,16 +397,16 @@ rules:
 
     # https://stylelint.io/user-guide/rules/declaration-empty-line-before
     # Require or disallow an empty line before declarations (Autofixable).
-    declaration-empty-line-before: false
+    # declaration-empty-line-before: false
 
     # https://stylelint.io/user-guide/rules/declaration-block-semicolon-newline-after
     # Require a newline or disallow whitespace after the semicolons of declaration blocks.
-    declaration-block-semicolon-newline-after: false
+    # declaration-block-semicolon-newline-after: false
 
     # https://stylelint.io/user-guide/rules/declaration-block-semicolon-newline-before
     # Require a newline or disallow whitespace before the semicolons of declaration blocks.
     declaration-block-semicolon-newline-before:
-        - never
+        - never-multi-line
         - severity: warning
 
     # https://stylelint.io/user-guide/rules/declaration-block-semicolon-space-after
@@ -466,7 +466,7 @@ rules:
     # https://stylelint.io/user-guide/rules/block-opening-brace-newline-before
     # Require a newline or disallow whitespace before the opening brace of blocks.
     block-opening-brace-newline-before:
-        - never
+        - never-single-line
         - severity: warning
 
     # https://stylelint.io/user-guide/rules/block-opening-brace-space-after
@@ -497,47 +497,47 @@ rules:
 
     # https://stylelint.io/user-guide/rules/selector-type-no-unknown
     # Disallow unknown type selectors.
-    selector-type-no-unknown: false
+    # selector-type-no-unknown: false
 
     # https://stylelint.io/user-guide/rules/selector-attribute-operator-blacklist
     # Specify a blacklist of disallowed attribute operators.
-    selector-attribute-operator-blacklist: false
+    # selector-attribute-operator-blacklist: false
 
     # https://stylelint.io/user-guide/rules/selector-attribute-operator-whitelist
     # Specify a whitelist of allowed attribute operators.
-    selector-attribute-operator-whitelist: false
+    # selector-attribute-operator-whitelist: false
 
     # https://stylelint.io/user-guide/rules/selector-id-pattern
     # Specify a pattern for id selectors.
-    selector-id-pattern: false
+    # selector-id-pattern: false
 
     # https://stylelint.io/user-guide/rules/selector-class-pattern
     # Specify a pattern for class selectors.
-    selector-class-pattern: false
+    # selector-class-pattern: false
 
     # https://stylelint.io/user-guide/rules/selector-combinator-blacklist
     # Specify a blacklist of disallowed combinators.
-    selector-combinator-blacklist: false
+    # selector-combinator-blacklist: false
 
     # https://stylelint.io/user-guide/rules/selector-combinator-whitelist
     # Specify a whitelist of allowed combinators.
-    selector-combinator-whitelist: false
+    # selector-combinator-whitelist: false
 
     # https://stylelint.io/user-guide/rules/selector-max-attribute
     # Limit the number of attribute selectors in a selector.
-    selector-max-attribute: false
+    # selector-max-attribute: false
 
     # https://stylelint.io/user-guide/rules/selector-max-class
     # Limit the number of classes in a selector.
-    selector-max-class: false
+    # selector-max-class: false
 
     # https://stylelint.io/user-guide/rules/selector-max-combinators
     # Limit the number of combinators in a selector.
-    selector-max-combinators: false
+    # selector-max-combinators: false
 
     # https://stylelint.io/user-guide/rules/selector-max-compound-selectors
     # Limit the number of compound selectors in a selector.
-    selector-max-compound-selectors: false
+    # selector-max-compound-selectors: false
 
     # https://stylelint.io/user-guide/rules/selector-max-empty-lines
     # Limit the number of adjacent empty lines within selectors.
@@ -547,33 +547,33 @@ rules:
 
     # https://stylelint.io/user-guide/rules/selector-max-id
     # Limit the number of id selectors in a selector.
-    selector-max-id: false
+    # selector-max-id: false
 
     # https://stylelint.io/user-guide/rules/selector-max-pseudo-class
     # Limit the number of pseudo-classes in a selector.
-    selector-max-pseudo-class: false
+    # selector-max-pseudo-class: false
 
     # https://stylelint.io/user-guide/rules/selector-max-specificity
     # Limit the specificity of selectors.
-    selector-max-specificity: false
+    # selector-max-specificity: false
 
     # https://stylelint.io/user-guide/rules/selector-max-type
     # Limit the number of type in a selector.
-    selector-max-type: false
+    # selector-max-type: false
 
     # https://stylelint.io/user-guide/rules/selector-max-universal
     # Limit the number of universal selectors in a selector.
-    selector-max-universal: false
+    # selector-max-universal: false
 
     # https://stylelint.io/user-guide/rules/selector-nested-pattern
     # Specify a pattern for the selectors of rules nested within rules.
-    selector-nested-pattern: false
+    # selector-nested-pattern: false
 
     # https://stylelint.io/user-guide/rules/selector-no-qualifying-type
     # Disallow qualifying a selector by type.
     selector-no-qualifying-type:
         - false
-        - ingore:
+        - ignore:
             - attribute
             - class
             - id
@@ -586,19 +586,19 @@ rules:
 
     # https://stylelint.io/user-guide/rules/selector-pseudo-class-blacklist
     # Specify a blacklist of disallowed pseudo-class selectors.
-    selector-pseudo-class-blacklist: false
+    # selector-pseudo-class-blacklist: false
 
     # https://stylelint.io/user-guide/rules/selector-pseudo-class-whitelist
     # Specify a whitelist of allowed pseudo-class selectors.
-    selector-pseudo-class-whitelist: false
+    # selector-pseudo-class-whitelist: false
 
     # https://stylelint.io/user-guide/rules/selector-pseudo-element-blacklist
     # Specify a blacklist of disallowed pseudo-element selectors.
-    selector-pseudo-element-blacklist: false
+    # selector-pseudo-element-blacklist: false
 
     # https://stylelint.io/user-guide/rules/selector-pseudo-element-whitelist
     # Specify a whitelist of allowed pseudo-element selectors.
-    selector-pseudo-element-whitelist: false
+    # selector-pseudo-element-whitelist: false
 
     # https://stylelint.io/user-guide/rules/selector-attribute-brackets-space-inside
     # Require a single space or disallow whitespace on the inside of the brackets within attribute selectors.
@@ -705,6 +705,7 @@ rules:
         - except:
             - after-single-line-comment
             - first-nested
+          severity: warning
 
     ### Media features
 
@@ -722,19 +723,19 @@ rules:
 
     # https://stylelint.io/user-guide/rules/media-feature-name-blacklist
     # Specify a blacklist of disallowed media feature names.
-    media-feature-name-blacklist: false
+    # media-feature-name-blacklist: false
 
     # https://stylelint.io/user-guide/rules/media-feature-name-value-whitelist
     # Specify a whitelist of allowed media feature name and value pairs.
-    media-feature-name-value-whitelist: false
+    # media-feature-name-value-whitelist: false
 
     # https://stylelint.io/user-guide/rules/media-feature-name-whitelist
     # Specify a whitelist of allowed media feature names.
-    media-feature-name-whitelist: false
+    # media-feature-name-whitelist: false
 
     # https://stylelint.io/user-guide/rules/custom-media-pattern
     # Specify a pattern for custom media query names.
-    custom-media-pattern: false
+    # custom-media-pattern: false
 
     # https://stylelint.io/user-guide/rules/media-feature-colon-space-after
     # Require a single space or disallow whitespace after the colon in media features.
@@ -805,7 +806,7 @@ rules:
         - ignoreAtRules:
             - mixin
             - include
-        - severity: error
+          severity: error
 
     # https://stylelint.io/user-guide/rules/at-rule-no-vendor-prefix
     # Disallow vendor prefixes for at-rules.
@@ -815,11 +816,11 @@ rules:
 
     # https://stylelint.io/user-guide/rules/at-rule-blacklist
     # Specify a blacklist of disallowed at-rules.
-    at-rule-blacklist: false
+    # at-rule-blacklist: false
 
     # https://stylelint.io/user-guide/rules/at-rule-whitelist
     # Specify a whitelist of allowed at-rules.
-    at-rule-whitelist: false
+    # at-rule-whitelist: false
 
     # https://stylelint.io/user-guide/rules/at-rule-empty-line-before
     # Require or disallow an empty line before at-rules (Autofixable).
@@ -828,10 +829,10 @@ rules:
         - except:
             - after-same-name
             - first-nested
-        - ignore:
+          ignore:
             - after-comment
             - blockless-after-same-name-blockless
-        - severity: warning
+          severity: warning
 
     # https://stylelint.io/user-guide/rules/at-rule-name-case
     # Specify lowercase or uppercase for at-rules names (Autofixable).
@@ -873,7 +874,7 @@ rules:
 
     # https://stylelint.io/user-guide/rules/comment-word-blacklist
     # Specify a blacklist of disallowed words within comments.
-    comment-word-blacklist: false
+    # comment-word-blacklist: false
 
     # https://stylelint.io/user-guide/rules/comment-empty-line-before
     # Require or disallow an empty line before comments (Autofixable).
@@ -931,7 +932,7 @@ rules:
 
     # https://stylelint.io/user-guide/rules/no-unknown-animations
     # Disallow unknown animations.
-    no-unknown-animations: false
+    # no-unknown-animations: false
 
     # https://stylelint.io/user-guide/rules/indentation
     # Specify indentation (Autofixable).
@@ -945,11 +946,11 @@ rules:
         - 1
         - ignore:
             - comments
-        - severity: warning
+          severity: warning
 
     # https://stylelint.io/user-guide/rules/max-line-length
     # Limit the length of a line.
-    max-line-length: false
+    # max-line-length: false
 
     # https://stylelint.io/user-guide/rules/no-eol-whitespace
     # Disallow end-of-line whitespace.
