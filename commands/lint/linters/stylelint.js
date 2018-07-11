@@ -15,7 +15,7 @@ function getConfig() {
     if (fs.existsSync(localConf)) {
         return localConf;
     }
-    return path.join(paths.cli, 'configs/lint/stylelintrc');
+    return path.join(paths.cli, 'configs/lint/stylelintrc.yml');
 }
 
 /**
