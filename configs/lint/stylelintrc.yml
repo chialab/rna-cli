@@ -214,7 +214,12 @@ rules:
     # Disallow unknown properties.
     property-no-unknown:
         - true
-        - severity: error
+        - ignoreProperties:
+            - appearance
+            - -webkit-overflow-scrolling
+            - -webkit-tap-highlight-color
+            - -webkit-line-clamp
+          severity: error
 
     # https://stylelint.io/user-guide/rules/shorthand-property-no-redundant-values
     # Disallow redundant values in shorthand properties (Autofixable).
