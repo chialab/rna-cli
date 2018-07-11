@@ -96,11 +96,11 @@ module.exports = function stylelintTask(app, options, profiler) {
                     app.log(formatter(eslintLikeReport));
                 }
                 return global.Promise.resolve(
-                    (options.warnings !== false || errorCount) ? reports : undefined
+                    (options.warnings !== false || errorCount) ? eslintLikeReport : undefined
                 );
             }
             app.log('everything is fine with stylelint.');
-            return global.Promise.resolve(reports);
+            return global.Promise.resolve();
         }).catch((err) => {
             profile.end();
             task();
