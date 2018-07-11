@@ -16,7 +16,7 @@ module.exports = (app, options) => {
     let stylelintPromise = global.Promise.resolve();
     if (options.linting !== false) {
         const cwd = paths.cwd;
-        let stylelintConfig = path.join(cwd, '.stylelintrc');
+        let stylelintConfig = path.join(cwd, '.stylelintrc.yml');
         let isNew = !fs.existsSync(stylelintConfig);
         let content = fs.readFileSync(
             path.join(paths.cli, './configs/lint/stylelintrc.yml'),
