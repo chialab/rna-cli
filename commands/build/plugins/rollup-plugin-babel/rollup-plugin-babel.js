@@ -4,13 +4,13 @@ const babelCore = require('@babel/core');
 const babelModuleImports = require('@babel/helper-module-imports');
 
 const BABEL_HELPERS = '\0rollupPluginBabelHelpers';
-const CJS_MODULES = [];
+const CJS_MODULES = {};
 
 function helperPlugin() {
     return {
         pre(file) {
             const cachedHelpers = {};
-            file.set('helperGenerator', name => {
+            file.set('helperGenerator', (name) => {
                 if (cachedHelpers[name]) {
                     return cachedHelpers[name];
                 }
@@ -39,6 +39,8 @@ module.exports = function(options = {}) {
     delete options.include;
     delete options.exclude;
 
+    let lastImporter;
+
     return {
         name: 'babel',
 
@@ -53,12 +55,17 @@ module.exports = function(options = {}) {
                 }
             }
 
-            for (let node of CJS_MODULES) {
-                if (node.id === filename) {
-                    return node.alias;
-                }
-                if (node.scope === id) {
-                    return id;
+            lastImporter = importer;
+
+            for (let cid in CJS_MODULES) {
+                let node = CJS_MODULES[cid];
+                if (node.importer !== importer) {
+                    if (cid === filename) {
+                        return CJS_MODULES[cid].alias;
+                    }
+                    if (CJS_MODULES[cid].scope === id) {
+                        return id;
+                    }
                 }
             }
         },
@@ -68,11 +75,11 @@ module.exports = function(options = {}) {
                 return babelCore.buildExternalHelpers(null, 'module');
             }
 
-            for (let node of CJS_MODULES) {
-                if (node.alias === id) {
-                    return `import Mod from '${node.scope}'; export default Mod.exports;`;
+            for (let cid in CJS_MODULES) {
+                if (CJS_MODULES[cid].alias === id) {
+                    return `import Mod from '${CJS_MODULES[cid].scope}'; export default Mod.exports;`;
                 }
-                if (node.scope === id) {
+                if (CJS_MODULES[cid].scope === id) {
                     return 'const module = { exports: {} }; export default module;';
                 }
             }
@@ -84,8 +91,8 @@ module.exports = function(options = {}) {
             if (!filter(id)) return null;
             if (id === BABEL_HELPERS) return null;
 
-            for (let node of CJS_MODULES) {
-                if (node.alias === id) {
+            for (let cid in CJS_MODULES) {
+                if (CJS_MODULES[cid].alias === id) {
                     return {
                         code,
                         map: {},
@@ -118,11 +125,12 @@ module.exports = function(options = {}) {
             const body = transformed.ast.program.body;
             for (let child of body) {
                 if (child.__scope) {
-                    CJS_MODULES.push({
+                    CJS_MODULES[id] = CJS_MODULES[id] || {
                         id,
                         scope: createScope(id),
                         alias: createAlias(id),
-                    });
+                        importer: lastImporter,
+                    };
                     break;
                 }
             }
