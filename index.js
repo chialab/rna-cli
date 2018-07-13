@@ -1,5 +1,15 @@
 #! /usr/bin/env node
 
+/* eslint-disable */
+
+var version = process.version.replace(/^v/, '').split('.');
+if (version[0] < 8 || (version[0] == 8 && version[1] < 9)) {
+    console.log('\nRNA requires Node.js 8.9.0 or higher to be installed.\n');
+    process.exit(1);
+}
+
+/* eslint-enable */
+
 const CLI = require('./lib/cli.js');
 
 const program = new CLI('@chialab/rna-cli').version(require('./package.json').version);
