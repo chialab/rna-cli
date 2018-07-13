@@ -24,25 +24,23 @@ $ docker run chialab/rna-cli rna --version
 
 ## Commands
 
-* [x] **help** - Show CLI help
-* [x] **setup** - Setup a new project.
-* [x] **install** - Sync project dependencies.
-* [x] **add** - Add a project dependency.
-* [x] **remove** - Remove a project dependency.
-* [x] **lint** - Lint your source files.
-* [x] **build** - Build the project.
-* [x] **manifest** - Generate webapp manifest.
-* [x] **sw** - Generate Service Worker with precached files.
-* [x] **watch** - Watch project files.
-* [x] **serve** - Setup a server for your project.
-* [x] **unit** - Run project unit tests.
-* [x] **publish** - Publish to NPM.
-* [ ] **cdn** - Publish to CDN.
-* [x] **documentation** - Generate API references.
-* [ ] **website** - Generate project websie.
-* [x] **start** - `yarn/npm start` alias.
-* [x] **run** - `yarn/npm run` alias.
-* [x] **upgrade** - Update the CLI.
+* **help** - Show CLI help
+* **setup** - Setup a new project.
+* **install** - Sync project dependencies.
+* **add** - Add a project dependency.
+* **remove** - Remove a project dependency.
+* **lint** - Lint your source files.
+* **build** - Build the project.
+* **manifest** - Generate webapp manifest.
+* **sw** - Generate Service Worker with precached files.
+* **watch** - Watch project files.
+* **serve** - Setup a server for your project.
+* **unit** - Run project unit tests.
+* **publish** - Publish to NPM.
+* **documentation** - Generate API references.
+* **start** - `yarn/npm start` alias.
+* **run** - `yarn/npm run` alias.
+* **upgrade** - Update the CLI.
 
 ## Principles
 
