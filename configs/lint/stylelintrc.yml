@@ -715,7 +715,7 @@ rules:
         - except:
             - first-nested
           ignore:
-            - after-single-line-comment
+            - after-comment
           severity: warning
 
     ### Media features
