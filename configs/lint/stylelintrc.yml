@@ -1021,9 +1021,9 @@ rules:
             # Typography
             - color
             - font
-            - font-weight
-            - font-size
             - font-family
+            - font-size
+            - font-weight
             - font-style
             - font-variant
             - font-size-adjust
