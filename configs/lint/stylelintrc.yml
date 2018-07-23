@@ -216,6 +216,8 @@ rules:
         - true
         - ignoreProperties:
             - appearance
+            - voice-family
+            - -webkit-appearance
             - -webkit-overflow-scrolling
             - -webkit-tap-highlight-color
             - -webkit-line-clamp
@@ -242,8 +244,9 @@ rules:
     property-no-vendor-prefix:
         - true
         - ignoreProperties:
-            - -webkit-overflow-scrolling
-            - -webkit-line-clamp
+            - appearance
+            - overflow-scrolling
+            - line-clamp
           severity: warning
 
     # https://stylelint.io/user-guide/rules/custom-property-empty-line-before
@@ -268,7 +271,9 @@ rules:
     # Specify lowercase or uppercase for keywords values.
     value-keyword-case:
         - lower
-        - severity: warning
+        - ignoreKeywords:
+            - '/^U\+/'
+          severity: warning
 
     # https://stylelint.io/user-guide/rules/value-list-comma-newline-after
     # Require a newline or disallow whitespace after the commas of value lists.
@@ -708,8 +713,9 @@ rules:
     rule-empty-line-before:
         - always-multi-line
         - except:
-            - after-single-line-comment
             - first-nested
+          ignore:
+            - after-single-line-comment
           severity: warning
 
     ### Media features
@@ -833,11 +839,10 @@ rules:
     at-rule-empty-line-before:
         - always
         - except:
-            - after-same-name
+            - blockless-after-same-name-blockless
             - first-nested
           ignore:
             - after-comment
-            - blockless-after-same-name-blockless
           severity: warning
 
     # https://stylelint.io/user-guide/rules/at-rule-name-case
