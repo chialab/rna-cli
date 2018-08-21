@@ -78,7 +78,6 @@ module.exports = (app, options, profiler) => {
                         fs.writeFileSync(`${options.output}.map`, result.map);
                     }
                     app.log(`${colors.bold(colors.green('sass done!'))} ${colors.grey(`(${options.output})`)}`);
-                    resolver.clear();
                     task();
                     profile.end();
                     let manifest = new BundleManifest(options.input, options.output);
@@ -88,7 +87,6 @@ module.exports = (app, options, profiler) => {
                     resolve(manifest);
                 })
                 .catch((err) => {
-                    resolver.clear();
                     task();
                     profile.end();
                     if (err) {
@@ -98,7 +96,6 @@ module.exports = (app, options, profiler) => {
                     reject();
                 });
         } catch (err) {
-            resolver.clear();
             task();
             profile.end();
             if (err) {

@@ -7463,9 +7463,9 @@ safe-regex@^1.1.0:
   version "2.1.2"
   resolved "https://registry.npmjs.org/safer-buffer/-/safer-buffer-2.1.2.tgz#44fa161b0187b9549dd84bb91802f9bd8385cd6a"
 
-sass@1.6.2:
-  version "1.6.2"
-  resolved "https://registry.npmjs.org/sass/-/sass-1.6.2.tgz#665cadcbd853e9e497cbd298de645440a992cd1a"
+sass@1.13.0:
+  version "1.13.0"
+  resolved "https://registry.npmjs.org/sass/-/sass-1.13.0.tgz#1b2dbd3e6d45a9d0fcf36203c2f1791bd3f4e876"
   dependencies:
     chokidar "^2.0.0"
 

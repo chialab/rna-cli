@@ -28,8 +28,6 @@ function alternatives(url) {
     return res;
 }
 
-let tmpFiles;
-
 /**
  * @typedef {Object} ImporterResult
  * @property {string} [file] The url of the path to import.
@@ -39,10 +37,8 @@ let tmpFiles;
 /**
  * Create a scoped SASS resolver.
  */
-const resolver = module.exports = function() {
-    tmpFiles = [];
-
-    const alreadyResolved = [];
+module.exports = function() {
+    const resolved = [];
     /**
      * Resolve the file path of an imported style.
      * @param {string} url The url to import.
@@ -103,38 +99,17 @@ const resolver = module.exports = function() {
                 }
             }
         }
-        if (alreadyResolved.indexOf(url) !== -1) {
+        if (resolved.indexOf(url) !== -1) {
             // This file has been resolved already.
             // Skip it in order to avoid duplications.
             return {
                 contents: '',
             };
         }
-        alreadyResolved.push(url);
-        if (path.extname(url) === '.css') {
-            // if the file has css extension, return its contents.
-            // (sass does not include css file using plain css import, so we have to pass the content).
-            const sassUrl = path.join(path.dirname(url), `${path.basename(url, path.extname(url))}.scss`);
-            fs.copySync(url, sassUrl);
-            url = sassUrl;
-            tmpFiles.push(sassUrl);
-        }
+        resolved.push(url);
         // return the found url.
         return {
             file: url,
         };
     };
-};
-
-/**
- * Remove temporary files.
- * @return {void}
- */
-resolver.clear = function() {
-    if (tmpFiles) {
-        tmpFiles.forEach((tmp) => {
-            fs.removeSync(tmp);
-        });
-        tmpFiles = [];
-    }
 };
