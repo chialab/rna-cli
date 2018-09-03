@@ -98,3 +98,5 @@ rules:
     - varsIgnorePattern: (IDOM|process)
   no-console:
     - 1
+  getter-return:
+    - 1

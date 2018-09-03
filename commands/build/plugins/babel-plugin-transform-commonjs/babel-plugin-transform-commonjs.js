@@ -12,7 +12,6 @@ function transformCommon({ types }) {
         visitor: {
             Program(program, state) {
                 const body = program.get('body');
-                const opts = state.opts || {};
 
                 for (let i = 0, len = body.length; i < len; i++) {
                     const item = body[i];
@@ -60,67 +59,50 @@ function transformCommon({ types }) {
                     },
                 });
 
-                if (imports.length === 0 && !('module' in program.scope.globals) &&  !('exports' in program.scope.globals)) {
+                if (imports.length === 0 && !('module' in program.scope.globals) && !('exports' in program.scope.globals)) {
                     // not commonjs module
                     return;
                 }
 
                 // setup the scope of the module.
-                let scopeOption = opts.scope;
-                if (typeof scopeOption === 'function') {
-                    scopeOption = scopeOption(program, state);
-                }
-                const scope = scopeOption !== false ? program.scope.generateUidIdentifier('scope') : types.identifier('module');
+                const scope = types.identifier('module');
 
                 // wrap the body of the module in order to usce the scope variable.
                 // `(function(module, exports) { <body> }(scope, scope.exports))`
-                if (scopeOption !== false) {
-                    let assignment;
-                    if (typeof scopeOption === 'string') {
-                        assignment = types.importDeclaration(
-                            [
-                                types.importDefaultSpecifier(scope),
-                            ],
-                            types.stringLiteral(scopeOption)
-                        );
-                    } else {
-                        // setup the module scope variable as `{ exports: {} }`.
-                        assignment = types.variableDeclaration(
-                            'const',
-                            [
-                                types.variableDeclarator(
-                                    scope,
-                                    types.objectExpression([
-                                        types.objectProperty(types.identifier('exports'), types.objectExpression([])),
-                                    ])
-                                ),
-                            ]
-                        );
-                    }
+                let assignment = types.variableDeclaration(
+                    'const',
+                    [
+                        types.variableDeclarator(
+                            scope,
+                            types.objectExpression([
+                                types.objectProperty(types.identifier('exports'), types.objectExpression([])),
+                            ])
+                        ),
+                    ]
+                );
 
-                    assignment.__scope = true;
+                assignment.__scope = true;
 
-                    const wrap = types.expressionStatement(
-                        types.callExpression(
-                            types.functionExpression(
-                                null,
-                                [types.identifier('module'), types.identifier('exports')],
-                                types.blockStatement(body.map((child) => {
-                                    if (child.isImportDeclaration()) {
-                                        return;
-                                    }
-                                    let node = child.node;
-                                    child.remove();
-                                    return node;
-                                }).filter(Boolean))
-                            ),
-                            [scope, types.memberExpression(scope, types.identifier('exports'))]
-                        )
-                    );
+                const wrap = types.expressionStatement(
+                    types.callExpression(
+                        types.functionExpression(
+                            null,
+                            [types.identifier('module'), types.identifier('exports')],
+                            types.blockStatement(body.map((child) => {
+                                if (child.isImportDeclaration()) {
+                                    return;
+                                }
+                                let node = child.node;
+                                child.remove();
+                                return node;
+                            }).filter(Boolean))
+                        ),
+                        [scope, types.memberExpression(scope, types.identifier('exports'))]
+                    )
+                );
 
-                    program.unshiftContainer('body', assignment);
-                    program.pushContainer('body', wrap);
-                }
+                program.unshiftContainer('body', assignment);
+                program.pushContainer('body', wrap);
 
                 // create the export declaration.
                 program.pushContainer('body', types.exportDefaultDeclaration(

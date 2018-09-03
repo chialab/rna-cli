@@ -14,6 +14,7 @@ const json = require('rollup-plugin-json');
 const url = require('rollup-plugin-url');
 const string = require('../plugins/rollup-plugin-string/rollup-plugin-string');
 const optimize = require('rollup-plugin-optimize-js');
+const typescript = require('rollup-plugin-typescript2');
 
 const postcss = require('postcss');
 const autoprefixer = require('autoprefixer');
@@ -29,12 +30,13 @@ function getBabelConfig(options) {
     const plugins = [
         [require('../plugins/babel-plugin-resolve/babel-plugin-resolve.js'), {
             modulesPaths: [path.join(paths.cwd, 'node_modules')],
-            exclude: ['\0rollupPluginBabelHelpers', 'rollupCommonGlobal'],
+            exclude: [/^\\0/],
+            jsNext: false,
         }],
     ];
 
     return {
-        include: /\.(mjs|js|jsx)$/,
+        include: /\.(mjs|js|jsx|ts)$/,
         babelrc: false,
         compact: false,
         presets: [
@@ -80,7 +82,7 @@ function getConfig(app, bundler, options) {
             output: {
                 file: options.output,
                 name: options.name,
-                format: 'umd',
+                format: options.format || 'umd',
                 sourcemap: (typeof options.map === 'string') ? options.map : (options.map !== false),
                 strict: false,
                 indent: false,
@@ -122,6 +124,17 @@ function getConfig(app, bundler, options) {
                 }),
 
                 /** PLUGINS THAT HAVE EFFECTS ON TRANSPILING AND CODE IN GENERAL */
+                path.extname(options.input) === '.ts' ? typescript({
+                    include: [/\.(ts|tsx)$/],
+                    clean: true,
+                    cacheRoot: path.join(paths.tmp, 'rtp'),
+                    useTsconfigDeclarationDir: true,
+                    tsconfigOverride: {
+                        compilerOptions: {
+                            declaration: !!options.declaration,
+                        },
+                    },
+                }) : {},
                 babel(babelConfig),
                 options.production ? uglify({
                     output: {
@@ -214,7 +227,7 @@ module.exports = (app, options, profiler) => {
     }
     if (options.production && !process.env.hasOwnProperty('NODE_ENV')) {
         // Set NODE_ENV environment variable if `--production` flag is set.
-        app.log(colors.yellow('🚢 setting "production" environment.'));
+        app.log(colors.yellow('🚢  setting "production" environment.'));
         process.env.NODE_ENV = 'production';
     }
     let profile = profiler.task('rollup');
