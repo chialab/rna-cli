@@ -59,9 +59,9 @@
     "postcss": "^7.0.0",
     "postcss-all-unset": "^1.1.0",
     "rollup": "^0.65.0",
-    "rollup-plugin-commonjs": "^9.1.6",
     "rollup-plugin-json": "^3.0.0",
     "rollup-plugin-optimize-js": "^0.0.4",
+    "rollup-plugin-typescript2": "^0.17.0",
     "rollup-plugin-uglify": "^5.0.2",
     "rollup-plugin-url": "^1.4.0",
     "sass": "^1.13.0",
@@ -72,6 +72,7 @@
     "stylelint": "^9.3.0",
     "stylelint-order": "^0.8.1",
     "sync-request": "^4.1.0",
+    "typescript": "^3.0.3",
     "uglify-es": "^3.3.9",
     "workbox-build": "^3.4.1",
     "yarn": "^1.9.4"
