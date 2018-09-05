@@ -91,7 +91,7 @@ function importResolve({ types }) {
         }
         try {
             if (RELATIVE_PATH.test(value)) {
-                value = require.resolve(value, { paths: nodeModules });
+                value = require.resolve(value, { paths: [dirname] });
             } else {
                 if (isCore(value)) {
                     // core nodejs modules
