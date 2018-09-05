@@ -9,7 +9,7 @@ const BundleManifest = require('../../../lib/bundle.js');
 
 const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel');
 const sass = require('../plugins/rollup-plugin-sass-modules/rollup-plugin-sass-modules');
-const uglify = require('rollup-plugin-uglify');
+const { uglify } = require('rollup-plugin-uglify');
 const json = require('rollup-plugin-json');
 const url = require('rollup-plugin-url');
 const string = require('../plugins/rollup-plugin-string/rollup-plugin-string');
