@@ -2,6 +2,9 @@ extends:
   - eslint:recommended
 
 globals:
+  assert: true
+  expect: true
+  should: true
   process: true
 
 env:
@@ -57,6 +60,7 @@ rules:
     - always-multiline
   constructor-super: 0
   generator-star-spacing: 0
+  getter-return: 1
   no-class-assign: 0
   no-confusing-arrow:
     - 2
