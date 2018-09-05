@@ -49,17 +49,23 @@ module.exports = (app, options) => {
         exclude.push(options.exclude);
     }
     if (fs.existsSync(output)) {
+        let tmpFile = `${output}.tmp`;
         fs.writeFileSync(
-            output,
-            fs.readFileSync(output, 'utf8').replace(/\.precache\s*\(\s*\[([^\]]*)\]\)/gi, '.precache([])')
+            tmpFile,
+            fs.readFileSync(output, 'utf8').replace(/\.(precache|precacheAndRoute)\s*\(\s*\[([^\]]*)\]\)/gi, '.$1([])')
         );
         returnPromise = workbox.injectManifest({
-            swSrc: output,
+            swSrc: tmpFile,
             swDest: output,
             globDirectory: input,
             globPatterns: ['**/*'],
             globIgnores: exclude,
             maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
+        }).then(() => {
+            fs.unlinkSync(tmpFile);
+        }).catch((err) => {
+            fs.unlinkSync(tmpFile);
+            return Promise.reject(err);
         });
     } else {
         returnPromise = workbox.generateSW({
