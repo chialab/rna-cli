@@ -539,9 +539,9 @@
     lodash "^4.17.10"
     to-fast-properties "^2.0.0"
 
-"@chialab/babel-preset@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.npmjs.org/@chialab/babel-preset/-/babel-preset-1.1.0.tgz#612df70cfb3dc9afeb92189744be4d7179645924"
+"@chialab/babel-preset@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.npmjs.org/@chialab/babel-preset/-/babel-preset-1.2.0.tgz#53accf555136c11f3aef7b5455be189bc299d72a"
   dependencies:
     "@babel/plugin-transform-react-jsx" "^7.0.0"
     "@babel/preset-env" "^7.0.0"
