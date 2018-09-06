@@ -144,6 +144,7 @@ function importResolve({ types }) {
                     }
                 }
             }
+            value = fs.realpathSync(value);
             value = path.relative(dirname, value);
             if (value[0] !== '.') {
                 value = `./${value}`;
