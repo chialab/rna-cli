@@ -28,6 +28,7 @@ function getBabelConfig(options) {
     }
 
     const plugins = [
+        require('@babel/plugin-syntax-dynamic-import').default,
         [require('../plugins/babel-plugin-resolve/babel-plugin-resolve.js'), {
             modulesPaths: [path.join(paths.cwd, 'node_modules')],
             exclude: [/^\\0/],
