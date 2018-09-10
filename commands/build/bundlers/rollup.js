@@ -9,7 +9,7 @@ const BundleManifest = require('../../../lib/bundle.js');
 
 const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel');
 const sass = require('../plugins/rollup-plugin-sass-modules/rollup-plugin-sass-modules');
-const { uglify } = require('rollup-plugin-uglify');
+const { terser } = require('rollup-plugin-terser');
 const json = require('rollup-plugin-json');
 const url = require('rollup-plugin-url');
 const string = require('../plugins/rollup-plugin-string/rollup-plugin-string');
@@ -137,11 +137,11 @@ function getConfig(app, bundler, options) {
                     },
                 }) : {},
                 babel(babelConfig),
-                options.production ? uglify({
+                options.production ? terser({
                     output: {
                         comments: /@license/,
                     },
-                }, require('uglify-es').minify) : {},
+                }) : {},
                 options.optimize ? optimize() : {},
             ],
             onwarn(warning) {
