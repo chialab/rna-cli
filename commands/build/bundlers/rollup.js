@@ -6,6 +6,7 @@ const paths = require('../../../lib/paths.js');
 const importer = require('../../../lib/import.js');
 const utils = require('../../../lib/utils.js');
 const BundleManifest = require('../../../lib/bundle.js');
+const fileSize = require('../../../lib/file-size.js');
 
 const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel');
 const sass = require('../plugins/rollup-plugin-sass-modules/rollup-plugin-sass-modules');
@@ -251,7 +252,8 @@ module.exports = (app, options, profiler) => {
                             }
                             profile.end();
                             task();
-                            app.log(`${colors.bold(colors.green('bundle ready!'))} ${colors.grey(`(${options.output})`)}`);
+                            app.log(colors.bold(colors.green('bundle ready!')));
+                            app.log(fileSize(options.output));
                             let manifest = new BundleManifest(options.input, options.output);
                             // get bundle dependencies
                             bundler.modules.forEach((mod) => {

@@ -4,6 +4,7 @@ const paths = require('../../../lib/paths.js');
 const colors = require('colors/safe');
 const sass = require('sass');
 const BundleManifest = require('../../../lib/bundle.js');
+const fileSize = require('../../../lib/file-size.js');
 const postcss = require('postcss');
 const resolver = require('../plugins/sass-resolver/sass-resolver');
 
@@ -77,7 +78,8 @@ module.exports = (app, options, profiler) => {
                     if (options.map !== false && options.map !== 'inline' && result.map) {
                         fs.writeFileSync(`${options.output}.map`, result.map);
                     }
-                    app.log(`${colors.bold(colors.green('sass done!'))} ${colors.grey(`(${options.output})`)}`);
+                    app.log(colors.bold(colors.green('sass ready!')));
+                    app.log(fileSize(options.output));
                     task();
                     profile.end();
                     let manifest = new BundleManifest(options.input, options.output);
