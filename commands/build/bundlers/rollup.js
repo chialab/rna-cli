@@ -196,16 +196,16 @@ function timeReport(profile, bundle) {
     };
     Object.keys(timings).forEach((key) => {
         if (key.match(/treeshaking/)) {
-            tasks.treeshaking += timings[key];
+            tasks.treeshaking += timings[key][0];
         } else if (key.match(/sourcemap/)) {
-            tasks.sourcemaps += timings[key];
+            tasks.sourcemaps += timings[key][0];
         } else if (key.match(/generate ast/)) {
-            tasks.parsing += timings[key];
+            tasks.parsing += timings[key][0];
         } else if (key.match(/plugin/)) {
             let match = key.match(/plugin\s*(\d*)(?:\s*\(([\w-_]*)\))?/i);
             let name = match[2] || match[1];
             tasks[name] = tasks[name] || 0;
-            tasks[name] += timings[key];
+            tasks[name] += timings[key][0];
         }
     });
     for (let k in tasks) {
