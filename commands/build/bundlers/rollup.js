@@ -32,7 +32,7 @@ function getBabelConfig(options) {
         [require('../plugins/babel-plugin-resolve/babel-plugin-resolve.js'), {
             modulesPaths: [path.join(paths.cwd, 'node_modules')],
             exclude: [/^\\0/],
-            jsNext: false,
+            jsNext: true,
         }],
     ];
 
