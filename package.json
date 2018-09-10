@@ -33,6 +33,7 @@
     "commondir": "^1.0.1",
     "cssnano": "^4.1.0",
     "documentation": "^8.1.2",
+    "dotenv": "^6.0.0",
     "eslint": "^5.5.0",
     "eslint-plugin-babel": "^5.1.0",
     "eslint-plugin-mocha": "^5.2.0",

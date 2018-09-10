@@ -10,6 +10,8 @@ if (version[0] < 8 || (version[0] == 8 && version[1] < 9)) {
 
 /* eslint-enable */
 
+require('dotenv').config();
+
 const CLI = require('./lib/cli.js');
 
 const program = new CLI('@chialab/rna-cli').version(require('./package.json').version);
