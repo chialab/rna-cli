@@ -91,7 +91,7 @@ module.exports = function stylelintTask(app, options, profiler) {
 
                 return res;
             });
-            if (errorCount || warningCount) {
+            if (errorCount || (options.warnings !== false && warningCount)) {
                 if (options.warnings !== false || errorCount) {
                     const formatter = require('eslint/lib/formatters/stylish');
                     app.log(formatter(eslintLikeReport));
