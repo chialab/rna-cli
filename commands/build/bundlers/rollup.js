@@ -138,8 +138,11 @@ function getConfig(app, bundler, options) {
                 }) : {},
                 babel(babelConfig),
                 options.production ? terser({
-                    output: {
-                        comments: /@license/,
+                    comments(node, { type, text }) {
+                        if (type == 'comment2') {
+                            // multiline comment
+                            return /@preserve|@license|@cc_on/i.test(text);
+                        }
                     },
                 }) : {},
                 options.optimize ? optimize() : {},
