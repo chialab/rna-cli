@@ -56,7 +56,7 @@ module.exports = function(options = {}) {
             let localOpts = Object.assign({
                 filename: id,
             }, options, {
-                ast: true,
+                ast: false,
                 sourceMap: true,
                 plugins: (options.plugins || []).concat(extraPlugins),
             });
@@ -67,13 +67,7 @@ module.exports = function(options = {}) {
                 });
             }
 
-            let transformed = babelCore.transform(code, localOpts);
-
-            return {
-                code: transformed.code,
-                // ast: transformed.ast.program,
-                map: transformed.map,
-            };
+            return babelCore.transformAsync(code, localOpts);
         },
     };
 };
