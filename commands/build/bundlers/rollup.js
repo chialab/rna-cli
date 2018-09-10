@@ -97,7 +97,7 @@ function getConfig(app, bundler, options) {
                     ],
                 }),
                 url({
-                    limit: 10 * 1000 * 1024,
+                    limit: 0,
                     exclude: [],
                     include: [
                         /\.(woff|ttf|eot|gif|png|jpg)$/,
