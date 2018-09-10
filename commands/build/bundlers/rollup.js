@@ -237,7 +237,7 @@ module.exports = (app, options, profiler) => {
     }
     let profile = profiler.task('rollup');
     let previousBundler = caches[options.input];
-    let task = app.log(`bundling${previousBundler ? ' [this will be fast]' : ''}... ${colors.grey(`(${options.input})`)}`, true);
+    let task = app.log(`bundling${previousBundler ? ' [this will be fast]' : ''}... ${colors.grey(`(${path.relative(paths.cwd, options.input)})`)}`, true);
     return getConfig(app, previousBundler, options)
         .then((config) =>
             rollup.rollup(config)

@@ -34,7 +34,7 @@ module.exports = (app, options, profiler) => {
     }
     return new global.Promise((resolve, reject) => {
         let profile = profiler.task('sass');
-        let task = app.log(`sass... ${colors.grey(`(${options.input})`)}`, true);
+        let task = app.log(`sass... ${colors.grey(`(${path.relative(paths.cwd, options.input)})`)}`, true);
         fs.ensureDirSync(path.dirname(options.output));
         try {
             const sassResult = sass.renderSync({
@@ -93,7 +93,7 @@ module.exports = (app, options, profiler) => {
                     profile.end();
                     if (err) {
                         app.log(err);
-                        app.log(`${colors.red('postcss error')} ${colors.grey(`(${options.output})`)}`);
+                        app.log(`${colors.red('postcss error')} ${colors.grey(`(${path.relative(paths.cwd, options.output)})`)}`);
                     }
                     reject();
                 });
@@ -102,7 +102,7 @@ module.exports = (app, options, profiler) => {
             profile.end();
             if (err) {
                 app.log(err);
-                app.log(`${colors.red('sass error')} ${colors.grey(`(${options.output})`)}`);
+                app.log(`${colors.red('sass error')} ${colors.grey(`(${path.relative(paths.cwd, options.input)})`)}`);
             }
             reject();
         }
