@@ -56,6 +56,7 @@ module.exports = function stylelintTask(app, options, profiler) {
             configFile,
             files: styleFiles,
             syntax: 'scss',
+            cache: true,
         }).then((reports) => {
             profile.end();
             task(); // Stop loader.
