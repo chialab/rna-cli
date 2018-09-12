@@ -104,7 +104,7 @@ module.exports = async function stylelintTask(app, options, profiler) {
             return eslintLikeReport;
         }
 
-        app.log('everything is fine with stylelint.');
+        app.log('everything is fine with Stylelint.');
     } catch(err) {
         profile.end();
         task();

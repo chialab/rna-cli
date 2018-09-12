@@ -34,4 +34,12 @@ require('./commands/documentation/index.js')(program);
 require('./commands/run/index.js')(program);
 require('./commands/upgrade/index.js')(program);
 
-program.start();
+(async() => {
+    try {
+        await program.start();
+    } catch (err) {
+        // eslint-disable-next-line
+        console.error(err);
+        process.exit(1);
+    }
+})();

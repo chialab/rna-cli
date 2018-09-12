@@ -26,11 +26,11 @@ function inline(str = '') {
 
 const exported = [];
 
-module.exports = async function(options) {
-    const filter = rollupPluginutils.createFilter(options.include || ['**/*.scss', '**/*.sass'], options.exclude);
-    const importer = options.importer || resolver();
-    const processor = options.processor || (async(code) => code);
-    const defaults = options.options || {};
+module.exports = function(options) {
+    let filter = rollupPluginutils.createFilter(options.include || ['**/*.scss', '**/*.sass'], options.exclude);
+    let importer = options.importer || resolver();
+    let processor = options.processor || (async(code) => code);
+    let defaults = options.options || {};
     let file;
     let active = [];
     return {

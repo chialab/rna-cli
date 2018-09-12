@@ -102,7 +102,11 @@ async function getConfig(app, bundler, options) {
                 ],
             }),
             sass({
-                processor: async(text) => {
+                exclude: [],
+                include: [
+                    /\.(css|scss|sass)$/,
+                ],
+                async processor(text) {
                     let { css } = await postcss([
                         autoprefixer(options.targets),
                     ]).process(text, {
@@ -112,10 +116,6 @@ async function getConfig(app, bundler, options) {
                     });
                     return css;
                 },
-                exclude: [],
-                include: [
-                    /\.(css|scss|sass)$/,
-                ],
                 options: {
                     sourceMap: options.map !== false,
                     sourceMapEmbed: options.map !== false,
