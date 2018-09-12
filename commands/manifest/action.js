@@ -2,7 +2,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const colors = require('colors/safe');
 const inquirer = require('inquirer');
-const cwd = require('../../lib/paths.js').cwd;
+const { cwd } = require('../../lib/paths.js');
 const Proteins = require('@chialab/proteins');
 
 const FAVICONS = {
@@ -348,6 +348,13 @@ module.exports = function(app, options = {}) {
                 let title = index.querySelector('title') || index.createElement('title');
                 title.innerHTML = manifest.name || manifest.short_name;
                 index.head.appendChild(title);
+                // update theme meta
+                if (manifest.theme) {
+                    let theme = index.querySelector('meta[name="theme-color"]') || index.createElement('meta');
+                    theme.setAttribute('name', 'theme-color');
+                    theme.setAttribute('content', manifest.theme);
+                    index.head.appendChild(theme);
+                }
             }
             // write the new manifest file.
             fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
