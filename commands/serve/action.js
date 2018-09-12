@@ -14,7 +14,7 @@ const Entry = require('../../lib/entry.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = (app, options = {}) => new global.Promise((resolve, reject) => {
+module.exports = (app, options = {}) => new Promise((resolve, reject) => {
     // Load directory to be served.
     let entries = Entry.resolve(cwd, options.arguments);
     let files = entries.map((entry) => (entry.file ? entry.file.path : entry.package.path));
@@ -110,7 +110,6 @@ module.exports = (app, options = {}) => new global.Promise((resolve, reject) => 
                     browserSync.reload(toReload);
                     app.log(colors.cyan(`${toReload} injected.`));
                 }
-                return global.Promise.resolve();
             });
         }
 

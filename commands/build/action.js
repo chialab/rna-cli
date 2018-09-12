@@ -188,7 +188,7 @@ module.exports = async(app, options = {}, profiler) => {
         });
         await WATCHER.watch((event, fp) => {
             REBUILD_QUEUE.add(() =>
-                global.Promise.all(
+                Promise.all(
                     // find out manifests with changed file dependency.
                     FILES[fp].map(async(bundle) => {
                         try {

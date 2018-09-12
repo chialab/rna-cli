@@ -63,7 +63,7 @@ module.exports = async function(options) {
             }, defaults);
             sassOptions.omitSourceMapUrl = true;
             sassOptions.sourceMapEmbed = false;
-            let result = await new global.Promise((resolve, reject) => {
+            let result = await new Promise((resolve, reject) => {
                 sass.render(sassOptions, (err, result) => {
                     if (err) {
                         reject(err);

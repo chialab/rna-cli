@@ -294,7 +294,7 @@ module.exports = async(app, options = {}) => {
             require('source-map-support/register');
             const mocha = new Mocha();
             mocha.addFile(tempUnit);
-            await new global.Promise((resolve, reject) => {
+            await new Promise((resolve, reject) => {
                 mocha.run((failures) => {
                     if (failures) {
                         reject(failures);
@@ -322,7 +322,7 @@ module.exports = async(app, options = {}) => {
             karmaOptions.preprocessors = {
                 [tempUnit]: ['sourcemap'],
             };
-            let server = await new global.Promise((resolve, reject) => {
+            let server = await new Promise((resolve, reject) => {
                 let s = new karma.Server(karmaOptions, (exitCode) => {
                     if (exitCode && !options.server) {
                         reject();
