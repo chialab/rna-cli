@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const colors = require('colors/safe');
 const glob = require('glob');
 const stylelint = require('stylelint');
 const paths = require('../../../lib/paths.js');
@@ -32,7 +31,7 @@ function getConfig() {
  * @namespace options
  * @property {Boolean} warnings Should include warnings in the response.
  */
-module.exports = function stylelintTask(app, options, profiler) {
+module.exports = async function stylelintTask(app, options, profiler) {
     let configFile = getConfig();
     let styleFiles = [];
     options.files
@@ -49,65 +48,66 @@ module.exports = function stylelintTask(app, options, profiler) {
                 ));
             }
         });
-    if (styleFiles.length) {
-        let profile = profiler.task('stylelint');
-        let task = app.log('running stylelint...', true);
-        return stylelint.lint({
+    if (!styleFiles.length) {
+        return;
+    }
+    let profile = profiler.task('stylelint');
+    let task = app.log('running stylelint...', true);
+    try {
+        let reports = await stylelint.lint({
             configFile,
             files: styleFiles,
             syntax: 'scss',
             cache: true,
-        }).then((reports) => {
-            profile.end();
-            task(); // Stop loader.
-            let errorCount = 0;
-            let warningCount = 0;
-            // convert stylelint report format to eslint format
-            const eslintLikeReport = reports.results.map((report) => {
-                let fileErrorCount = 0;
-                let fileWarningCount = 0;
-                let messages = report.warnings.map((warn) => {
-                    if (warn.severity === 'error') {
-                        fileErrorCount++;
-                    } else {
-                        fileWarningCount++;
-                    }
-                    return {
-                        ruleId: warn.rule,
-                        severity: warn.severity === 'error' ? 2 : 1,
-                        line: warn.line,
-                        column: warn.column,
-                        message: warn.text.replace(/\s\([a-z-/]*\)/, ''),
-                    };
-                });
-                errorCount += fileErrorCount;
-                warningCount += fileWarningCount;
-                const res = {
-                    filePath: report.source,
-                    warningCount: fileWarningCount,
-                    errorCount: fileErrorCount,
-                    messages,
-                };
-
-                return res;
-            });
-            if (errorCount || (options.warnings !== false && warningCount)) {
-                if (options.warnings !== false || errorCount) {
-                    const formatter = require('eslint/lib/formatters/stylish');
-                    app.log(formatter(eslintLikeReport));
-                }
-                return global.Promise.resolve(
-                    (options.warnings !== false || errorCount) ? eslintLikeReport : undefined
-                );
-            }
-            app.log('everything is fine with stylelint.');
-            return global.Promise.resolve();
-        }).catch((err) => {
-            profile.end();
-            task();
-            app.log(colors.red('failed to execute stylelint.'));
-            return global.Promise.reject(err);
         });
+
+        profile.end();
+        task(); // Stop loader.
+
+        let errorCount = 0;
+        let warningCount = 0;
+        // convert stylelint report format to eslint format
+        const eslintLikeReport = reports.results.map((report) => {
+            let fileErrorCount = 0;
+            let fileWarningCount = 0;
+            let messages = report.warnings.map((warn) => {
+                if (warn.severity === 'error') {
+                    fileErrorCount++;
+                } else {
+                    fileWarningCount++;
+                }
+                return {
+                    ruleId: warn.rule,
+                    severity: warn.severity === 'error' ? 2 : 1,
+                    line: warn.line,
+                    column: warn.column,
+                    message: warn.text.replace(/\s\([a-z-/]*\)/, ''),
+                };
+            });
+            errorCount += fileErrorCount;
+            warningCount += fileWarningCount;
+            const res = {
+                filePath: report.source,
+                warningCount: fileWarningCount,
+                errorCount: fileErrorCount,
+                messages,
+            };
+
+            return res;
+        });
+
+        if (errorCount || (options.warnings !== false && warningCount)) {
+            if (options.warnings !== false || errorCount) {
+                const formatter = require('eslint/lib/formatters/stylish');
+                app.log(formatter(eslintLikeReport));
+            }
+            return eslintLikeReport;
+        }
+
+        app.log('everything is fine with stylelint.');
+    } catch(err) {
+        profile.end();
+        task();
+        throw err;
     }
-    return global.Promise.resolve();
 };

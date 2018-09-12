@@ -12,35 +12,35 @@ const configurator = require('../../../lib/configurator.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = (app, options) => {
-    let eslintPromise = global.Promise.resolve();
-    if (options.linting !== false) {
-        const cwd = paths.cwd;
-        let eslintIgnore = path.join(cwd, '.eslintignore');
-        let ignoreContent = fs.readFileSync(
-            path.join(paths.cli, './configs/lint/eslintignore'),
-            'utf8'
-        );
-
-        // "Append" configuration to `.eslintignore`.
-        configurator(eslintIgnore, ignoreContent, '# RNA');
-
-        let eslintConfig = path.join(cwd, '.eslintrc.yml');
-        let isNew = !fs.existsSync(eslintConfig);
-        let content = fs.readFileSync(
-            path.join(paths.cli, './configs/lint/eslintrc.yml'),
-            'utf8'
-        );
-
-        // "Append" configuration to `.eslintrc.yml`.
-        configurator(eslintConfig, content, '# RNA');
-
-        if (isNew) {
-            eslintPromise = manager.dev(paths.cwd, 'eslint', 'eslint-plugin-mocha', 'babel-eslint@8', 'eslint-plugin-babel');
-            app.log(`${colors.green('.eslintrc.yml created.')} ${colors.grey(`(${eslintConfig})`)}`);
-        } else {
-            app.log(`${colors.green('.eslintrc.yml updated.')} ${colors.grey(`(${eslintConfig})`)}`);
-        }
+module.exports = async(app, options) => {
+    if (options.linting === false) {
+        return;
     }
-    return eslintPromise;
+
+    const cwd = paths.cwd;
+    let eslintIgnore = path.join(cwd, '.eslintignore');
+    let ignoreContent = fs.readFileSync(
+        path.join(paths.cli, './configs/lint/eslintignore'),
+        'utf8'
+    );
+
+    // "Append" configuration to `.eslintignore`.
+    configurator(eslintIgnore, ignoreContent, '# RNA');
+
+    let eslintConfig = path.join(cwd, '.eslintrc.yml');
+    let isNew = !fs.existsSync(eslintConfig);
+    let content = fs.readFileSync(
+        path.join(paths.cli, './configs/lint/eslintrc.yml'),
+        'utf8'
+    );
+
+    // "Append" configuration to `.eslintrc.yml`.
+    configurator(eslintConfig, content, '# RNA');
+
+    if (isNew) {
+        await manager.dev(paths.cwd, 'eslint', 'eslint-plugin-mocha', 'babel-eslint', 'eslint-plugin-babel');
+        app.log(`${colors.green('.eslintrc.yml created.')} ${colors.grey(`(${eslintConfig})`)}`);
+        return;
+    }
+    app.log(`${colors.green('.eslintrc.yml updated.')} ${colors.grey(`(${eslintConfig})`)}`);
 };

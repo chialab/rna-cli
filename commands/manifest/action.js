@@ -106,7 +106,7 @@ function defaults(manifest, json = {}) {
  * @param {String} output The download path for the generated icons.
  * @return {Promise}
  */
-function generateIcons(manifest, index, icon, output) {
+async function generateIcons(manifest, index, icon, output) {
     const generator = require('./lib/icons.js');
     const iconsPath = path.join(output, 'icons');
     // create or empty the icons path.
@@ -120,50 +120,43 @@ function generateIcons(manifest, index, icon, output) {
         });
     }
 
-    return Promise.all([
-        generator(icon, iconsPath, MANIFEST_ICONS)
-            .then((icons) => {
-                // update manifest icons
-                manifest.icons = icons.map((file) => ({
-                    src: path.relative(output, file.src),
-                    sizes: `${file.size}x${file.size}`,
-                    type: 'image/png',
-                }));
-            }),
-        generator(icon, iconsPath, FAVICONS)
-            .then((favicons) => {
-                // update favicons
-                if (index) {
-                    favicons.forEach((file) => {
-                        index.head.innerHTML += `<link rel="icon" type="image/png" sizes="${file.size}x${file.size}" href="${path.relative(output, file.src)}">`;
-                    });
-                    index.head.innerHTML += `<link rel="shortcut icon" href="${path.relative(output, favicons[favicons.length - 1].src)}">`;
-                }
-            }),
-        generator(icon, iconsPath, APPLE_ICONS)
-            .then((appleIcons) => {
-                // update apple icons
-                if (index) {
-                    index.head.innerHTML += `<link rel="apple-touch-icon" href="${path.relative(output, appleIcons[0].src)}">`;
-                    appleIcons.forEach((file) => {
-                        index.head.innerHTML += `<link rel="apple-touch-icon" sizes="${file.size}x${file.size}" href="${path.relative(output, file.src)}">`;
-                    });
-                }
-            }),
-    ]);
+    let icons = await generator(icon, iconsPath, MANIFEST_ICONS);
+    let favicons = await generator(icon, iconsPath, FAVICONS);
+    let appleIcons = await generator(icon, iconsPath, APPLE_ICONS);
+
+    // update manifest icons
+    manifest.icons = icons.map((file) => ({
+        src: path.relative(output, file.src),
+        sizes: `${file.size}x${file.size}`,
+        type: 'image/png',
+    }));
+
+    // update favicons
+    if (index) {
+        favicons.forEach((file) => {
+            index.head.innerHTML += `<link rel="icon" type="image/png" sizes="${file.size}x${file.size}" href="${path.relative(output, file.src)}">`;
+        });
+        index.head.innerHTML += `<link rel="shortcut icon" href="${path.relative(output, favicons[favicons.length - 1].src)}">`;
+    }
+
+    // update apple icons
+    if (index) {
+        index.head.innerHTML += `<link rel="apple-touch-icon" href="${path.relative(output, appleIcons[0].src)}">`;
+        appleIcons.forEach((file) => {
+            index.head.innerHTML += `<link rel="apple-touch-icon" sizes="${file.size}x${file.size}" href="${path.relative(output, file.src)}">`;
+        });
+    }
 }
 
-module.exports = function(app, options = {}) {
+module.exports = async function(app, options = {}) {
     if (options.arguments.length === 0) {
         // missing webapp path for the manifest.
-        app.log(colors.red('missing webapp path.'));
-        return global.Promise.reject();
+        throw 'Missing webapp path.';
     }
     let dir = path.resolve(cwd, options.arguments[0]);
     if (!fs.statSync(dir).isDirectory()) {
         // the webapp path is not a directory.
-        app.log(colors.red('webapp path is not a directory.'));
-        return global.Promise.reject();
+        throw 'Webapp path is not a directory.';
     }
     // default manifest path.
     let manifestPath = path.join(dir, 'manifest.json');
@@ -178,24 +171,14 @@ module.exports = function(app, options = {}) {
     }
     if (options.manifest) {
         // use the manifest flag as source for the new manifest.
-        try {
-            manifest = require(path.resolve(cwd, options.manifest));
-        } catch (err) {
-            // invalid manifest.
-            app.log(colors.red('invalid source manifest.'));
-            return global.Promise.reject(err);
-        }
+        manifest = require(path.resolve(cwd, options.manifest));
     }
 
     // collect package json metadata.
     let jsonPath = path.join(cwd, 'package.json');
     let json = {};
     if (fs.existsSync(jsonPath)) {
-        try {
-            json = require(jsonPath);
-        } catch (err) {
-            // invalid package json
-        }
+        json = require(jsonPath);
     }
 
     // collect index data if provided by flag.
@@ -221,13 +204,12 @@ module.exports = function(app, options = {}) {
     // set manifest defaults
     defaults(manifest, json);
 
-    let fillManifest = global.Promise.resolve();
     if (!options.ci && !process.env.CI) {
         // create the prompt.
-        const formatQuestion = (msg) => `${colors.cyan('manifest')} > ${msg}:`;
-        const prompt = inquirer.createPromptModule();
+        let formatQuestion = (msg) => `${colors.cyan('manifest')} > ${msg}:`;
+        let prompt = inquirer.createPromptModule();
         // @see https://developer.mozilla.org/en-US/docs/Web/Manifest
-        fillManifest = prompt([
+        let answers = await prompt([
             {
                 type: 'input',
                 name: 'name',
@@ -290,92 +272,74 @@ module.exports = function(app, options = {}) {
                 message: formatQuestion('default lang'),
                 default: manifest.lang,
             },
-        ].filter((cmd) => !!cmd) /* filter active commands */).then((answers) => {
-            // merge answers with the current manifest.
-            manifest = Proteins.merge(manifest, answers);
-            return global.Promise.resolve();
-        });
+        ].filter(/* filter active commands */(cmd) => !!cmd));
+        // merge answers with the current manifest.
+        manifest = Proteins.merge(manifest, answers);
     }
 
-    return fillManifest
-        .then(() => {
-            let generatingIcons = global.Promise.resolve();
-            if (options.icon) {
-                if (typeof options.icon !== 'string') {
-                    // the webapp path is not a directory.
-                    app.log(colors.red('missing icon path.'));
-                    return global.Promise.reject();
-                }
-                // generate icons.
-                const icon = path.resolve(cwd, options.icon);
-                if (!fs.existsSync(icon)) {
-                    // provided icons does not exists.
-                    app.log(`${colors.red('icon file not found.')} ${colors.grey(`(${icon})`)}`);
-                    return global.Promise.reject();
-                }
-                // exec the request.
-                let task = app.log('generating icons...', true);
-                generatingIcons = generateIcons(manifest, index, icon, dir)
-                    .then(() => {
-                        task();
-                        app.log(`${colors.bold(colors.green('icons generated!'))} ${colors.grey(`(${dir}/icons)`)}`);
-                        return global.Promise.resolve();
-                    }).catch((err) => {
-                        task();
-                        app.log(`${colors.red('error generting icons.')} ${colors.grey(`(${icon})`)}`);
-                        return global.Promise.reject(err);
-                    });
+    if (options.icon) {
+        if (typeof options.icon !== 'string') {
+            // the webapp path is not a directory.
+            throw 'Missing icon path.';
+        }
+        // generate icons.
+        const icon = path.resolve(cwd, options.icon);
+        if (!fs.existsSync(icon)) {
+            // provided icons does not exists.
+            throw `Icon file not found. (${icon})`;
+        }
+        // exec the request.
+        let task = app.log('generating icons...', true);
+        try {
+            await generateIcons(manifest, index, icon, dir);
+            task();
+            app.log(`${colors.bold(colors.green('icons generated!'))} ${colors.grey(`(${dir}/icons)`)}`);
+        } catch (err) {
+            task();
+            throw err;
+        }
+    }
+
+    if (options.scope) {
+        manifest.scope = options.scope;
+    }
+
+    if (index) {
+        if (manifest.scope) {
+            // update index <base> using manifest.scope
+            let base = index.querySelector('base') || index.createElement('base');
+            base.setAttribute('href', manifest.scope);
+            index.head.appendChild(base);
+        }
+        // update index meta title
+        let meta = index.querySelector('meta[name="apple-mobile-web-app-title"]') || index.createElement('meta');
+        meta.setAttribute('name', 'apple-mobile-web-app-title');
+        meta.setAttribute('content', manifest.name || manifest.short_name);
+        index.head.appendChild(meta);
+        // update index title
+        let title = index.querySelector('title') || index.createElement('title');
+        title.innerHTML = manifest.name || manifest.short_name;
+        index.head.appendChild(title);
+        // update theme meta
+        if (manifest.theme) {
+            let theme = index.querySelector('meta[name="theme-color"]') || index.createElement('meta');
+            theme.setAttribute('name', 'theme-color');
+            theme.setAttribute('content', manifest.theme);
+            index.head.appendChild(theme);
+        }
+
+        // beautify html
+        let html = require('js-beautify').html(
+            index.documentElement.outerHTML, {
+                indent_size: 4,
+                indent_char: ' ',
+                preserve_newlines: false,
             }
-            return generatingIcons;
-        })
-        .then(() => {
-            if (options.scope) {
-                manifest.scope = options.scope;
-            }
-            if (index) {
-                if (manifest.scope) {
-                    // update index <base> using manifest.scope
-                    let base = index.querySelector('base') || index.createElement('base');
-                    base.setAttribute('href', manifest.scope);
-                    index.head.appendChild(base);
-                }
-                // update index meta title
-                let meta = index.querySelector('meta[name="apple-mobile-web-app-title"]') || index.createElement('meta');
-                meta.setAttribute('name', 'apple-mobile-web-app-title');
-                meta.setAttribute('content', manifest.name || manifest.short_name);
-                index.head.appendChild(meta);
-                // update index title
-                let title = index.querySelector('title') || index.createElement('title');
-                title.innerHTML = manifest.name || manifest.short_name;
-                index.head.appendChild(title);
-                // update theme meta
-                if (manifest.theme) {
-                    let theme = index.querySelector('meta[name="theme-color"]') || index.createElement('meta');
-                    theme.setAttribute('name', 'theme-color');
-                    theme.setAttribute('content', manifest.theme);
-                    index.head.appendChild(theme);
-                }
-            }
-            // write the new manifest file.
-            fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-            app.log(`${colors.bold(colors.green('manifest generated.'))} ${colors.grey(`(${manifestPath})`)}`);
-            if (index) {
-                // beautify html
-                let html = require('js-beautify').html(
-                    index.documentElement.outerHTML, {
-                        indent_size: 4,
-                        indent_char: ' ',
-                        preserve_newlines: false,
-                    }
-                );
-                fs.writeFileSync(indexPath, `<!DOCTYPE html>\n${html}`);
-                app.log(`${colors.bold(colors.green('index updated.'))} ${colors.grey(`(${indexPath})`)}`);
-            }
-            return global.Promise.resolve();
-        })
-        .catch((err) => {
-            // ops.
-            app.log(colors.red('error generating manifest.'));
-            return global.Promise.reject(err);
-        });
+        );
+        fs.writeFileSync(indexPath, `<!DOCTYPE html>\n${html}`);
+        app.log(`${colors.bold(colors.green('index updated.'))} ${colors.grey(`(${indexPath})`)}`);
+    }
+    // write the new manifest file.
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+    app.log(`${colors.bold(colors.green('manifest generated.'))} ${colors.grey(`(${manifestPath})`)}`);
 };

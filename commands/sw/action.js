@@ -28,19 +28,16 @@ function remember(app, output) {
  * @param {Object} options Options.
  * @returns {Promise|void}
  */
-module.exports = (app, options) => {
+module.exports = async(app, options) => {
     if (!options.arguments.length) {
-        app.log(colors.red('missin input files.'));
-        return global.Promise.reject();
+        throw 'Missin input files.';
     }
     if (!options.output) {
-        app.log(colors.red('missin output file.'));
-        return global.Promise.reject();
+        throw 'Missin output file.';
     }
-    const input = path.resolve(process.cwd(), options.arguments[0]);
-    const output = path.resolve(process.cwd(), options.output);
+    let input = path.resolve(process.cwd(), options.arguments[0]);
+    let output = path.resolve(process.cwd(), options.output);
     let task = app.log('generating service worker...', true);
-    let returnPromise;
     let exclude = [
         'service-worker.js',
         '*.map',
@@ -48,53 +45,55 @@ module.exports = (app, options) => {
     if (options.exclude) {
         exclude.push(options.exclude);
     }
-    if (fs.existsSync(output)) {
-        let tmpFile = `${output}.tmp`;
-        fs.writeFileSync(
-            tmpFile,
-            fs.readFileSync(output, 'utf8').replace(/\.(precache|precacheAndRoute)\s*\(\s*\[([^\]]*)\]\)/gi, '.$1([])')
-        );
-        returnPromise = workbox.injectManifest({
-            swSrc: tmpFile,
-            swDest: output,
-            globDirectory: input,
-            globPatterns: ['**/*'],
-            globIgnores: exclude,
-            maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
-        }).then(() => {
-            fs.unlinkSync(tmpFile);
-        }).catch((err) => {
-            fs.unlinkSync(tmpFile);
-            return Promise.reject(err);
-        });
-    } else {
-        returnPromise = workbox.generateSW({
-            globDirectory: input,
-            swDest: output,
-            globPatterns: ['**/*'],
-            globIgnores: exclude,
-            maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
-        });
-    }
-    return returnPromise.then((res) => {
+
+    try {
+        let res;
+        if (fs.existsSync(output)) {
+            let tmpFile = `${output}.tmp`;
+            fs.writeFileSync(
+                tmpFile,
+                fs.readFileSync(output, 'utf8').replace(/\.(precache|precacheAndRoute)\s*\(\s*\[([^\]]*)\]\)/gi, '.$1([])')
+            );
+            try {
+                res = await workbox.injectManifest({
+                    swSrc: tmpFile,
+                    swDest: output,
+                    globDirectory: input,
+                    globPatterns: ['**/*'],
+                    globIgnores: exclude,
+                    maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
+                });
+            } catch (err) {
+                fs.unlinkSync(tmpFile);
+                throw err;
+            }
+        } else {
+            res = await workbox.generateSW({
+                globDirectory: input,
+                swDest: output,
+                globPatterns: ['**/*'],
+                globIgnores: exclude,
+                maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
+            });
+        }
+
         task();
         app.log(`${colors.bold(colors.green('service worker generated!'))} ${colors.grey(`(${output})`)}`);
         if (options.remember !== false) {
             remember(app, path.relative(input, output));
         }
         if (options.watch) {
-            const FILES = glob.sync(path.join(input, '**/*'), {
+            let FILES = glob.sync(path.join(input, '**/*'), {
                 ignore: exclude.map((pattern) => path.join(input, pattern)),
             });
-            FILES.push(output);
-            const WATCHER = new Watcher({
+            let WATCHER = new Watcher({
                 log: false,
                 debounce: 200,
                 ignored: '**/*.map',
                 cwd: paths.cwd,
             });
             WATCHER.add(FILES);
-            return WATCHER.watch((event, file) => {
+            await WATCHER.watch((event, file) => {
                 if (file === output) {
                     const content = fs.readFileSync(file, 'utf8');
                     if (content.indexOf('.precache([])') === -1) {
@@ -104,10 +103,9 @@ module.exports = (app, options) => {
                 app.exec('sw', Object.assign({}, options, { remember: false, watch: false }));
             });
         }
-        return global.Promise.resolve(res);
-    }).catch((err) => {
+        return res;
+    } catch(err) {
         task();
-        app.log(colors.red('failed to generate service worker'));
-        return global.Promise.reject(err);
-    });
+        throw err;
+    }
 };

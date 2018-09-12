@@ -9,26 +9,17 @@ const paths = require('../../lib/paths.js');
  * @param {Object} options Options.
  * @returns {Promise|void}
  */
-module.exports = (app, options = {}) => {
+module.exports = async(app, options = {}) => {
     if (!paths.cwd) {
         // Unable to detect project root.
-        app.log(colors.red('no project found.'));
-        return global.Promise.reject();
+        throw 'No project found.';
     }
     let args = options.arguments || [];
     if (args.length === 0) {
         // Nothing to remove.
-        app.log(colors.yellow('🤷‍ specify the package to remove.'));
-    } else {
-        // Remove requested packages.
-        return manager.remove(paths.cwd, ...options.arguments)
-            .then((res) => {
-                app.log(colors.green('packages successfully removed.'));
-                return global.Promise.resolve(res);
-            })
-            .catch((err) => {
-                app.log(colors.red('failed to remove packages.'));
-                return global.Promise.reject(err);
-            });
+        throw 'Specify the package to remove.';
     }
+    // Remove requested packages.
+    await manager.remove(paths.cwd, ...options.arguments);
+    app.log(colors.green('packages successfully removed.'));
 };

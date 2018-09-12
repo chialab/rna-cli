@@ -26,16 +26,17 @@ function inline(str = '') {
 
 const exported = [];
 
-module.exports = function(options) {
+module.exports = async function(options) {
     const filter = rollupPluginutils.createFilter(options.include || ['**/*.scss', '**/*.sass'], options.exclude);
     const importer = options.importer || resolver();
-    const processor = options.processor || ((code) => global.Promise.resolve(code));
+    const processor = options.processor || (async(code) => code);
     const defaults = options.options || {};
     let file;
     let active = [];
     return {
         name: 'sass-modules',
-        transform(code, id) {
+
+        async transform(code, id) {
             if (!filter(id)) { return null; }
             let match = importRegex.exec(code);
             let matches = [];
@@ -49,10 +50,10 @@ module.exports = function(options) {
             if (active.indexOf(id) !== -1) {
                 active.splice(active.indexOf(id), 1);
                 jsCode += '\nexport default \'\';';
-                return global.Promise.resolve({
+                return {
                     code: jsCode,
                     map: { mappings: '' },
-                });
+                };
             }
             exported.push(id);
             let sassOptions = Object.assign({
@@ -62,7 +63,7 @@ module.exports = function(options) {
             }, defaults);
             sassOptions.omitSourceMapUrl = true;
             sassOptions.sourceMapEmbed = false;
-            return new global.Promise((resolve, reject) => {
+            let result = await new global.Promise((resolve, reject) => {
                 sass.render(sassOptions, (err, result) => {
                     if (err) {
                         reject(err);
@@ -70,53 +71,41 @@ module.exports = function(options) {
                         resolve(result);
                     }
                 });
-            }).then((result) => {
-                let post = processor(inline(result.css));
-                if (!(post instanceof global.Promise)) {
-                    post = global.Promise.resolve(post);
-                }
-                return post.then((css) => {
-                    if (options.insert) {
-                        jsCode += stylize(css);
-                    } else {
-                        jsCode += `export default '${css}';`;
-                    }
-                    return global.Promise.resolve({
-                        code: jsCode,
-                        map: { mappings: '' },
-                    });
-                });
             });
-        },
-        ongenerate(options) {
-            let promise = global.Promise.resolve();
-            if (defaults.outFile) {
-                file = '';
-                exported.forEach((id) => {
-                    let sassOptions = Object.assign({
-                        file: id,
-                        includePaths,
-                        importer: (url, prev) => importer(url, prev, options),
-                    }, defaults);
-                    let css = sass.renderSync(sassOptions).css.toString();
-                    let post = processor(css);
-                    if (!(post instanceof global.Promise)) {
-                        post = global.Promise.resolve(post);
-                    }
-                    promise = promise.then(() =>
-                        post.then((css) => {
-                            file += css;
-                        })
-                    );
-                });
+            let css = await processor(inline(result.css));
+            if (options.insert) {
+                jsCode += stylize(css);
+            } else {
+                jsCode += `export default '${css}';`;
             }
-            return promise;
+            return {
+                code: jsCode,
+                map: { mappings: '' },
+            };
         },
-        onwrite() {
+
+        async ongenerate(options) {
+            if (!defaults.outFile) {
+                return;
+            }
+            file = '';
+            for (let i = 0; i < exported.length; i++) {
+                let id = exported[id];
+                let sassOptions = Object.assign({
+                    file: id,
+                    includePaths,
+                    importer: (url, prev) => importer(url, prev, options),
+                }, defaults);
+                let result = sass.renderSync(sassOptions).css.toString();
+                let css = await processor(result);
+                file += css;
+            }
+        },
+
+        async onwrite() {
             if (defaults.outFile && file) {
                 fs.writeFileSync(defaults.outFile, file);
                 file = null;
-                return global.Promise.resolve();
             }
         },
     };

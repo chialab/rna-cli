@@ -9,17 +9,17 @@ const paths = require('../../lib/paths.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = (app, options) => {
+module.exports = async(app, options) => {
     // Detect directory to use as project root, and ensure it is present.
     paths.cwd = options.arguments.length ? path.resolve(process.cwd(), options.arguments[0]) : (paths.cwd || process.cwd());
     fs.ensureDirSync(paths.cwd);
 
-    return require('./tasks/git.js')(app, options)
-        .then(() => require('./tasks/npm.js')(app, options))
-        .then(() => require('./tasks/directories.js')(app, options))
-        .then(() => require('./tasks/config.js')(app, options))
-        .then(() => require('./tasks/eslint.js')(app, options))
-        .then(() => require('./tasks/stylelint.js')(app, options))
-        .then(() => require('./tasks/license.js')(app, options))
-        .then(() => require('./tasks/readme.js')(app, options));
+    await require('./tasks/git.js')(app, options);
+    await require('./tasks/npm.js')(app, options);
+    await require('./tasks/directories.js')(app, options);
+    await require('./tasks/config.js')(app, options);
+    await require('./tasks/eslint.js')(app, options);
+    await require('./tasks/stylelint.js')(app, options);
+    await require('./tasks/license.js')(app, options);
+    await require('./tasks/readme.js')(app, options);
 };

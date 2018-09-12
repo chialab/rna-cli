@@ -31,54 +31,48 @@ module.exports = function(input, output, presets = {}) {
     // ensure the output dir exists
     fs.ensureDirSync(output);
     return Promise.all(
-        Object.keys(presets).map((k) => {
+        Object.keys(presets).map(async(k) => {
             // merge preset options
             let options = Object.assign({}, presets[k]);
             let dest = path.join(output, options.name);
             // load the icon source
-            return sharp(input)
+            let buffer = await sharp(input)
                 // resize the image
                 .resize(options.size - (options.gutter || 0))
-                .png()
-                .toBuffer()
-                .then((buffer) =>
-                    // create the first level with the background color
-                    sharp({
-                        create: {
-                            width: options.size,
-                            height: options.size,
-                            channels: 4,
-                            background: options.background || { r: 0, g: 0, b: 0, alpha: 0 },
-                        },
-                    })
-                        // add the icon
-                        .overlayWith(buffer, {
-                            gravity: sharp.gravity.centre,
-                            density: 300,
-                        })
-                        .png()
-                        .toBuffer()
-                )
-                .then((buffer) => {
-                    if (options.round) {
-                        // mask the icon with an svg with rounded corners
-                        let roundedContent = `<svg><rect x="0" y="0" width="${options.size}" height="${options.size}" rx="${options.round}" ry="${options.round}"/></svg>`;
-                        let roundedCorners = Buffer.alloc(roundedContent.length, roundedContent);
-                        return sharp(buffer)
-                            .overlayWith(roundedCorners, { cutout: true })
-                            .png()
-                            .toBuffer();
-                    }
-                    return buffer;
+                .png().toBuffer();
+
+            // create the first level with the background color
+            buffer = await sharp({
+                create: {
+                    width: options.size,
+                    height: options.size,
+                    channels: 4,
+                    background: options.background || { r: 0, g: 0, b: 0, alpha: 0 },
+                },
+            })
+                // add the icon
+                .overlayWith(buffer, {
+                    gravity: sharp.gravity.centre,
+                    density: 300,
                 })
-                .then((buffer) =>
-                    // save the file
-                    sharp(buffer).toFile(dest)
-                )
-                .then(() => ({
-                    src: dest,
-                    size: options.size,
-                }));
+                .png().toBuffer();
+
+            if (options.round) {
+                // mask the icon with an svg with rounded corners
+                let roundedContent = `<svg><rect x="0" y="0" width="${options.size}" height="${options.size}" rx="${options.round}" ry="${options.round}"/></svg>`;
+                let roundedCorners = Buffer.alloc(roundedContent.length, roundedContent);
+                buffer = await sharp(buffer)
+                    .overlayWith(roundedCorners, { cutout: true })
+                    .png().toBuffer();
+            }
+
+            // save the file
+            await sharp(buffer).toFile(dest);
+
+            return {
+                src: dest,
+                size: options.size,
+            };
         })
     );
 };

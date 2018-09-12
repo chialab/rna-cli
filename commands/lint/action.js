@@ -1,5 +1,4 @@
 const path = require('path');
-const colors = require('colors/safe');
 const commondir = require('commondir');
 const paths = require('../../lib/paths.js');
 const Entry = require('../../lib/entry.js');
@@ -50,48 +49,45 @@ function filterStyleFiles(entries) {
  * @property {Boolean} styles Should run linter for Sass files.
  * @property {Boolean} watch Should watch files.
  */
-module.exports = (app, options, profiler) => {
+module.exports = async(app, options, profiler) => {
     if (!paths.cwd) {
         // Unable to detect project root.
-        app.log(colors.red('no project found.'));
-        return global.Promise.reject();
+        throw 'No project found.';
     }
     let res = [];
     let entries = Entry.resolve(paths.cwd, options.arguments.length ? options.arguments : ['src/**/*.*', 'packages/*/src/**/*.*']);
-    const eslintTask = options.js !== false ? require('./linters/eslint.js') : () => global.Promise.resolve();
-    let response = eslintTask(app, { warnings: options.warnings, files: filterJSFiles(entries) }, profiler)
-        .then((eslintRes) => {
-            if (eslintRes) {
-                res.push(eslintRes);
-            }
-            const stylelintTask = options.styles !== false ? require('./linters/stylelint.js') : () => global.Promise.resolve();
-            return stylelintTask(app, { warnings: options.warnings, files: filterStyleFiles(entries) }, profiler)
-                .then((sassRes) => {
-                    if (sassRes) {
-                        res.push(sassRes);
-                    }
-                    return global.Promise.resolve(res);
-                });
-        });
 
-    return response
-        .then((res) => {
-            if (options.watch) {
-                const DIR = commondir(entries.map((entry) => (entry.file ? entry.file.path : entry.package.path)));
-                const WATCHER = new Watcher({
-                    cwd: DIR,
-                });
-                WATCHER.add('**/*.{js,jsx,sass,scss,css}');
-                return WATCHER.watch((event, fp) => {
-                    app.exec('lint', {
-                        arguments: [fp],
-                        warnings: options.warnings,
-                        styles: options.styles,
-                        js: options.js,
-                        watch: false,
-                    });
-                });
-            }
-            return global.Promise.resolve(res);
+    if (options.js !== false) {
+        let eslintTask = require('./linters/eslint.js');
+        let eslintRes = await eslintTask(app, { warnings: options.warnings, files: filterJSFiles(entries) }, profiler);
+        if (eslintRes) {
+            res.push(eslintRes);
+        }
+    }
+
+    if (options.styles !== false) {
+        let stylelintTask = require('./linters/stylelint.js');
+        let sassRes = await stylelintTask(app, { warnings: options.warnings, files: filterStyleFiles(entries) }, profiler);
+        if (sassRes) {
+            res.push(sassRes);
+        }
+    }
+
+    if (options.watch) {
+        let DIR = commondir(entries.map((entry) => (entry.file ? entry.file.path : entry.package.path)));
+        let WATCHER = new Watcher({
+            cwd: DIR,
         });
+        WATCHER.add('**/*.{js,jsx,mjs,sass,scss,css}');
+        await WATCHER.watch((event, fp) => {
+            app.exec('lint', {
+                arguments: [fp],
+                warnings: options.warnings,
+                styles: options.styles,
+                js: options.js,
+                watch: false,
+            });
+        });
+    }
+    return res;
 };

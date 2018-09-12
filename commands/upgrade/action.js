@@ -7,17 +7,10 @@ const manager = require('../../lib/package-manager.js');
  * @param {CLI} app CLI instance.
  * @returns {Promise|void}
  */
-module.exports = (app) =>
-    app.checkUpdate()
-        .then((version) =>
-            manager.global(app.pkg)
-                .then(() => {
-                    app.log(colors.green(`Updated to version ${version}!`));
-                    return global.Promise.resolve();
-                })
-                .catch((err) => {
-                    app.log(colors.red(`Error updating to version ${version}!`));
-                    return global.Promise.reject(err);
-                })
-        )
-        .catch(() => global.Promise.resolve());
+module.exports = async(app) => {
+    let version = await app.checkUpdate();
+    if (version) {
+        await manager.global(app.pkg);
+        app.log(colors.green(`Updated to version ${version}!`));
+    }
+};

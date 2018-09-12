@@ -13,29 +13,23 @@ const Entry = require('../../lib/entry.js');
  * @param {String} output The reference file name.
  * @return {Promise}
  */
-function generate(app, sources, output) {
+async function generate(app, sources, output) {
     let task = app.log(`generating API references... (${output})`, true);
     // start the `documentation` task.
-    return documentation.build(sources, {})
+    try {
+        let builder = await documentation.build(sources, {});
         // format the result using markdown.
-        .then(documentation.formats.md)
-        .then((contents) => {
-            // write the final result.
-            fs.ensureDirSync(path.dirname(output));
-            fs.writeFileSync(output, contents);
-            task();
-            app.log(`${colors.bold(colors.green('API references created.'))} ${colors.grey(`(${output})`)}`);
-            return global.Promise.resolve();
-        })
-        .catch((err) => {
-            // ops.
-            task();
-            if (err) {
-                app.log(err);
-            }
-            app.log(`${colors.red('failed to generate API references.')} ${colors.grey(`(${output})`)}`);
-            return global.Promise.reject();
-        });
+        let contents = await documentation.formats.md(builder);
+        // write the final result.
+        fs.ensureDirSync(path.dirname(output));
+        fs.writeFileSync(output, contents);
+        task();
+        app.log(`${colors.bold(colors.green('API references created.'))} ${colors.grey(`(${output})`)}`);
+    } catch(err) {
+        // ops.
+        task();
+        throw err;
+    }
 }
 
 /**
@@ -45,29 +39,26 @@ function generate(app, sources, output) {
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = (app, options) => {
+module.exports = async(app, options) => {
     let entries = Entry.resolve(paths.cwd, options.arguments);
     if (!entries.length) {
         // no arguments
         if (!paths.cwd) {
             // Unable to detect project root.
-            app.log(colors.red('no project found.'));
-            return global.Promise.reject();
-        } else {
-            // use cwd sources.
-            entries = Entry.resolve(paths.cwd, path.join(paths.cwd, 'src/**/*.js'));
+            throw 'No project found.';
         }
+        // use cwd sources.
+        entries = Entry.resolve(paths.cwd, path.join(paths.cwd, 'src/**/*.js'));
     }
 
     if (!options.output) {
-        app.log(colors.red('missing \'output\' property.'));
-        return global.Promise.reject();
+        throw 'Missing \'output\' property.';
     }
 
-    let promise = global.Promise.resolve();
-
     // process entries
-    entries.forEach((entry) => {
+    for (let i = 0; i < entries.length; i++) {
+        let entry = entries[i];
+
         if (entry.file) {
             // process file
             let output = path.resolve(paths.cwd, options.output);
@@ -75,27 +66,25 @@ module.exports = (app, options) => {
                 // `output` options is a folder
                 output = path.join(output, `${path.basename(entry.file.path, path.extname(entry.file.path))}.md`);
             }
-            promise = promise.then(() => generate(
+            await generate(
                 app,
                 [entry.file.path],
                 options.output
-            ));
-        } else {
-            // process package
-            let output = path.resolve(entry.package.path, options.output);
-            if (!path.extname(output)) {
-                // `output` options is a folder
-                let shortName = entry.package.name.split('/')[1];
-                // generate a file with the name of the package.
-                output = path.join(output, `${shortName.toLowerCase()}.md`);
-            }
-            promise = promise.then(() => generate(
-                app,
-                [path.join(entry.package.path, entry.package.json.module || entry.package.json.main)],
-                output
-            ));
+            );
+            continue;
         }
-    });
-
-    return promise;
+        // process package
+        let output = path.resolve(entry.package.path, options.output);
+        if (!path.extname(output)) {
+            // `output` options is a folder
+            let shortName = entry.package.name.split('/')[1];
+            // generate a file with the name of the package.
+            output = path.join(output, `${shortName.toLowerCase()}.md`);
+        }
+        await generate(
+            app,
+            [path.join(entry.package.path, entry.package.json.module || entry.package.json.main)],
+            output
+        );
+    }
 };

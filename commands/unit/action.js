@@ -100,6 +100,7 @@ function getConfig(app, options) {
         // how many browser should be started simultaneously
         concurrency: options.concurrency && Proteins.isNumber(Number(options.concurrency)) ? options.concurrency : 2,
     };
+
     if (!options.server) {
         if (options.browser) {
             conf.frameworks.push('detectBrowsers');
@@ -206,11 +207,10 @@ function getConfig(app, options) {
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = (app, options = {}) => {
+module.exports = async(app, options = {}) => {
     if (!paths.cwd) {
         // Unable to detect project root.
-        app.log(colors.red('no project found.'));
-        return global.Promise.reject();
+        throw 'No project found.';
     }
 
     // check sauce values
@@ -222,14 +222,10 @@ module.exports = (app, options = {}) => {
             process.env.SAUCE_ACCESS_KEY = options['saucelabs.key'];
         }
         if (!process.env.SAUCE_USERNAME) {
-            app.log(colors.red('Missing SAUCE_USERNAME variable.'));
-            app.log(colors.grey('export a `SAUCE_USERNAME` environment variable or use the `--saucelabs.username` flag.'));
-            return global.Promise.reject();
+            throw 'Missing SAUCE_USERNAME variable.';
         }
         if (!process.env.SAUCE_ACCESS_KEY) {
-            app.log(colors.red('Missing SAUCE_ACCESS_KEY variable.'));
-            app.log(colors.grey('export a `SAUCE_ACCESS_KEY` environment variable or use the `--saucelabs.key` flag.'));
-            return global.Promise.reject();
+            throw 'Missing SAUCE_ACCESS_KEY variable.';
         }
     }
 
@@ -262,9 +258,10 @@ module.exports = (app, options = {}) => {
             files.push(...Entry.resolve(paths.cwd, path.join(entry.package.path, 'test/unit/**/*.js')));
         }
     });
+
     if (!files.length) {
         app.log(colors.yellow('no unit tests found.'));
-        return global.Promise.resolve();
+        return;
     }
 
     let taskEnvironments = Object.keys(options).filter((optName) => options[optName] && optName in ENVIRONMENTS);
@@ -278,7 +275,7 @@ module.exports = (app, options = {}) => {
     let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
     const unitCode = `${files.map((entry) => `import '${entry.file.path}';`).join('\n')}`;
     fs.writeFileSync(tempSource, unitCode);
-    return app.exec('build', { // Build sources.
+    await app.exec('build', { // Build sources.
         'arguments': [tempSource],
         'coverage': options.coverage,
         'output': tempUnit,
@@ -286,104 +283,99 @@ module.exports = (app, options = {}) => {
         'map': 'inline',
         'jsx.pragma': options['jsx.pragma'],
         'jsx.module': options['jsx.module'],
-    }).then(() => { // Test built sources.
-        let promise = global.Promise.resolve();
-        taskEnvironments.forEach((taskEnvName) => {
-            let taskEnv = ENVIRONMENTS[taskEnvName];
-            if (taskEnv.runner === 'mocha') {
-                // Startup Mocha.
-                promise = promise.then(() => {
-                    require('source-map-support/register');
-                    const mocha = new Mocha();
-                    mocha.addFile(tempUnit);
-                    return new global.Promise((resolve, reject) => {
-                        mocha.run((failures) => {
-                            if (failures) {
-                                reject(failures);
-                            } else {
-                                resolve();
-                            }
-                        });
-                    });
-                });
-            } else if (taskEnv.runner === 'karma') {
-                // Startup Karma.
-                promise = promise.then(() => {
-                    let karmaOptions;
-                    try {
-                        karmaOptions = getConfig(app, {
-                            ci: options.ci,
-                            server: options.server,
-                            coverage: options.coverage,
-                            targets: options.targets,
-                            concurrency: options.concurrency,
-                            timeout: options.timeout,
-                            customContextFile,
-                            [taskEnvName]: true,
-                        });
-                    } catch (err) {
-                        return global.Promise.reject(err);
-                    }
-                    karmaOptions.files = [tempUnit];
-                    karmaOptions.preprocessors = {
-                        [tempUnit]: ['sourcemap'],
-                    };
-                    return new global.Promise((resolve, reject) => {
-                        const server = new karma.Server(karmaOptions, (exitCode) => {
-                            if (exitCode && !options.server) {
-                                reject();
-                            } else {
-                                resolve();
-                            }
-                        });
-                        if (!options.server) {
-                            server.on('listening', (port) => {
-                                const browsers = server.get('config').browsers;
-                                if (!browsers || browsers.length === 0) {
-                                    karma.stopper.stop({ port });
-                                }
-                            });
-                        }
-                        if (options.coverage) {
-                            let reportMap;
-                            server.on('run_start', () => {
-                                reportMap = require('istanbul-lib-coverage').createCoverageMap({});
-                            });
-                            server.on('coverage_complete', (browser, coverageReport) => {
-                                reportMap.merge(coverageReport);
-                            });
-                            server.on('run_complete', () => {
-                                setTimeout(() => {
-                                    reportMap = reportMap.toJSON();
-                                    let coverageFiles = Object.keys(reportMap);
-                                    if (coverageFiles.length) {
-                                        const utils = require('istanbul/lib/object-utils');
-                                        let summaries = coverageFiles.map((coverageFile) => utils.summarizeFileCoverage(reportMap[coverageFile]));
-                                        let finalSummary = utils.mergeSummaryObjects.apply(null, summaries);
-                                        app.log(colors.bold(colors.underline('COVERAGE SUMMARY:')));
-                                        app.log(formatCoverageReport(finalSummary, 'statements'));
-                                        app.log(formatCoverageReport(finalSummary, 'branches'));
-                                        app.log(formatCoverageReport(finalSummary, 'functions'));
-                                        app.log(formatCoverageReport(finalSummary, 'lines'));
-                                    }
-                                });
-                            });
-                        }
-                        server.start();
-                    });
-                });
-            } else if (taskEnv.runner === 'ns') {
-                if (!['ios', 'android'].includes(options.nativescript.toLowerCase())) {
-                    promise.then(() => global.Promise.reject('Invalid nativescript platform. Valid platforms are `ios` and `android`.'));
-                } else {
-                    // Create fake NS application.
-                    promise = promise.then(() => runNativeScriptTest(options.nativescript, tempUnit));
-                }
-            }
-        });
-
-        return promise;
     });
+
+    // Test built sources.
+    for (let i = 0; i < taskEnvironments.length; i++) {
+        let taskEnvName = taskEnvironments[i];
+        let taskEnv = ENVIRONMENTS[taskEnvName];
+        if (taskEnv.runner === 'mocha') {
+            // Startup Mocha.
+            require('source-map-support/register');
+            const mocha = new Mocha();
+            mocha.addFile(tempUnit);
+            await new global.Promise((resolve, reject) => {
+                mocha.run((failures) => {
+                    if (failures) {
+                        reject(failures);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+            continue;
+        }
+
+        if (taskEnv.runner === 'karma') {
+            // Startup Karma.
+            let karmaOptions = getConfig(app, {
+                ci: options.ci,
+                server: options.server,
+                coverage: options.coverage,
+                targets: options.targets,
+                concurrency: options.concurrency,
+                timeout: options.timeout,
+                customContextFile,
+                [taskEnvName]: true,
+            });
+            karmaOptions.files = [tempUnit];
+            karmaOptions.preprocessors = {
+                [tempUnit]: ['sourcemap'],
+            };
+            let server = await new global.Promise((resolve, reject) => {
+                let s = new karma.Server(karmaOptions, (exitCode) => {
+                    if (exitCode && !options.server) {
+                        reject();
+                    } else {
+                        resolve(s);
+                    }
+                });
+            });
+            if (!options.server) {
+                server.on('listening', (port) => {
+                    let browsers = server.get('config').browsers;
+                    if (!browsers || browsers.length === 0) {
+                        karma.stopper.stop({ port });
+                    }
+                });
+            }
+            if (options.coverage) {
+                let reportMap;
+                server.on('run_start', () => {
+                    reportMap = require('istanbul-lib-coverage').createCoverageMap({});
+                });
+                server.on('coverage_complete', (browser, coverageReport) => {
+                    reportMap.merge(coverageReport);
+                });
+                server.on('run_complete', () => {
+                    setTimeout(() => {
+                        reportMap = reportMap.toJSON();
+                        let coverageFiles = Object.keys(reportMap);
+                        if (coverageFiles.length) {
+                            const utils = require('istanbul/lib/object-utils');
+                            let summaries = coverageFiles.map((coverageFile) => utils.summarizeFileCoverage(reportMap[coverageFile]));
+                            let finalSummary = utils.mergeSummaryObjects.apply(null, summaries);
+                            app.log(colors.bold(colors.underline('COVERAGE SUMMARY:')));
+                            app.log(formatCoverageReport(finalSummary, 'statements'));
+                            app.log(formatCoverageReport(finalSummary, 'branches'));
+                            app.log(formatCoverageReport(finalSummary, 'functions'));
+                            app.log(formatCoverageReport(finalSummary, 'lines'));
+                        }
+                    });
+                });
+            }
+            server.start();
+            continue;
+        }
+
+        if (taskEnv.runner === 'ns') {
+            if (!['ios', 'android'].includes(options.nativescript.toLowerCase())) {
+                throw 'Invalid nativescript platform. Valid platforms are `ios` and `android`.';
+            }
+            // Create fake NS application.
+            await runNativeScriptTest(options.nativescript, tempUnit);
+        }
+    }
 };
 
 /**

@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const colors = require('colors/safe');
 const glob = require('glob');
 const Linter = require('eslint').CLIEngine;
 const paths = require('../../../lib/paths.js');
@@ -44,34 +43,33 @@ module.exports = function eslint(app, options, profiler) {
                 ));
             }
         });
-    if (jsFiles.length) {
-        let profile = profiler.task('eslint');
-        let task = app.log('running ESLint...', true);
-        try {
-            const linter = new Linter({
-                configFile,
-                cwd: paths.cwd,
-                cache: true,
-            });
-            const report = linter.executeOnFiles(jsFiles);
-            profile.end();
-            task(); // Stop loader.
-            if (report.errorCount || (options.warnings !== false && report.warningCount)) {
-                if (options.warnings !== false || report.errorCount) {
-                    const formatter = require('eslint/lib/formatters/stylish');
-                    app.log(formatter(report.results));
-                }
-                return global.Promise.resolve(
-                    (options.warnings !== false || report.errorCount) ? report : undefined
-                );
-            }
-            app.log('everything is fine with ESLint.');
-        } catch (err) {
-            profile.end();
-            task();
-            app.log(colors.red('failed to execute ESLint.'));
-            return global.Promise.reject(err);
-        }
+
+    if (!jsFiles.length) {
+        return;
     }
-    return global.Promise.resolve();
+    let profile = profiler.task('eslint');
+    let task = app.log('running ESLint...', true);
+    try {
+        const linter = new Linter({
+            configFile,
+            cwd: paths.cwd,
+            cache: true,
+        });
+        const report = linter.executeOnFiles(jsFiles);
+        profile.end();
+        task(); // Stop loader.
+        if (report.errorCount || (options.warnings !== false && report.warningCount)) {
+            if (options.warnings !== false || report.errorCount) {
+                const formatter = require('eslint/lib/formatters/stylish');
+                app.log(formatter(report.results));
+            }
+            return report;
+        }
+
+        app.log('everything is fine with ESLint.');
+    } catch (err) {
+        profile.end();
+        task();
+        throw err;
+    }
 };

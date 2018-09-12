@@ -9,27 +9,21 @@ const paths = require('../../lib/paths.js');
  * @param {Object} options Options.
  * @returns {Promise|void}
  */
-module.exports = (app, options) => {
+module.exports = async(app, options) => {
     if (!paths.cwd) {
         // Unable to detect project root.
-        app.log(colors.red('no project found.'));
-        return global.Promise.reject();
+        throw 'No project found';
     }
     let args = options.arguments || [];
     if (args.length === 0) {
         // Nothing to add.
-        app.log(colors.yellow('🤷‍ specify the package to add.'));
-    } else {
-        // Add requested packages.
-        let request = options.dev ? manager.dev(paths.cwd, ...options.arguments) : manager.add(paths.cwd, ...options.arguments);
-        return request
-            .then((res) => {
-                app.log(colors.green('packages successfully added.'));
-                return global.Promise.resolve(res);
-            })
-            .catch((err) => {
-                app.log(colors.red('failed to add packages.'));
-                return global.Promise.reject(err);
-            });
+        throw 'Specify the package to add';
     }
+    // Add requested packages.
+    if (options.dev) {
+        return await manager.dev(paths.cwd, ...options.arguments);
+    }
+
+    await manager.add(paths.cwd, ...options.arguments);
+    app.log(colors.green('packages successfully added.'));
 };

@@ -44,5 +44,5 @@ ElectronBrowser.$inject = ['baseBrowserDecorator', 'args', 'config.electronOpts'
 
 // PUBLISH DI MODULE
 module.exports = {
-    'launcher:Electron': ['type', ElectronBrowser]
+    'launcher:Electron': ['type', ElectronBrowser],
 };

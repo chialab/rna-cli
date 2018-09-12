@@ -9,15 +9,15 @@ const paths = require('../../../lib/paths.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = () => {
+module.exports = async() => {
     let cwd = paths.cwd;
     const jsonFile = path.join(cwd, 'package.json');
     if (!fs.existsSync(jsonFile)) {
         // No `package.json` is present: nothing to do.
-        return global.Promise.resolve();
+        return;
     }
-    const json = require(jsonFile);
 
+    const json = require(jsonFile);
     // Ensure path specified in `package.json` "main" key is present.
     if (json.structure === 'webapp') {
         // Using a simple HTML file as main entrypoint.
@@ -60,6 +60,4 @@ module.exports = () => {
         // Ensure paths listed as workspaces are present.
         json.workspaces.forEach((ws) => fs.ensureDirSync(path.dirname(ws)));
     }
-
-    return global.Promise.resolve();
 };

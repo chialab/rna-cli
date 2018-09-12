@@ -11,34 +11,37 @@ const Entry = require('../../../lib/entry.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = (app, options) => {
-    if (options.readme !== false) {
-        const cwd = paths.cwd;
-        const jsonFile = path.join(cwd, 'package.json');
-        if (!fs.existsSync(jsonFile)) {
-            return global.Promise.resolve();
-        }
-        const json = require(jsonFile);
-        let readme = path.join(cwd, 'README.md');
-        if (fs.existsSync(readme) && !options.force) {
-            // README already there: leave it as is.
-            app.log(`${colors.green('readme found.')} ${colors.grey(`(${readme})`)}`);
-            return global.Promise.resolve();
-        }
+module.exports = async(app, options) => {
+    if (options.readme === false) {
+        return;
+    }
 
-        let requirements = `### Requirements
+    const cwd = paths.cwd;
+    const jsonFile = path.join(cwd, 'package.json');
+    if (!fs.existsSync(jsonFile)) {
+        return;
+    }
+    const json = require(jsonFile);
+    let readme = path.join(cwd, 'README.md');
+    if (fs.existsSync(readme) && !options.force) {
+        // README already there: leave it as is.
+        app.log(`${colors.green('readme found.')} ${colors.grey(`(${readme})`)}`);
+        return;
+    }
 
-* Node (>= 6)
+    let requirements = `### Requirements
+
+* Node (>= 10)
 * RNA cli (\`npm install @chialab/rna-cli\`)
 `;
 
-        let content = `# ${json.name}
+    let content = `# ${json.name}
 
 ${json.description || ''}
 `;
-        if (json.structure === 'webapp') {
-            // README for Web applications.
-            content += `${requirements}
+    if (json.structure === 'webapp') {
+        // README for Web applications.
+        content += `${requirements}
 
 ### Build the project.
 
@@ -52,9 +55,9 @@ $ rna build --production
 $ rna build --watch + serve ./public --watch
 \`\`\`
 `;
-        } else if (json.structure === 'module') {
-            // README for modules.
-            content += `[![NPM](https://img.shields.io/npm/v/${json.name}.svg)](https://www.npmjs.com/package/${json.name})
+    } else if (json.structure === 'module') {
+        // README for modules.
+        content += `[![NPM](https://img.shields.io/npm/v/${json.name}.svg)](https://www.npmjs.com/package/${json.name})
 
 ## Install
 
@@ -78,17 +81,17 @@ $ rna install
 $ rna build --watch
 \`\`\`
 `;
-        } else if (json.structure === 'monorepo') {
-            // README for repositories that contain multiple modules.
-            let packages = Entry.resolve(cwd, []);
-            if (packages.length) {
-                content += `
+    } else if (json.structure === 'monorepo') {
+        // README for repositories that contain multiple modules.
+        let packages = Entry.resolve(cwd, []);
+        if (packages.length) {
+            content += `
 | **Package** | **Path** | **Status** |
 |---------|--------|--------|
 ${packages.map((entry) => `| ${entry.package.name} | ./${path.relative(cwd, entry.package.path)} | [![NPM](https://img.shields.io/npm/v/${entry.package.name}.svg)](https://www.npmjs.com/package/${entry.package.name}) |`).join('\n')}
 `;
-            }
-            content += `
+        }
+        content += `
 ## Development
 ${requirements}
 
@@ -112,11 +115,9 @@ $ rna install
 $ rna build --watch
 \`\`\`
 `;
-        }
-
-        // Write file contents.
-        fs.writeFileSync(readme, content);
-        app.log(`${colors.green('readme created.')} ${colors.grey(`(${readme})`)}`);
     }
-    return global.Promise.resolve();
+
+    // Write file contents.
+    fs.writeFileSync(readme, content);
+    app.log(`${colors.green('readme created.')} ${colors.grey(`(${readme})`)}`);
 };
