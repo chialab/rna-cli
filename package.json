@@ -58,7 +58,6 @@
     "karma-sourcemap-loader": "^0.3.7",
     "lerna": "^3.2.1",
     "mocha": "^5.2.0",
-    "npm-which": "^3.0.1",
     "postcss": "^7.0.0",
     "postcss-all-unset": "^1.1.0",
     "rollup": "^0.65.0",

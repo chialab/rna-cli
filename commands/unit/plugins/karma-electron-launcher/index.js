@@ -1,9 +1,8 @@
 const fs = require('fs-extra');
 const path = require('path');
-const which = require('which');
 const paths = require('../../../../lib/paths.js');
 
-const ELECTRON = path.dirname(fs.realpathSync(which.sync('electron')));
+const ELECTRON = require.resolve('electron');
 
 const defaultElectron = {
     width: 400,

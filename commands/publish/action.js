@@ -1,8 +1,6 @@
-const cli = require('../../lib/paths').cli;
 const exec = require('../../lib/exec.js');
-const which = require('npm-which')(cli);
 
-const BIN = which.sync('lerna');
+const BIN = require.resolve('lerna/cli.js');
 
 /**
  * Command action to publish modules to NPM.
