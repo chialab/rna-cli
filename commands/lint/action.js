@@ -54,14 +54,13 @@ module.exports = async(app, options, profiler) => {
         // Unable to detect project root.
         throw 'No project found.';
     }
-    let res = [];
     let entries = Entry.resolve(paths.cwd, options.arguments.length ? options.arguments : ['src/**/*.*', 'packages/*/src/**/*.*']);
 
     if (options.js !== false) {
         let eslintTask = require('./linters/eslint.js');
         let eslintRes = await eslintTask(app, { warnings: options.warnings, files: filterJSFiles(entries) }, profiler);
         if (eslintRes) {
-            res.push(eslintRes);
+            throw 'ESLint found some errors.';
         }
     }
 
@@ -69,7 +68,7 @@ module.exports = async(app, options, profiler) => {
         let stylelintTask = require('./linters/stylelint.js');
         let sassRes = await stylelintTask(app, { warnings: options.warnings, files: filterStyleFiles(entries) }, profiler);
         if (sassRes) {
-            res.push(sassRes);
+            throw 'Stylelint found some errors';
         }
     }
 
@@ -89,5 +88,4 @@ module.exports = async(app, options, profiler) => {
             });
         });
     }
-    return res;
 };

@@ -59,10 +59,8 @@ module.exports = function eslint(app, options, profiler) {
         profile.end();
         task(); // Stop loader.
         if (report.errorCount || (options.warnings !== false && report.warningCount)) {
-            if (options.warnings !== false || report.errorCount) {
-                const formatter = require('eslint/lib/formatters/stylish');
-                app.log(formatter(report.results));
-            }
+            const formatter = require('eslint/lib/formatters/stylish');
+            app.log(formatter(report.results));
             return report;
         }
 

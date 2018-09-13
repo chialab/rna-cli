@@ -71,6 +71,7 @@ module.exports = async(app, options = {}, profiler) => {
             warnings: false,
         });
     }
+
     if (lintErrors && lintErrors.length) {
         throw 'Linter errors found.';
     }
