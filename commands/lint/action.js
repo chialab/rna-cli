@@ -36,6 +36,68 @@ function filterStyleFiles(entries) {
 }
 
 /**
+ * Run Stylelint.
+ *
+ * @param {CLI} app The current CLI instance.
+ * @param {Array<string>} files The list of files to lint.
+ * @param {string|Array<string>} files Glob string or array of files to lint.
+ *
+ * @namespace options
+ * @property {Boolean} warnings Should include warnings in the response.
+ */
+async function stylelint(app, files, profiler) {
+    const Stylelint = require('../../lib/Linters/Stylelint.js');
+
+    let profile = profiler.task('stylelint');
+    let task = app.log('running stylelint...', true);
+    try {
+        let linter = new Stylelint();
+        let report = await linter.lint({
+            files,
+        });
+        profile.end();
+        task(); // Stop loader.
+        if (report.errorCount) {
+            return report;
+        }
+    } catch(err) {
+        profile.end();
+        task();
+        throw err;
+    }
+}
+
+/**
+ * Lint JS files with ESlint.
+ * @param {CLI} app The current CLI instance.
+ * @param {Array<string>} files The list of files to lint.
+ * @param {string|Array<string>} files Glob string or array of files to lint.
+ *
+ * @namespace options
+ * @property {Boolean} warnings Should include warnings in the response.
+ */
+async function eslint(app, files, profiler) {
+    const ESLint = require('../../lib/Linters/ESLint.js');
+
+    let profile = profiler.task('eslint');
+    let task = app.log('running ESLint...', true);
+    try {
+        const linter = new ESLint();
+        const report = await linter.lint(files);
+        app.log(linter.report);
+        profile.end();
+        task(); // Stop loader.
+        if (report.errorCount) {
+            return report;
+        }
+    } catch (err) {
+        profile.end();
+        task();
+        throw err;
+    }
+}
+
+/**
  * Command action to run linter.
  *
  * @param {CLI} app CLI instance.
@@ -49,24 +111,23 @@ function filterStyleFiles(entries) {
  * @property {Boolean} styles Should run linter for Sass files.
  * @property {Boolean} watch Should watch files.
  */
-module.exports = async(app, options, profiler) => {
+module.exports = async function lint(app, options, profiler) {
     if (!paths.cwd) {
         // Unable to detect project root.
         throw 'No project found.';
     }
+
     let entries = Entry.resolve(paths.cwd, options.arguments.length ? options.arguments : ['src/**/*.*', 'packages/*/src/**/*.*']);
 
     if (options.js !== false) {
-        let eslintTask = require('./linters/eslint.js');
-        let eslintRes = await eslintTask(app, { warnings: options.warnings, files: filterJSFiles(entries) }, profiler);
+        let eslintRes = await eslint(app, filterJSFiles(entries), profiler);
         if (eslintRes) {
             throw 'ESLint found some errors.';
         }
     }
 
     if (options.styles !== false) {
-        let stylelintTask = require('./linters/stylelint.js');
-        let sassRes = await stylelintTask(app, { warnings: options.warnings, files: filterStyleFiles(entries) }, profiler);
+        let sassRes = await stylelint(app, filterStyleFiles(entries), profiler);
         if (sassRes) {
             throw 'Stylelint found some errors';
         }
