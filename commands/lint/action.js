@@ -52,9 +52,10 @@ async function stylelint(app, files, profiler) {
     let task = app.log('running stylelint...', true);
     try {
         let linter = new Stylelint();
-        let report = await linter.lint({
-            files,
-        });
+        let report = await linter.lint(files);
+        if (report.errorCount || report.warningCount) {
+            app.log(linter.report());
+        }
         profile.end();
         task(); // Stop loader.
         if (report.errorCount) {
@@ -84,7 +85,9 @@ async function eslint(app, files, profiler) {
     try {
         const linter = new ESLint();
         const report = await linter.lint(files);
-        app.log(linter.report);
+        if (report.errorCount || report.warningCount) {
+            app.log(linter.report());
+        }
         profile.end();
         task(); // Stop loader.
         if (report.errorCount) {
@@ -117,17 +120,19 @@ module.exports = async function lint(app, options, profiler) {
         throw 'No project found.';
     }
 
-    let entries = Entry.resolve(paths.cwd, options.arguments.length ? options.arguments : ['src/**/*.*', 'packages/*/src/**/*.*']);
+    let entries = Entry.resolve(paths.cwd, options.arguments.length ? options.arguments : ['src/**/*', 'packages/*/src/**/*']);
+    let jsFiles = filterJSFiles(entries);
+    let cssFiles = filterStyleFiles(entries);
 
-    if (options.js !== false) {
-        let eslintRes = await eslint(app, filterJSFiles(entries), profiler);
+    if (jsFiles.length) {
+        let eslintRes = await eslint(app, jsFiles, profiler);
         if (eslintRes) {
             throw 'ESLint found some errors.';
         }
     }
 
-    if (options.styles !== false) {
-        let sassRes = await stylelint(app, filterStyleFiles(entries), profiler);
+    if (cssFiles.length) {
+        let sassRes = await stylelint(app, cssFiles, profiler);
         if (sassRes) {
             throw 'Stylelint found some errors';
         }
