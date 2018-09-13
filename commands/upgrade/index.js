@@ -9,5 +9,5 @@ module.exports = (program) => {
         .command('upgrade')
         .description('Upgrade the CLI.')
         .help('Try to install the latest version of the CLI.')
-        .action(require('path').resolve(__dirname, './action.js'));
+        .action(`${__dirname}/action.js`);
 };

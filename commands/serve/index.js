@@ -15,5 +15,5 @@ module.exports = (program) => {
         .option('[--directory]', 'Should list directories.')
         .option('[--https.key]', 'Path to server https key.')
         .option('[--https.cert]', 'Path to server https certificate.')
-        .action(require('path').resolve(__dirname, './action.js'));
+        .action(`${__dirname}/action.js`);
 };

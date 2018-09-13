@@ -37,5 +37,5 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
         .option('[--jsx.module]', 'The module to auto import for JSX pragma.')
         .option('[--polyfill]', 'Auto add polyfills. [⚠️  experimental]')
         .option('[--optimize]', 'Run OptimizeJS after bundle. [⚠️  experimental]')
-        .action(require('path').resolve(__dirname, './action.js'));
+        .action(`${__dirname}/action.js`);
 };

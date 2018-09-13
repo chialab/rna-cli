@@ -13,5 +13,5 @@ module.exports = (program) => {
         .option('[--no-git]', 'Do not commit version changes to Git.')
         .option('[--no-npm]', 'Do not commit version changes to NPM.')
         .help('Use `lerna` to handle to publish monorepos.\n')
-        .action(require('path').resolve(__dirname, './action.js'));
+        .action(`${__dirname}/action.js`);
 };

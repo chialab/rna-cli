@@ -9,5 +9,5 @@ module.exports = (program) => {
         .command('install')
         .description('Sync project dependencies after a project update or a git pull.')
         .help('A simple alias to `yarn install` command.')
-        .action(require('path').resolve(__dirname, './action.js'));
+        .action(`${__dirname}/action.js`);
 };

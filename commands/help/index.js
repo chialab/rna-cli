@@ -9,5 +9,5 @@ module.exports = (program) => {
         .command('help')
         .description('Show CLI help.')
         .option('[--deprecated]', 'Show deprecated commands.')
-        .action(require('path').resolve(__dirname, './action.js'));
+        .action(`${__dirname}/action.js`);
 };

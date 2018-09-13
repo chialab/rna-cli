@@ -16,5 +16,5 @@ module.exports = (program) => {
         .option('[--no-license]', 'Skip license files.')
         .option('[--no-readme]', 'Skip README generation.')
         .option('[--force]', 'Force project setup if already initialized.')
-        .action(require('path').resolve(__dirname, './action.js'));
+        .action(`${__dirname}/action.js`);
 };

@@ -9,5 +9,5 @@ module.exports = (program) => {
         .command('test')
         .description('Trigger project `test` script.')
         .help('A simple alias to `yarn test` command.')
-        .action(require('path').resolve(__dirname, './action.js'));
+        .action(`${__dirname}/action.js`);
 };
