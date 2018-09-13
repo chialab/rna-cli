@@ -96,15 +96,11 @@ module.exports = async function stylelintTask(app, options, profiler) {
             return res;
         });
 
-        if (errorCount || (options.warnings !== false && warningCount)) {
-            if (options.warnings !== false || errorCount) {
-                const formatter = require('eslint/lib/formatters/stylish');
-                app.log(formatter(eslintLikeReport));
-            }
+        const formatter = require('eslint/lib/formatters/stylish');
+        app.log(formatter(eslintLikeReport));
+        if (errorCount) {
             return eslintLikeReport;
         }
-
-        app.log('everything is fine with Stylelint.');
     } catch(err) {
         profile.end();
         task();

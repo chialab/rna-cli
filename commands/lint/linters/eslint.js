@@ -58,13 +58,11 @@ module.exports = function eslint(app, options, profiler) {
         const report = linter.executeOnFiles(jsFiles);
         profile.end();
         task(); // Stop loader.
-        if (report.errorCount || (options.warnings !== false && report.warningCount)) {
-            const formatter = require('eslint/lib/formatters/stylish');
-            app.log(formatter(report.results));
+        const formatter = require('eslint/lib/formatters/stylish');
+        app.log(formatter(report.results));
+        if (report.errorCount) {
             return report;
         }
-
-        app.log('everything is fine with ESLint.');
     } catch (err) {
         profile.end();
         task();

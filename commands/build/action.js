@@ -62,20 +62,6 @@ module.exports = async(app, options = {}, profiler) => {
         throw 'No project found.';
     }
 
-    let lintErrors;
-    if (options.lint !== false) {
-        lintErrors = await app.exec('lint', {
-            arguments: typeof options.lint === 'string' ? [options.lint] : options.arguments,
-            styles: options['lint-styles'] !== false,
-            js: options['lint-js'] !== false,
-            warnings: false,
-        });
-    }
-
-    if (lintErrors && lintErrors.length) {
-        throw 'Linter errors found.';
-    }
-
     let entries = Entry.resolve(paths.cwd, options.arguments);
     let bundleManifests = [];
 
@@ -99,10 +85,17 @@ module.exports = async(app, options = {}, profiler) => {
                 bundleManifests.push(manifest);
                 continue;
             }
-            // Javascript file
-            let manifest = await bundle(app, opts, profiler);
-            // collect the generated BundleManifest
-            bundleManifests.push(manifest);
+            try {
+                // Javascript file
+                let manifest = await bundle(app, opts, profiler);
+                // collect the generated BundleManifest
+                bundleManifests.push(manifest);
+            } catch (err) {
+                if (err.plugin && err.plugin === 'eslint') {
+                    throw '';
+                }
+                throw err;
+            }
             continue;
         }
 
@@ -134,8 +127,15 @@ module.exports = async(app, options = {}, profiler) => {
         if (jsOptions.input) {
             jsOptions.targets = options.targets ? browserslist.elaborate(options.targets) : browserslist.load(json);
             // a javascript source has been detected.
-            let manifest = await bundle(app, jsOptions, profiler);
-            bundleManifests.push(manifest);
+            try {
+                let manifest = await bundle(app, jsOptions, profiler);
+                bundleManifests.push(manifest);
+            } catch (err) {
+                if (err.plugin && err.plugin === 'eslint') {
+                    throw '';
+                }
+                throw err;
+            }
         }
 
         // build `style` > `main`.css
@@ -194,20 +194,9 @@ module.exports = async(app, options = {}, profiler) => {
                     FILES[fp].map(async(bundle) => {
                         try {
                             await BUNDLES_QUEUES.tick(bundle, 100);
-                            let shouldLint = options.lint !== false;
-                            if (shouldLint) {
-                                if (ext.isJSFile(fp)) {
-                                    shouldLint = options['lint-js'] !== false;
-                                } else if (ext.isStyleFile(fp)) {
-                                    shouldLint = options['lint-styles'] !== false;
-                                } else {
-                                    shouldLint = false;
-                                }
-                            }
                             let bundleManifests = await app.exec('build', Object.assign(options, {
                                 arguments: [bundle.input],
                                 output: bundle.output,
-                                lint: shouldLint && fp,
                                 cache: true,
                                 watch: false,
                             }));

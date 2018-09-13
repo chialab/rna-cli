@@ -8,6 +8,7 @@ const utils = require('../../../lib/utils.js');
 const BundleManifest = require('../../../lib/bundle.js');
 const fileSize = require('../../../lib/file-size.js');
 
+const { eslint } = require('rollup-plugin-eslint');
 const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel');
 const sass = require('../plugins/rollup-plugin-sass-modules/rollup-plugin-sass-modules');
 const { terser } = require('rollup-plugin-terser');
@@ -87,6 +88,11 @@ async function getConfig(app, bundler, options) {
             indent: false,
         },
         plugins: [
+            eslint({
+                throwOnError: true,
+                throwOnWarning: false,
+                include: /\.(mjs|js|jsx|ts)$/,
+            }),
             /** PLUGINS THAT HAVE EFFECTS ON IMPORT HANDLING */
             json(),
             string({
