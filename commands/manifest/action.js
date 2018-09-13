@@ -3,6 +3,7 @@ const path = require('path');
 const colors = require('colors/safe');
 const inquirer = require('inquirer');
 const { cwd } = require('../../lib/paths.js');
+const fileSize = require('../../lib/file-size.js');
 const Proteins = require('@chialab/proteins');
 
 const FAVICONS = {
@@ -293,7 +294,8 @@ module.exports = async function(app, options = {}) {
         try {
             await generateIcons(manifest, index, icon, dir);
             task();
-            app.log(`${colors.bold(colors.green('icons generated!'))} ${colors.grey(`(${dir}/icons)`)}`);
+            app.log(colors.bold(colors.green('icons generated!')));
+            app.log(fileSize(`${dir}/icons`));
         } catch (err) {
             task();
             throw err;
@@ -337,9 +339,11 @@ module.exports = async function(app, options = {}) {
             }
         );
         fs.writeFileSync(indexPath, `<!DOCTYPE html>\n${html}`);
-        app.log(`${colors.bold(colors.green('index updated.'))} ${colors.grey(`(${indexPath})`)}`);
+        app.log(colors.bold(colors.green('index updated!')));
+        app.log(fileSize(indexPath));
     }
     // write the new manifest file.
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-    app.log(`${colors.bold(colors.green('manifest generated.'))} ${colors.grey(`(${manifestPath})`)}`);
+    app.log(colors.bold(colors.green('manifest generated!')));
+    app.log(fileSize(manifestPath));
 };

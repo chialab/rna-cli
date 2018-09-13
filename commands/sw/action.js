@@ -4,22 +4,8 @@ const paths = require('../../lib/paths.js');
 const colors = require('colors/safe');
 const workbox = require('workbox-build');
 const Watcher = require('../../lib/Watcher');
+const fileSize = require('../../lib/file-size.js');
 const glob = require('glob');
-
-function remember(app, output) {
-    app.log(colors.yellow('remember to include'));
-    app.log(colors.grey(`<script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('${output}', {scope: '/'})
-            .then(function(reg) {
-                // registration worked
-            }).catch(function(error) {
-                // registration failed
-            });
-    }
-</script>`));
-    app.log(colors.yellow('in your index.html file.'));
-}
 
 /**
  * Command action to add files to precache for a service worker.
@@ -78,10 +64,8 @@ module.exports = async(app, options) => {
         }
 
         task();
-        app.log(`${colors.bold(colors.green('service worker generated!'))} ${colors.grey(`(${output})`)}`);
-        if (options.remember !== false) {
-            remember(app, path.relative(input, output));
-        }
+        app.log(colors.bold(colors.green('service worker generated!')));
+        app.log(fileSize(options.output));
         if (options.watch) {
             let FILES = glob.sync(path.join(input, '**/*'), {
                 ignore: exclude.map((pattern) => path.join(input, pattern)),
@@ -100,7 +84,7 @@ module.exports = async(app, options) => {
                         return;
                     }
                 }
-                app.exec('sw', Object.assign({}, options, { remember: false, watch: false }));
+                app.exec('sw', Object.assign({}, options, { watch: false }));
             });
         }
         return res;
