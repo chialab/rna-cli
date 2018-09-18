@@ -12,7 +12,7 @@ module.exports = (program) => {
         .option('[--no-git]', 'Skip git setup.')
         .option('[--no-npm]', 'Skip package.json setup.')
         .option('[--no-config]', 'Skip editor config files.')
-        .option('[--no-linting]', 'Skip lint config files.')
+        .option('[--no-lint]', 'Skip lint config files.')
         .option('[--no-license]', 'Skip license files.')
         .option('[--no-readme]', 'Skip README generation.')
         .option('[--force]', 'Force project setup if already initialized.')

@@ -39,7 +39,7 @@ async function generate(app, sources, output) {
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async(app, options) => {
+module.exports = async function docs(app, options) {
     let entries = Entry.resolve(paths.cwd, options.arguments);
     if (!entries.length) {
         // no arguments

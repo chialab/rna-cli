@@ -8,7 +8,7 @@ const paths = require('../../lib/paths.js');
  * @param {CLI} app CLI instance.
  * @returns {Promise}
  */
-module.exports = async(app) => {
+module.exports = async function install(app) {
     if (!paths.cwd) {
         // Unable to detect project root.
         throw 'No project found.';

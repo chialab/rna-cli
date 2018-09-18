@@ -7,7 +7,7 @@ const paths = require('../../lib/paths.js');
  * @param {CLI} app CLI instance.
  * @returns {Promise}
  */
-module.exports = async() => {
+module.exports = async function start() {
     if (!paths.cwd) {
         // Unable to detect project root.
         throw 'No project found.';

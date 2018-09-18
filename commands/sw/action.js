@@ -14,7 +14,7 @@ const glob = require('glob');
  * @param {Object} options Options.
  * @returns {Promise|void}
  */
-module.exports = async(app, options) => {
+module.exports = async function sw(app, options) {
     if (!options.arguments.length) {
         throw 'Missin input files.';
     }
@@ -77,7 +77,7 @@ module.exports = async(app, options) => {
                 cwd: paths.cwd,
             });
             WATCHER.add(FILES);
-            await WATCHER.watch((event, file) => {
+            WATCHER.watch((event, file) => {
                 if (file === output) {
                     const content = fs.readFileSync(file, 'utf8');
                     if (content.indexOf('.precache([])') === -1) {

@@ -10,7 +10,7 @@ const paths = require('../../../lib/paths.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async(app, options) => {
+module.exports = async function licenseTask(app, options) {
     if (options.license === false) {
         return;
     }
@@ -51,5 +51,5 @@ module.exports = async(app, options) => {
         text = text.replace(/<(owner|author|copyright\sholders)>/gi, json.author);
     }
     fs.writeFileSync(license, text);
-    app.log(`${colors.green('license created.')} ${colors.grey(`(${license})`)}`);
+    app.log(`${colors.green('license created.')} ${colors.grey(`(${license.replace(cwd, '')})`)}`);
 };

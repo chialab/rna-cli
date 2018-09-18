@@ -36,6 +36,38 @@ function filterStyleFiles(entries) {
 }
 
 /**
+ * Lint JS files with ESlint.
+ * @param {CLI} app The current CLI instance.
+ * @param {Array<string>} files The list of files to lint.
+ * @param {string|Array<string>} files Glob string or array of files to lint.
+ *
+ * @namespace options
+ * @property {Boolean} warnings Should include warnings in the response.
+ */
+async function eslint(app, files, profiler) {
+    const ESLint = require('../../lib/Linters/ESLint.js');
+
+    let profile = profiler.task('eslint');
+    let task = app.log('running ESLint...', true);
+    try {
+        const linter = new ESLint();
+        const report = await linter.lint(files);
+        if (report.errorCount || report.warningCount) {
+            app.log(linter.report());
+        }
+        profile.end();
+        task(); // Stop loader.
+        if (report.errorCount) {
+            return report;
+        }
+    } catch (err) {
+        profile.end();
+        task();
+        throw err;
+    }
+}
+
+/**
  * Run Stylelint.
  *
  * @param {CLI} app The current CLI instance.
@@ -62,38 +94,6 @@ async function stylelint(app, files, profiler) {
             return report;
         }
     } catch(err) {
-        profile.end();
-        task();
-        throw err;
-    }
-}
-
-/**
- * Lint JS files with ESlint.
- * @param {CLI} app The current CLI instance.
- * @param {Array<string>} files The list of files to lint.
- * @param {string|Array<string>} files Glob string or array of files to lint.
- *
- * @namespace options
- * @property {Boolean} warnings Should include warnings in the response.
- */
-async function eslint(app, files, profiler) {
-    const ESLint = require('../../lib/Linters/ESLint.js');
-
-    let profile = profiler.task('eslint');
-    let task = app.log('running ESLint...', true);
-    try {
-        const linter = new ESLint();
-        const report = await linter.lint(files);
-        if (report.errorCount || report.warningCount) {
-            app.log(linter.report());
-        }
-        profile.end();
-        task(); // Stop loader.
-        if (report.errorCount) {
-            return report;
-        }
-    } catch (err) {
         profile.end();
         task();
         throw err;
@@ -144,7 +144,7 @@ module.exports = async function lint(app, options, profiler) {
             cwd: DIR,
         });
         WATCHER.add('**/*.{js,jsx,mjs,sass,scss,css}');
-        await WATCHER.watch((event, fp) => {
+        WATCHER.watch((event, fp) => {
             app.exec('lint', {
                 arguments: [fp],
                 warnings: options.warnings,

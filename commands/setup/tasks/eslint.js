@@ -12,8 +12,8 @@ const configurator = require('../../../lib/configurator.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async(app, options) => {
-    if (options.linting === false) {
+module.exports = async function eslintTask(app, options) {
+    if (options.lint === false) {
         return;
     }
 
@@ -37,10 +37,8 @@ module.exports = async(app, options) => {
     // "Append" configuration to `.eslintrc.yml`.
     configurator(eslintConfig, content, '# RNA');
 
-    if (isNew) {
+    if (isNew || options.force) {
         await manager.dev(paths.cwd, 'eslint', 'eslint-plugin-mocha', 'babel-eslint', 'eslint-plugin-babel');
-        app.log(`${colors.green('.eslintrc.yml created.')} ${colors.grey(`(${eslintConfig})`)}`);
-        return;
     }
-    app.log(`${colors.green('.eslintrc.yml updated.')} ${colors.grey(`(${eslintConfig})`)}`);
+    app.log(`${colors.green(`.eslintrc.yml ${isNew ? 'created' : 'updated'}.`)} ${colors.grey(`(${eslintConfig.replace(cwd, '')})`)}`);
 };

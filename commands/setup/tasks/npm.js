@@ -13,7 +13,7 @@ const configurator = require('../../../lib/configurator.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async(app, options) => {
+module.exports = async function npmTask(app, options) {
     if (options.npm === false) {
         return;
     }
@@ -175,13 +175,15 @@ module.exports = async(app, options) => {
     // "Append" configuration to `.gitignore`.
     configurator(gitIgnore, content, '# RNA-STRUCTURE');
 
-    // NPMIGNORE
-    let npmIgnore = path.join(cwd, '.npmignore');
-    content = fs.readFileSync(
-        path.join(paths.cli, './configs/npm/npmignore'),
-        'utf8'
-    );
+    if (!json.private) {
+        // NPMIGNORE
+        let npmIgnore = path.join(cwd, '.npmignore');
+        content = fs.readFileSync(
+            path.join(paths.cli, './configs/npm/npmignore'),
+            'utf8'
+        );
 
-    // "Append" configuration to `.npmignore`.
-    configurator(npmIgnore, content, '# RNA-STRUCTURE');
+        // "Append" configuration to `.npmignore`.
+        configurator(npmIgnore, content, '# RNA-STRUCTURE');
+    }
 };

@@ -9,7 +9,7 @@ const paths = require('../../lib/paths.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async(app, options) => {
+module.exports = async function setup(app, options) {
     // Detect directory to use as project root, and ensure it is present.
     paths.cwd = options.arguments.length ? path.resolve(process.cwd(), options.arguments[0]) : (paths.cwd || process.cwd());
     fs.ensureDirSync(paths.cwd);

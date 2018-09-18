@@ -9,7 +9,7 @@ const paths = require('../../../lib/paths.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async() => {
+module.exports = async function directoriesTask() {
     let cwd = paths.cwd;
     const jsonFile = path.join(cwd, 'package.json');
     if (!fs.existsSync(jsonFile)) {

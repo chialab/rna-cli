@@ -11,7 +11,7 @@ const Entry = require('../../../lib/entry.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async(app, options) => {
+module.exports = async function readmeTask(app, options) {
     if (options.readme === false) {
         return;
     }

@@ -61,7 +61,6 @@
     "postcss": "^7.0.0",
     "postcss-all-unset": "^1.1.0",
     "rollup": "^0.65.0",
-    "rollup-plugin-eslint": "^5.0.0",
     "rollup-plugin-json": "^3.0.0",
     "rollup-plugin-optimize-js": "^0.0.4",
     "rollup-plugin-terser": "^2.0.2",

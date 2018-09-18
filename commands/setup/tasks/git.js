@@ -13,7 +13,7 @@ const configurator = require('../../../lib/configurator.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async(app, options) => {
+module.exports = async function gitTask(app, options) {
     if (options.git === false) {
         return;
     }

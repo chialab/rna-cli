@@ -1,29 +1,32 @@
 const fs = require('fs-extra');
 const path = require('path');
+const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
 const paths = require('../../lib/paths.js');
 const Entry = require('../../lib/entry.js');
-const bundle = require('./bundlers/rollup.js');
-const sass = require('./bundlers/sass.js');
 const Watcher = require('../../lib/Watcher');
 const ext = require('../../lib/extensions.js');
 const browserslist = require('../../lib/browserslist.js');
 const PriorityQueues = require('../../lib/PriorityQueues');
-const Queue = require('../../lib/Queue');
+const utils = require('../../lib/utils.js');
+const fileSize = require('../../lib/file-size.js');
+
+// collect bundles dependencies.
+const BUNDLE_FILES = {};
 
 /**
  * Add bundles' files to the watcher.
- * @param {Object} files Set of data where keys are file paths and values a list of related bundles.
  * @param {Watcher} watcher The watcher instance.
+ * @param {Object} files Set of data where keys are file paths and values a list of related bundles.
  * @param {BundleManifest} bundleManifest A bundle.
  * @param {BundleManifest} oldManifest The previous bundle.
  */
-function watchBundle(files, watcher, bundleManifest, oldManifest) {
+function watchBundle(watcher, bundleManifest, oldManifest) {
     if (oldManifest) {
         // remove old manifest from the list.
         oldManifest.files.forEach((f) => {
-            const list = files[f] || [];
-            const io = list.indexOf(oldManifest);
+            let list = BUNDLE_FILES[f] || [];
+            let io = list.indexOf(oldManifest);
             if (io !== -1) {
                 list.splice(io, 1);
             }
@@ -32,10 +35,104 @@ function watchBundle(files, watcher, bundleManifest, oldManifest) {
     // iterate bundle dependencies.
     bundleManifest.files.forEach((f) => {
         // collect file manifest dependents.
-        files[f] = files[f] || [];
-        files[f].push(bundleManifest);
-        watcher.add(f);
+        BUNDLE_FILES[f] = BUNDLE_FILES[f] || [];
+        BUNDLE_FILES[f].push(bundleManifest);
+        if (BUNDLE_FILES[f].length === 1) {
+            watcher.add(f);
+        }
     });
+}
+
+async function rollup(app, options, profiler) {
+    const Rollup = require('../../lib/Bundlers/Rollup.js');
+
+    if (options.output) {
+        options.output = path.resolve(paths.cwd, options.output);
+        let final = options.output.split(path.sep).pop();
+        if (!final.match(/\./)) {
+            options.output = path.join(
+                options.output,
+                path.basename(options.input)
+            );
+        }
+    }
+    if (!options.name) {
+        options.name = utils.camelize(
+            path.basename(options.output, path.extname(options.output))
+        );
+    }
+    if (options.production && !process.env.hasOwnProperty('NODE_ENV')) {
+        // Set NODE_ENV environment variable if `--production` flag is set.
+        app.log(colors.yellow('🚢  setting "production" environment.'));
+        process.env.NODE_ENV = 'production';
+    }
+    let profile = profiler.task('rollup');
+    let task = app.log(`bundling... ${colors.grey(`(${path.relative(paths.cwd, options.input)})`)}`, true);
+    try {
+        let config = await Rollup.detectConfig();
+        let bundler = new Rollup(
+            Object.assign({
+                config,
+            }, options)
+        );
+        let manifest = await bundler.build();
+        if (app.options.profile) {
+            let tasks = bundler.timings();
+            for (let k in tasks) {
+                profile.task(k, false).set(tasks[k]);
+            }
+        }
+        profile.end();
+        task();
+        app.log(colors.bold(colors.green('bundle ready!')));
+        app.log(fileSize(options.output));
+
+        if (bundler.linter && (bundler.linter.hasErrors() || bundler.linter.hasWarnings())) {
+            app.log(bundler.linter.report());
+        }
+
+        return manifest;
+    } catch (err) {
+        profile.end();
+        task();
+        throw err;
+    }
+}
+
+async function postcss(app, options, profiler) {
+    const PostCSS = require('../../lib/Bundlers/PostCSS.js');
+
+    if (options.output) {
+        options.output = path.resolve(paths.cwd, options.output);
+        let final = options.output.split(path.sep).pop();
+        if (!final.match(/\./)) {
+            options.output = path.join(
+                options.output,
+                path.basename(options.input)
+            );
+        }
+    }
+
+    let task = app.log(`postcss... ${colors.grey(`(${path.relative(paths.cwd, options.input)})`)}`, true);
+    let profile = profiler.task('postcss');
+    try {
+        let bundler = new PostCSS(options);
+        let manifest = await bundler.build();
+        task();
+        profile.end();
+        app.log(colors.bold(colors.green('css ready!')));
+        app.log(fileSize(options.output));
+
+        if (bundler.linter && (bundler.linter.hasErrors() || bundler.linter.hasWarnings())) {
+            app.log(bundler.linter.report());
+        }
+
+        return manifest;
+    } catch (err) {
+        task();
+        profile.end();
+        throw err;
+    }
 }
 
 /**
@@ -55,7 +152,7 @@ function watchBundle(files, watcher, bundleManifest, oldManifest) {
  * @property {Boolean} watch Should watch files.
  * @property {Boolean} cache Use cache if available.
  */
-module.exports = async(app, options = {}, profiler) => {
+module.exports = async function build(app, options = {}, profiler) {
     options = Proteins.clone(options);
     if (!options.arguments.length && !paths.cwd) {
         // Unable to detect project root.
@@ -80,22 +177,15 @@ module.exports = async(app, options = {}, profiler) => {
             opts.targets = opts.targets ? browserslist.elaborate(opts.targets) : browserslist.load(opts.input);
             if (ext.isStyleFile(entry.file.path)) {
                 // Style file
-                let manifest = await sass(app, opts, profiler);
+                let manifest = await postcss(app, opts, profiler);
                 // collect the generated BundleManifest
                 bundleManifests.push(manifest);
                 continue;
             }
-            try {
-                // Javascript file
-                let manifest = await bundle(app, opts, profiler);
-                // collect the generated BundleManifest
-                bundleManifests.push(manifest);
-            } catch (err) {
-                if (err.plugin && err.plugin === 'eslint') {
-                    throw '';
-                }
-                throw err;
-            }
+            // Javascript file
+            let manifest = await rollup(app, opts, profiler);
+            // collect the generated BundleManifest
+            bundleManifests.push(manifest);
             continue;
         }
 
@@ -127,15 +217,8 @@ module.exports = async(app, options = {}, profiler) => {
         if (jsOptions.input) {
             jsOptions.targets = options.targets ? browserslist.elaborate(options.targets) : browserslist.load(json);
             // a javascript source has been detected.
-            try {
-                let manifest = await bundle(app, jsOptions, profiler);
-                bundleManifests.push(manifest);
-            } catch (err) {
-                if (err.plugin && err.plugin === 'eslint') {
-                    throw '';
-                }
-                throw err;
-            }
+            let manifest = await rollup(app, jsOptions, profiler);
+            bundleManifests.push(manifest);
         }
 
         // build `style` > `main`.css
@@ -165,7 +248,7 @@ module.exports = async(app, options = {}, profiler) => {
         if (styleOptions.input) {
             styleOptions.targets = options.targets ? browserslist.elaborate(options.targets) : browserslist.load(json);
             // a style source has been detected.
-            let manifest = await sass(app, styleOptions, profiler);
+            let manifest = await postcss(app, styleOptions, profiler);
             // collect the generated BundleManifest
             bundleManifests.push(manifest);
         }
@@ -175,41 +258,53 @@ module.exports = async(app, options = {}, profiler) => {
     if (options.watch) {
         // setup a bundles priority chain.
         const BUNDLES_QUEUES = new PriorityQueues();
-        // setup a rebuild Promises chain.
-        const REBUILD_QUEUE = new Queue();
         // start the watch task
         const WATCHER = new Watcher({
             cwd: paths.cwd,
             log: true,
         });
-        // collect bundles dependencies.
-        const FILES = {};
+
         bundleManifests.forEach((bundle) => {
-            watchBundle(FILES, WATCHER, bundle);
+            watchBundle(WATCHER, bundle);
         });
-        await WATCHER.watch((event, fp) => {
-            REBUILD_QUEUE.add(() =>
-                Promise.all(
-                    // find out manifests with changed file dependency.
-                    FILES[fp].map(async(bundle) => {
-                        try {
-                            await BUNDLES_QUEUES.tick(bundle, 100);
-                            let bundleManifests = await app.exec('build', Object.assign(options, {
-                                arguments: [bundle.input],
-                                output: bundle.output,
-                                cache: true,
-                                watch: false,
-                            }));
-                            // watch new files for bundles.
-                            await watchBundle(FILES, WATCHER, bundleManifests[0], bundle);
-                        } catch (err) {
-                            if (err) {
-                                app.log(err);
-                            }
-                        }
-                    })
-                )
+
+        let promise = Promise.resolve();
+
+        WATCHER.watch(async(event, fp) => {
+            let bundles = BUNDLE_FILES[fp].slice(0);
+
+            if (!bundles) {
+                return Promise.resolve();
+            }
+
+            let ticks = await Promise.all(
+                // find out manifests with changed file dependency.
+                bundles.map((bundle) => BUNDLES_QUEUES.tick(bundle, 100))
             );
+
+            for (let i = 0; i < ticks.length; i++) {
+                if (!ticks[i]) {
+                    continue;
+                }
+
+                let bundle = bundles[i];
+                promise = promise.then(async() => {
+                    try {
+                        let bundleManifests = await build(app, Object.assign(options, {
+                            arguments: [bundle.input],
+                            output: bundle.output,
+                            cache: true,
+                            watch: false,
+                        }), profiler);
+                        // watch new files for bundles.
+                        watchBundle(WATCHER, bundleManifests[0], bundle);
+                    } catch (err) {
+                        if (err) {
+                            app.log(err);
+                        }
+                    }
+                });
+            }
         });
     }
     // resolve build task with the list of generated manifests.

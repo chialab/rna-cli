@@ -12,8 +12,8 @@ const configurator = require('../../../lib/configurator.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async(app, options) => {
-    if (options.linting === false) {
+module.exports = async function stylelintTask(app, options) {
+    if (options.lint === false) {
         return;
     }
     const cwd = paths.cwd;
@@ -27,10 +27,8 @@ module.exports = async(app, options) => {
     // "Append" configuration to `.stylelintrc`.
     configurator(stylelintConfig, content, '# RNA');
 
-    if (isNew) {
+    if (isNew || options.force) {
         await manager.dev(paths.cwd, 'stylelint', 'stylelint-order');
-        app.log(`${colors.green('.stylelintrc created.')} ${colors.grey(`(${stylelintConfig})`)}`);
-    } else {
-        app.log(`${colors.green('.stylelintrc updated.')} ${colors.grey(`(${stylelintConfig})`)}`);
     }
+    app.log(`${colors.green(`.stylelintrc ${isNew ? 'created' : 'updated'}.`)} ${colors.grey(`(${stylelintConfig.replace(cwd, '')})`)}`);
 };

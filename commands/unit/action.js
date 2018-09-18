@@ -207,7 +207,7 @@ function getConfig(app, options) {
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async(app, options = {}) => {
+module.exports = async function unit(app, options = {}) {
     if (!paths.cwd) {
         // Unable to detect project root.
         throw 'No project found.';

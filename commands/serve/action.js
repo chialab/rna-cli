@@ -103,7 +103,7 @@ module.exports = (app, options = {}) => new Promise((resolve, reject) => {
                 log: false,
             });
             WATCHER.add(PATHS);
-            return WATCHER.watch((event, p) => {
+            WATCHER.watch((event, p) => {
                 if (event !== 'unlink') {
                     let toReload = p.replace(base, '').replace(/^\/*/, '');
                     // File updated: notify BrowserSync so that it can be reloaded.

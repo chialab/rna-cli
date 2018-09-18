@@ -7,7 +7,7 @@ const manager = require('../../lib/package-manager.js');
  * @param {CLI} app CLI instance.
  * @returns {Promise|void}
  */
-module.exports = async(app) => {
+module.exports = async function upgrade(app) {
     let version = await app.checkUpdate();
     if (version) {
         await manager.global(app.pkg);
