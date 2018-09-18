@@ -311,23 +311,31 @@ module.exports = async function(app, options = {}) {
             // update index <base> using manifest.scope
             let base = index.querySelector('base') || index.createElement('base');
             base.setAttribute('href', manifest.scope);
-            index.head.appendChild(base);
+            if (!base.parentNode) {
+                index.head.appendChild(base);
+            }
         }
         // update index meta title
         let meta = index.querySelector('meta[name="apple-mobile-web-app-title"]') || index.createElement('meta');
         meta.setAttribute('name', 'apple-mobile-web-app-title');
         meta.setAttribute('content', manifest.name || manifest.short_name);
-        index.head.appendChild(meta);
+        if (!meta.parentNode) {
+            index.head.appendChild(meta);
+        }
         // update index title
         let title = index.querySelector('title') || index.createElement('title');
         title.innerHTML = manifest.name || manifest.short_name;
-        index.head.appendChild(title);
+        if (!title.parentNode) {
+            index.head.appendChild(title);
+        }
         // update theme meta
         if (manifest.theme) {
             let theme = index.querySelector('meta[name="theme-color"]') || index.createElement('meta');
             theme.setAttribute('name', 'theme-color');
             theme.setAttribute('content', manifest.theme);
-            index.head.appendChild(theme);
+            if (!theme.parentNode) {
+                index.head.appendChild(theme);
+            }
         }
 
         // beautify html
