@@ -9,6 +9,7 @@ const BundleManifest = require('../../../lib/bundle.js');
 
 const babel = require('../plugins/rollup-plugin-babel/rollup-plugin-babel');
 const sass = require('../plugins/rollup-plugin-sass-modules/rollup-plugin-sass-modules');
+const resolve = require('rollup-plugin-node-resolve');
 const uglify = require('rollup-plugin-uglify');
 const json = require('rollup-plugin-json');
 const url = require('rollup-plugin-url');
@@ -26,13 +27,6 @@ function getBabelConfig(options) {
         return JSON.parse(fs.readFileSync(localConf), 'utf8');
     }
 
-    const plugins = [
-        [require('../plugins/babel-plugin-resolve/babel-plugin-resolve.js'), {
-            modulesPaths: [path.join(paths.cwd, 'node_modules')],
-            exclude: ['\0rollupPluginBabelHelpers', 'rollupCommonGlobal'],
-        }],
-    ];
-
     return {
         include: /\.(mjs|js|jsx)$/,
         babelrc: false,
@@ -49,7 +43,6 @@ function getBabelConfig(options) {
                 pragmaModule: options['jsx.module'] || '@dnajs/idom',
             }],
         ],
-        plugins,
     };
 }
 
@@ -87,6 +80,12 @@ function getConfig(app, bundler, options) {
             },
             plugins: [
                 /** PLUGINS THAT HAVE EFFECTS ON IMPORT HANDLING */
+                resolve({
+                    module: true,
+                    jsnext: true,
+                    main: true,
+                    preserveSymlinks: true,
+                }),
                 json(),
                 string({
                     include: [
@@ -164,6 +163,7 @@ function getConfig(app, bundler, options) {
                 return false;
             },
             perf: app.options.profile,
+            preserveSymlinks: true,
         };
     }
 
