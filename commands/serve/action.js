@@ -2,8 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const colors = require('colors/safe');
-const Watcher = require('../../lib/Watcher');
 const commondir = require('commondir');
+const store = require('../../lib/store.js');
+const Watcher = require('../../lib/Watcher');
 const cwd = require('../../lib/paths.js').cwd;
 const Entry = require('../../lib/entry.js');
 
@@ -72,10 +73,10 @@ module.exports = (app, options = {}) => new Promise((resolve, reject) => {
             },
         };
     }
-    if (options.https || options['https.key']) {
+    if (options.https === true || options['https.key']) {
         config.https = {
-            key: options['https.key'] || options.https,
-            cert: options['https.cert'] || options.cert || path.join(path.dirname(options['https.key'] || options.https), 'cert.pem'),
+            key: options['https.key'] || store.file('https/https.key'),
+            cert: options['https.cert'] || store.file('https/https.pem'),
         };
     }
     if (options.port) {
