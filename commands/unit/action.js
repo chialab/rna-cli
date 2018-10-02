@@ -8,6 +8,8 @@ const paths = require('../../lib/paths.js');
 const saucelabs = require('../../lib/saucelabs.js');
 const Entry = require('../../lib/entry.js');
 const browserslist = require('../../lib/browserslist.js');
+const store = require('../../lib/store.js');
+const Rollup = require('../../lib/Bundlers/Rollup.js');
 const runNativeScriptTest = require('./lib/ns.js');
 
 /**
@@ -270,20 +272,30 @@ module.exports = async function unit(app, options = {}) {
         taskEnvironments.push('browser');
     }
 
-    // build tests
-    let tempSource = path.join(paths.tmp, `source-${Date.now()}.js`);
-    let tempUnit = path.join(paths.tmp, `unit-${Date.now()}.js`);
     const unitCode = `${files.map((entry) => `import '${entry.file.path}';`).join('\n')}`;
-    fs.writeFileSync(tempSource, unitCode);
-    await app.exec('build', { // Build sources.
-        'arguments': [tempSource],
-        'coverage': options.coverage,
-        'output': tempUnit,
-        'targets': options.targets,
-        'map': 'inline',
-        'jsx.pragma': options['jsx.pragma'],
-        'jsx.module': options['jsx.module'],
-    });
+
+    // build tests
+    let tempSource = store.tmpfile('unit-source.js');
+    let tempUnit = store.tmpfile('unit-build.js');
+    tempSource.write(unitCode);
+
+    let config = await Rollup.detectConfig();
+    let bundler = new Rollup(Object.assign(
+        {
+            'coverage': options.coverage,
+            'targets': options.targets,
+            'jsx.pragma': options['jsx.pragma'],
+            'jsx.module': options['jsx.module'],
+        },
+        config,
+        {
+            input: tempSource.path,
+            output: tempUnit.path,
+            map: 'inline',
+        }
+    ));
+
+    await bundler.build();
 
     // Test built sources.
     for (let i = 0; i < taskEnvironments.length; i++) {
@@ -293,7 +305,7 @@ module.exports = async function unit(app, options = {}) {
             // Startup Mocha.
             require('source-map-support/register');
             const mocha = new Mocha();
-            mocha.addFile(tempUnit);
+            mocha.addFile(tempUnit.path);
             await new Promise((resolve, reject) => {
                 mocha.run((failures) => {
                     if (failures) {
@@ -318,9 +330,9 @@ module.exports = async function unit(app, options = {}) {
                 customContextFile,
                 [taskEnvName]: true,
             });
-            karmaOptions.files = [tempUnit];
+            karmaOptions.files = [tempUnit.path];
             karmaOptions.preprocessors = {
-                [tempUnit]: ['sourcemap'],
+                [tempUnit.path]: ['sourcemap'],
             };
             let server = await new Promise((resolve, reject) => {
                 let s = new karma.Server(karmaOptions, (exitCode) => {
@@ -373,7 +385,7 @@ module.exports = async function unit(app, options = {}) {
                 throw 'Invalid nativescript platform. Valid platforms are `ios` and `android`.';
             }
             // Create fake NS application.
-            await runNativeScriptTest(options.nativescript, tempUnit);
+            await runNativeScriptTest(options.nativescript, tempUnit.path);
         }
     }
 };
