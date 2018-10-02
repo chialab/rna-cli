@@ -1,6 +1,5 @@
 const fs = require('fs-extra');
-const path = require('path');
-const paths = require('../../../../lib/paths.js');
+const store = require('../../../../lib/store.js');
 
 const ELECTRON = require.resolve('electron');
 
@@ -15,9 +14,9 @@ const ElectronBrowser = function(baseBrowserDecorator, args, electronOpts) {
     let browserOptions = Object.assign({}, defaultElectron, electronOpts || {}, args.electronOpts || {});
 
     this._start = (url) => {
-        const SOURCE_PATH = path.join(__dirname, 'ElectronTest');
-        const STATIC_PATH = path.join(paths.tmp, 'ElectronTest');
-        const MAIN_JS = path.join(STATIC_PATH, 'main.js');
+        const SOURCE_PATH = store.tmpdir('ElectronTest').path;
+        const STATIC_PATH = store.tmpdir('ElectronTest').path;
+        const MAIN_JS = SOURCE_PATH.file('main.js').path;
 
         fs.copySync(SOURCE_PATH, STATIC_PATH);
         let content = fs.readFileSync(MAIN_JS, 'utf8')

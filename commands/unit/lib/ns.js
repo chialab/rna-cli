@@ -1,12 +1,12 @@
 const fs = require('fs-extra');
-const path = require('path');
 const exec = require('../../../lib/exec.js');
-const paths = require('../../../lib/paths.js');
+const store = require('../../../lib/store.js');
 
 module.exports = async function runNativeScriptTest(platform, file) {
-    let p = path.join(paths.tmp, 'NSTest');
-    await exec('tns', ['create', 'Test', '--path', p]);
-    await exec('tns', ['test', 'init', '--path', `${p}/Test`, '--framework', 'mocha']);
-    await fs.copy(file, `${p}/Test/app/tests`);
-    await exec('tns', ['test', platform, '--emulator', '--justlaunch', '--path', `${p}/Test`]);
+    let dir = store.tmpdir('NSTest');
+    let testDir = dir.directory('Test');
+    await exec('tns', ['create', 'Test', '--path', dir.path]);
+    await exec('tns', ['test', 'init', '--path', testDir.path, '--framework', 'mocha']);
+    await fs.copy(file, testDir.directory('tests').path);
+    await exec('tns', ['test', platform, '--emulator', '--justlaunch', '--path', testDir.path]);
 };
