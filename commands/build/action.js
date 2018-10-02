@@ -56,16 +56,23 @@ async function rollup(app, options, profiler) {
             );
         }
     }
+
     if (!options.name) {
         options.name = utils.camelize(
             path.basename(options.output, path.extname(options.output))
         );
     }
+
     if (options.production && !process.env.hasOwnProperty('NODE_ENV')) {
         // Set NODE_ENV environment variable if `--production` flag is set.
         app.log(colors.yellow('🚢  setting "production" environment.'));
         process.env.NODE_ENV = 'production';
     }
+
+    if (fs.existsSync(`${options.output}.map`)) {
+        fs.unlinkSync(`${options.output}.map`);
+    }
+
     let profile = profiler.task('rollup');
     let task = app.log(`bundling... ${colors.grey(`(${path.relative(paths.cwd, options.input)})`)}`, true);
     try {
@@ -111,6 +118,10 @@ async function postcss(app, options, profiler) {
                 path.basename(options.input)
             );
         }
+    }
+
+    if (fs.existsSync(`${options.output}.map`)) {
+        fs.unlinkSync(`${options.output}.map`);
     }
 
     let task = app.log(`postcss... ${colors.grey(`(${path.relative(paths.cwd, options.input)})`)}`, true);

@@ -5,6 +5,7 @@ const colors = require('colors/safe');
 const workbox = require('workbox-build');
 const Watcher = require('../../lib/Watcher');
 const fileSize = require('../../lib/file-size.js');
+const store = require('../../lib/store.js');
 const glob = require('glob');
 
 /**
@@ -32,17 +33,18 @@ module.exports = async function sw(app, options) {
         exclude.push(options.exclude);
     }
 
+    if (fs.existsSync(`${options.output}.map`)) {
+        fs.unlinkSync(`${options.output}.map`);
+    }
+
     try {
         let res;
         if (fs.existsSync(output)) {
-            let tmpFile = `${output}.tmp`;
-            fs.writeFileSync(
-                tmpFile,
-                fs.readFileSync(output, 'utf8').replace(/\.(precache|precacheAndRoute)\s*\(\s*\[([^\]]*)\]\)/gi, '.$1([])')
-            );
+            let tmpFile = store.tmpfile('sw.js');
+            tmpFile.write(fs.readFileSync(output, 'utf8').replace(/\.(precache|precacheAndRoute)\s*\(\s*\[([^\]]*)\]\)/gi, '.$1([])'));
             try {
                 res = await workbox.injectManifest({
-                    swSrc: tmpFile,
+                    swSrc: tmpFile.path,
                     swDest: output,
                     globDirectory: input,
                     globPatterns: ['**/*'],
@@ -50,7 +52,7 @@ module.exports = async function sw(app, options) {
                     maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
                 });
             } catch (err) {
-                fs.unlinkSync(tmpFile);
+                tmpFile.unlink();
                 throw err;
             }
         } else {

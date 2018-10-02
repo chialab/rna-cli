@@ -75,8 +75,8 @@ module.exports = (app, options = {}) => new Promise((resolve, reject) => {
     }
     if (options.https === true || options['https.key']) {
         config.https = {
-            key: options['https.key'] || store.file('https/https.key'),
-            cert: options['https.cert'] || store.file('https/https.pem'),
+            key: options['https.key'] || store.file('https/https.key').path,
+            cert: options['https.cert'] || store.file('https/https.pem').path,
         };
     }
     if (options.port) {
