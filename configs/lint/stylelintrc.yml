@@ -497,7 +497,9 @@ rules:
     # Disallow unknown pseudo-class selectors.
     selector-pseudo-class-no-unknown:
         - true
-        - severity: error
+        - ignorePseudoClasses:
+            - focus-visible
+          severity: error
 
     # https://stylelint.io/user-guide/rules/selector-pseudo-element-no-unknown
     # Disallow unknown pseudo-element selectors.
