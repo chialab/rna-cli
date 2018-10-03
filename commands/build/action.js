@@ -279,9 +279,8 @@ module.exports = async function build(app, options = {}, profiler) {
             watchBundle(WATCHER, bundle);
         });
 
-        let promise = Promise.resolve();
-
         WATCHER.watch(async(event, fp) => {
+            let promise = Promise.resolve();
             let bundles = BUNDLE_FILES[fp].slice(0);
 
             if (!bundles) {
@@ -316,6 +315,8 @@ module.exports = async function build(app, options = {}, profiler) {
                     }
                 });
             }
+
+            await promise;
         });
     }
     // resolve build task with the list of generated manifests.

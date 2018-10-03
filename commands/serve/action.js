@@ -8,6 +8,9 @@ const Watcher = require('../../lib/Watcher');
 const cwd = require('../../lib/paths.js').cwd;
 const Entry = require('../../lib/entry.js');
 
+// Do not reload on change
+const IGNORE = ['.map'];
+
 /**
  * Command action to run a local development server.
  *
@@ -105,7 +108,7 @@ module.exports = (app, options = {}) => new Promise((resolve, reject) => {
             });
             WATCHER.add(PATHS);
             WATCHER.watch((event, p) => {
-                if (event !== 'unlink') {
+                if (event !== 'unlink' && !IGNORE.includes(path.extname(p))) {
                     let toReload = p.replace(base, '').replace(/^\/*/, '');
                     // File updated: notify BrowserSync so that it can be reloaded.
                     browserSync.reload(toReload);
