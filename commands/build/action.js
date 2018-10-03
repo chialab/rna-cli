@@ -18,25 +18,25 @@ const BUNDLE_FILES = {};
  * Add bundles' files to the watcher.
  * @param {Watcher} watcher The watcher instance.
  * @param {Object} files Set of data where keys are file paths and values a list of related bundles.
- * @param {BundleManifest} bundleManifest A bundle.
- * @param {BundleManifest} oldManifest The previous bundle.
+ * @param {Bundle} bundle A bundle.
+ * @param {Bundle} previousBundle The previous bundle.
  */
-function watchBundle(watcher, bundleManifest, oldManifest) {
-    if (oldManifest) {
+function watchBundle(watcher, bundle, previousBundle) {
+    if (previousBundle) {
         // remove old manifest from the list.
-        oldManifest.files.forEach((f) => {
+        previousBundle.files.forEach((f) => {
             let list = BUNDLE_FILES[f] || [];
-            let io = list.indexOf(oldManifest);
+            let io = list.indexOf(previousBundle);
             if (io !== -1) {
                 list.splice(io, 1);
             }
         });
     }
     // iterate bundle dependencies.
-    bundleManifest.files.forEach((f) => {
+    bundle.files.forEach((f) => {
         // collect file manifest dependents.
         BUNDLE_FILES[f] = BUNDLE_FILES[f] || [];
-        BUNDLE_FILES[f].push(bundleManifest);
+        BUNDLE_FILES[f].push(bundle);
         if (BUNDLE_FILES[f].length === 1) {
             watcher.add(f);
         }
@@ -171,7 +171,7 @@ module.exports = async function build(app, options = {}, profiler) {
     }
 
     let entries = Entry.resolve(paths.cwd, options.arguments);
-    let bundleManifests = [];
+    let bundles = [];
 
     // Process entries.
     for (let i = 0; i < entries.length; i++) {
@@ -189,14 +189,14 @@ module.exports = async function build(app, options = {}, profiler) {
             if (ext.isStyleFile(entry.file.path)) {
                 // Style file
                 let manifest = await postcss(app, opts, profiler);
-                // collect the generated BundleManifest
-                bundleManifests.push(manifest);
+                // collect the generated Bundle
+                bundles.push(manifest);
                 continue;
             }
             // Javascript file
             let manifest = await rollup(app, opts, profiler);
-            // collect the generated BundleManifest
-            bundleManifests.push(manifest);
+            // collect the generated Bundle
+            bundles.push(manifest);
             continue;
         }
 
@@ -229,7 +229,7 @@ module.exports = async function build(app, options = {}, profiler) {
             jsOptions.targets = options.targets ? browserslist.elaborate(options.targets) : browserslist.load(json);
             // a javascript source has been detected.
             let manifest = await rollup(app, jsOptions, profiler);
-            bundleManifests.push(manifest);
+            bundles.push(manifest);
         }
 
         // build `style` > `main`.css
@@ -260,8 +260,8 @@ module.exports = async function build(app, options = {}, profiler) {
             styleOptions.targets = options.targets ? browserslist.elaborate(options.targets) : browserslist.load(json);
             // a style source has been detected.
             let manifest = await postcss(app, styleOptions, profiler);
-            // collect the generated BundleManifest
-            bundleManifests.push(manifest);
+            // collect the generated Bundle
+            bundles.push(manifest);
         }
     }
 
@@ -275,13 +275,13 @@ module.exports = async function build(app, options = {}, profiler) {
             log: true,
         });
 
-        bundleManifests.forEach((bundle) => {
+        bundles.forEach((bundle) => {
             watchBundle(WATCHER, bundle);
         });
 
         WATCHER.watch(async(event, fp) => {
             let promise = Promise.resolve();
-            let bundles = BUNDLE_FILES[fp].slice(0);
+            let bundles = (BUNDLE_FILES[fp] && BUNDLE_FILES[fp].slice(0));
 
             if (!bundles) {
                 return Promise.resolve();
@@ -300,14 +300,14 @@ module.exports = async function build(app, options = {}, profiler) {
                 let bundle = bundles[i];
                 promise = promise.then(async() => {
                     try {
-                        let bundleManifests = await build(app, Object.assign(options, {
+                        let bundles = await build(app, Object.assign(options, {
                             arguments: [bundle.input],
                             output: bundle.output,
                             cache: true,
                             watch: false,
                         }), profiler);
                         // watch new files for bundles.
-                        watchBundle(WATCHER, bundleManifests[0], bundle);
+                        watchBundle(WATCHER, bundles[0], bundle);
                     } catch (err) {
                         if (err) {
                             app.log(err);
@@ -320,5 +320,5 @@ module.exports = async function build(app, options = {}, profiler) {
         });
     }
     // resolve build task with the list of generated manifests.
-    return bundleManifests;
+    return bundles;
 };
