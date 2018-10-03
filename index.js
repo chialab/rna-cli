@@ -32,7 +32,6 @@ require('./commands/unit/index.js')(program);
 require('./commands/publish/index.js')(program);
 require('./commands/documentation/index.js')(program);
 require('./commands/run/index.js')(program);
-require('./commands/upgrade/index.js')(program);
 
 (async() => {
     try {
