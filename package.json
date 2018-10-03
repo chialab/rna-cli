@@ -57,6 +57,7 @@
     "karma-sauce-launcher": "github:edoardocavazza/karma-sauce-launcher#chialab",
     "karma-sourcemap-loader": "^0.3.7",
     "lerna": "^3.2.1",
+    "minimatch": "^3.0.4",
     "mocha": "^5.2.0",
     "postcss": "^7.0.0",
     "postcss-all-unset": "^1.1.0",

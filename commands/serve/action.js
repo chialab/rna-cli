@@ -5,11 +5,8 @@ const colors = require('colors/safe');
 const commondir = require('commondir');
 const store = require('../../lib/store.js');
 const Watcher = require('../../lib/Watcher');
-const cwd = require('../../lib/paths.js').cwd;
+const { cwd } = require('../../lib/paths.js');
 const Entry = require('../../lib/entry.js');
-
-// Do not reload on change
-const IGNORE = ['.map'];
 
 /**
  * Command action to run a local development server.
@@ -96,22 +93,18 @@ module.exports = (app, options = {}) => new Promise((resolve, reject) => {
         }
 
         if (options.watch) {
-            // Watch only requested paths, not the commondir
-            const PATHS = files
-                .filter((p) => fs.statSync(p).isDirectory())
-                .map((p) => path.join(p, '**/*'));
             // Configure watch.
-            const WATCHER = new Watcher({
-                cwd,
+            let watcher = new Watcher(files, {
                 debounce: 200,
                 log: false,
+                ignore: '**/*.map',
             });
-            WATCHER.add(PATHS);
-            WATCHER.watch((event, p) => {
-                if (event !== 'unlink' && !IGNORE.includes(path.extname(p))) {
-                    let toReload = p.replace(base, '').replace(/^\/*/, '');
-                    // File updated: notify BrowserSync so that it can be reloaded.
-                    browserSync.reload(toReload);
+
+            watcher.watch((event, p) => {
+                let toReload = p.replace(base, '').replace(/^\/*/, '');
+                // File updated: notify BrowserSync so that it can be reloaded.
+                browserSync.reload(toReload);
+                if (event !== 'unlink') {
                     app.log(colors.cyan(`${toReload} injected.`));
                 }
             });

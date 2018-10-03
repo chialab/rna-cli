@@ -1,5 +1,4 @@
 const path = require('path');
-const commondir = require('commondir');
 const paths = require('../../lib/paths.js');
 const Entry = require('../../lib/entry.js');
 const Watcher = require('../../lib/Watcher');
@@ -139,19 +138,19 @@ module.exports = async function lint(app, options, profiler) {
     }
 
     if (options.watch) {
-        let DIR = commondir(entries.map((entry) => (entry.file ? entry.file.path : entry.package.path)));
-        let WATCHER = new Watcher({
-            cwd: DIR,
-        });
-        WATCHER.add('**/*.{js,jsx,mjs,sass,scss,css}');
-        WATCHER.watch((event, fp) => {
-            app.exec('lint', {
-                arguments: [fp],
-                warnings: options.warnings,
-                styles: options.styles,
-                js: options.js,
-                watch: false,
-            });
+        let extensionsToWatch = ['.js', '.jsx', '.mjs', '.sass', '.scss', '.css'];
+        let watcher = new Watcher(paths.cwd);
+
+        watcher.watch(async(event, fp) => {
+            if (extensionsToWatch.includes(path.extname(fp))) {
+                await app.exec('lint', {
+                    arguments: [fp],
+                    warnings: options.warnings,
+                    styles: options.styles,
+                    js: options.js,
+                    watch: false,
+                });
+            }
         });
     }
 };

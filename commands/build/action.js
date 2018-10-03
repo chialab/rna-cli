@@ -11,38 +11,6 @@ const PriorityQueues = require('../../lib/PriorityQueues');
 const utils = require('../../lib/utils.js');
 const fileSize = require('../../lib/file-size.js');
 
-// collect bundles dependencies.
-const BUNDLE_FILES = {};
-
-/**
- * Add bundles' files to the watcher.
- * @param {Watcher} watcher The watcher instance.
- * @param {Object} files Set of data where keys are file paths and values a list of related bundles.
- * @param {Bundle} bundle A bundle.
- * @param {Bundle} previousBundle The previous bundle.
- */
-function watchBundle(watcher, bundle, previousBundle) {
-    if (previousBundle) {
-        // remove old manifest from the list.
-        previousBundle.files.forEach((f) => {
-            let list = BUNDLE_FILES[f] || [];
-            let io = list.indexOf(previousBundle);
-            if (io !== -1) {
-                list.splice(io, 1);
-            }
-        });
-    }
-    // iterate bundle dependencies.
-    bundle.files.forEach((f) => {
-        // collect file manifest dependents.
-        BUNDLE_FILES[f] = BUNDLE_FILES[f] || [];
-        BUNDLE_FILES[f].push(bundle);
-        if (BUNDLE_FILES[f].length === 1) {
-            watcher.add(f);
-        }
-    });
-}
-
 async function rollup(app, options, profiler) {
     const Rollup = require('../../lib/Bundlers/Rollup.js');
 
@@ -144,6 +112,14 @@ async function postcss(app, options, profiler) {
         profile.end();
         throw err;
     }
+}
+
+function changedBundles(bundles, file) {
+    return bundles
+        .filter((bundle) => {
+            let bundleFiles = bundle.files || [];
+            return bundleFiles.includes(file);
+        });
 }
 
 /**
@@ -268,28 +244,24 @@ module.exports = async function build(app, options = {}, profiler) {
     // once bundles are generated, check for watch option.
     if (options.watch) {
         // setup a bundles priority chain.
-        const BUNDLES_QUEUES = new PriorityQueues();
+        let queue = new PriorityQueues();
         // start the watch task
-        const WATCHER = new Watcher({
-            cwd: paths.cwd,
+        let watcher = new Watcher(paths.cwd, {
             log: true,
+            ignore: (file) => !changedBundles(bundles, file).length,
         });
 
-        bundles.forEach((bundle) => {
-            watchBundle(WATCHER, bundle);
-        });
-
-        WATCHER.watch(async(event, fp) => {
+        watcher.watch(async(event, file) => {
             let promise = Promise.resolve();
-            let bundles = (BUNDLE_FILES[fp] && BUNDLE_FILES[fp].slice(0));
+            let bundlesWithChanges = changedBundles(bundles, file);
 
-            if (!bundles) {
-                return Promise.resolve();
+            if (bundlesWithChanges.length === 0) {
+                return true;
             }
 
             let ticks = await Promise.all(
                 // find out manifests with changed file dependency.
-                bundles.map((bundle) => BUNDLES_QUEUES.tick(bundle, 100))
+                bundlesWithChanges.map((bundle) => queue.tick(bundle, 100))
             );
 
             for (let i = 0; i < ticks.length; i++) {
@@ -297,17 +269,15 @@ module.exports = async function build(app, options = {}, profiler) {
                     continue;
                 }
 
-                let bundle = bundles[i];
+                let bundle = bundlesWithChanges[i];
                 promise = promise.then(async() => {
                     try {
-                        let bundles = await build(app, Object.assign(options, {
+                        await build(app, Object.assign(options, {
                             arguments: [bundle.input],
                             output: bundle.output,
                             cache: true,
                             watch: false,
                         }), profiler);
-                        // watch new files for bundles.
-                        watchBundle(WATCHER, bundles[0], bundle);
                     } catch (err) {
                         if (err) {
                             app.log(err);

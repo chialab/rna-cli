@@ -1,12 +1,10 @@
 const fs = require('fs');
 const path = require('path');
-const paths = require('../../lib/paths.js');
 const colors = require('colors/safe');
 const workbox = require('workbox-build');
 const Watcher = require('../../lib/Watcher');
 const fileSize = require('../../lib/file-size.js');
 const store = require('../../lib/store.js');
-const glob = require('glob');
 
 /**
  * Command action to add files to precache for a service worker.
@@ -69,17 +67,13 @@ module.exports = async function sw(app, options) {
         app.log(colors.bold(colors.green('service worker generated!')));
         app.log(fileSize(options.output));
         if (options.watch) {
-            let FILES = glob.sync(path.join(input, '**/*'), {
-                ignore: exclude.map((pattern) => path.join(input, pattern)),
-            });
-            let WATCHER = new Watcher({
+            let watcher = new Watcher(input, {
                 log: false,
                 debounce: 200,
-                ignored: '**/*.map',
-                cwd: paths.cwd,
+                ignore: '**/*.map',
             });
-            WATCHER.add(FILES);
-            WATCHER.watch((event, file) => {
+
+            watcher.watch((event, file) => {
                 if (file === output) {
                     const content = fs.readFileSync(file, 'utf8');
                     if (content.indexOf('.precache([])') === -1) {
