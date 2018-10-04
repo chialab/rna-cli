@@ -33,7 +33,7 @@ require('./commands/publish/index.js')(program);
 require('./commands/documentation/index.js')(program);
 require('./commands/run/index.js')(program);
 
-(async() => {
+(async () => {
     try {
         await program.start();
     } catch (err) {

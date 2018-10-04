@@ -251,7 +251,7 @@ module.exports = async function build(app, options = {}, profiler) {
             ignore: (file) => !changedBundles(bundles, file).length,
         });
 
-        watcher.watch(async(event, file) => {
+        watcher.watch(async (event, file) => {
             let promise = Promise.resolve();
             let bundlesWithChanges = changedBundles(bundles, file);
 
@@ -270,7 +270,7 @@ module.exports = async function build(app, options = {}, profiler) {
                 }
 
                 let bundle = bundlesWithChanges[i];
-                promise = promise.then(async() => {
+                promise = promise.then(async () => {
                     try {
                         await build(app, Object.assign(options, {
                             arguments: [bundle.input],

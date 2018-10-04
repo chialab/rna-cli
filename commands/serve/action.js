@@ -95,7 +95,6 @@ module.exports = (app, options = {}) => new Promise((resolve, reject) => {
         if (options.watch) {
             // Configure watch.
             let watcher = new Watcher(files, {
-                debounce: 200,
                 log: false,
                 ignore: '**/*.map',
             });

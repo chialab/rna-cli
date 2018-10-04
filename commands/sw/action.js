@@ -69,18 +69,17 @@ module.exports = async function sw(app, options) {
         if (options.watch) {
             let watcher = new Watcher(input, {
                 log: false,
-                debounce: 200,
                 ignore: '**/*.map',
             });
 
-            watcher.watch((event, file) => {
+            watcher.watch(async (event, file) => {
                 if (file === output) {
                     const content = fs.readFileSync(file, 'utf8');
-                    if (content.indexOf('.precache([])') === -1) {
+                    if (!content.match(/\.(precache|precacheAndRoute)\(\[\]\)/)) {
                         return;
                     }
                 }
-                app.exec('sw', Object.assign({}, options, { watch: false }));
+                await sw(app, Object.assign({}, options, { watch: false }));
             });
         }
         return res;

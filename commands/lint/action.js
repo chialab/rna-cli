@@ -141,7 +141,7 @@ module.exports = async function lint(app, options, profiler) {
         let extensionsToWatch = ['.js', '.jsx', '.mjs', '.sass', '.scss', '.css'];
         let watcher = new Watcher(paths.cwd);
 
-        watcher.watch(async(event, fp) => {
+        watcher.watch(async (event, fp) => {
             if (extensionsToWatch.includes(path.extname(fp))) {
                 await app.exec('lint', {
                     arguments: [fp],
