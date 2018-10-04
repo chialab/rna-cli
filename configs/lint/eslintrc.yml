@@ -39,7 +39,9 @@ rules:
   prefer-const: 0
   space-before-function-paren:
     - 1
-    - never
+    - anonymous: never
+      named: never
+      asyncArrow: always
   no-proto: 0
   no-param-reassign: 0
   quote-props:
