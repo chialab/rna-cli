@@ -1,6 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
-const sharp = require('sharp');
+const SHARP_PATH = require.resolve('sharp');
 
 /**
  * @typedef {Object} Color
@@ -28,10 +28,12 @@ const sharp = require('sharp');
  * @return {Promise}
  */
 module.exports = function(input, output, presets = {}) {
+    const sharp = require(SHARP_PATH);
     // ensure the output dir exists
     fs.ensureDirSync(output);
     return Promise.all(
-        Object.keys(presets).map(async(k) => {
+        Object.keys(presets).map(async (k) => {
+
             // merge preset options
             let options = Object.assign({}, presets[k]);
             let dest = path.join(output, options.name);
@@ -74,5 +76,10 @@ module.exports = function(input, output, presets = {}) {
                 size: options.size,
             };
         })
-    );
+    ).then((result) => {
+        if (require.cache[SHARP_PATH]) {
+            delete require.cache[SHARP_PATH];
+        }
+        return result;
+    });
 };
