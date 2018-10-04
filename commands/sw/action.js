@@ -3,8 +3,8 @@ const path = require('path');
 const colors = require('colors/safe');
 const workbox = require('workbox-build');
 const Watcher = require('../../lib/Watcher');
-const fileSize = require('../../lib/file-size.js');
 const store = require('../../lib/store.js');
+const utils = require('../../lib/utils.js');
 
 /**
  * Command action to add files to precache for a service worker.
@@ -65,7 +65,8 @@ module.exports = async function sw(app, options) {
 
         task();
         app.log(colors.bold(colors.green('service worker generated!')));
-        app.log(fileSize(options.output));
+        let { size, zipped } = utils.size(options.output);
+        app.log(`${utils.relativeToCwd(options.output)} ${colors.grey(`(${utils.prettyByte(size)}, ${utils.prettyByte(zipped)} zipped)`)}`);
         if (options.watch) {
             let watcher = new Watcher(input, {
                 log: false,

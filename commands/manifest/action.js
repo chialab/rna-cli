@@ -3,7 +3,7 @@ const path = require('path');
 const colors = require('colors/safe');
 const inquirer = require('inquirer');
 const { cwd } = require('../../lib/paths.js');
-const fileSize = require('../../lib/file-size.js');
+const utils = require('../../lib/utils.js');
 const Proteins = require('@chialab/proteins');
 
 const FAVICONS = {
@@ -295,7 +295,10 @@ module.exports = async function(app, options = {}) {
             await generateIcons(manifest, index, icon, dir);
             task();
             app.log(colors.bold(colors.green('icons generated!')));
-            app.log(fileSize(`${dir}/icons`));
+            utils.size(`${dir}/icons`)
+                .forEach(({ file, size, zipped }) => {
+                    app.log(`${utils.relativeToCwd(file)} ${colors.grey(`(${utils.prettyByte(size)}, ${utils.prettyByte(zipped)} zipped)`)}`);
+                });
         } catch (err) {
             task();
             throw err;
@@ -348,10 +351,12 @@ module.exports = async function(app, options = {}) {
         );
         fs.writeFileSync(indexPath, `<!DOCTYPE html>\n${html}`);
         app.log(colors.bold(colors.green('index updated!')));
-        app.log(fileSize(indexPath));
+        let { size, zipped } = utils.size(indexPath);
+        app.log(`${utils.relativeToCwd(indexPath)} ${colors.grey(`(${utils.prettyByte(size)}, ${utils.prettyByte(zipped)} zipped)`)}`);
     }
     // write the new manifest file.
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
     app.log(colors.bold(colors.green('manifest generated!')));
-    app.log(fileSize(manifestPath));
+    let { size, zipped } = utils.size(manifestPath);
+    app.log(`${utils.relativeToCwd(manifestPath)} ${colors.grey(`(${utils.prettyByte(size)}, ${utils.prettyByte(zipped)} zipped)`)}`);
 };

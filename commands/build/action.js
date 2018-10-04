@@ -9,27 +9,9 @@ const ext = require('../../lib/extensions.js');
 const browserslist = require('../../lib/browserslist.js');
 const PriorityQueues = require('../../lib/PriorityQueues');
 const utils = require('../../lib/utils.js');
-const fileSize = require('../../lib/file-size.js');
 
 async function rollup(app, options, profiler) {
     const Rollup = require('../../lib/Bundlers/Rollup.js');
-
-    if (options.output) {
-        options.output = path.resolve(paths.cwd, options.output);
-        let final = options.output.split(path.sep).pop();
-        if (!final.match(/\./)) {
-            options.output = path.join(
-                options.output,
-                path.basename(options.input)
-            );
-        }
-    }
-
-    if (!options.name) {
-        options.name = utils.camelize(
-            path.basename(options.output, path.extname(options.output))
-        );
-    }
 
     if (options.production && !process.env.hasOwnProperty('NODE_ENV')) {
         // Set NODE_ENV environment variable if `--production` flag is set.
@@ -37,22 +19,23 @@ async function rollup(app, options, profiler) {
         process.env.NODE_ENV = 'production';
     }
 
-    if (fs.existsSync(`${options.output}.map`)) {
-        fs.unlinkSync(`${options.output}.map`);
-    }
-
     let profile = profiler.task('rollup');
-    let task = app.log(`bundling... ${colors.grey(`(${path.relative(paths.cwd, options.input)})`)}`, true);
+    let task;
     try {
-        let config = await Rollup.detectConfig();
-        let bundler = new Rollup(
-            Object.assign({
-                config,
-            }, options)
-        );
-        let manifest = await bundler.build();
+        let bundle = options.bundle;
+        if (!bundle) {
+            let config = await Rollup.detectConfig();
+            bundle = new Rollup(
+                Object.assign({
+                    config,
+                }, options)
+            );
+        }
+        task = app.log(`bundling... ${colors.grey(`(${utils.relativeToCwd(bundle.options.input)})`)}`, true);
+        await bundle.build();
+        await bundle.write();
         if (app.options.profile) {
-            let tasks = bundler.timings();
+            let tasks = bundle.timings;
             for (let k in tasks) {
                 profile.task(k, false).set(tasks[k]);
             }
@@ -60,16 +43,21 @@ async function rollup(app, options, profiler) {
         profile.end();
         task();
         app.log(colors.bold(colors.green('bundle ready!')));
-        app.log(fileSize(options.output));
+        let { size, zipped } = utils.size(bundle.options.output);
+        app.log(`${utils.relativeToCwd(bundle.options.output)} ${colors.grey(`(${utils.prettyByte(size)}, ${utils.prettyByte(zipped)} zipped)`)}`);
 
-        if (bundler.linter && (bundler.linter.hasErrors() || bundler.linter.hasWarnings())) {
-            app.log(bundler.linter.report());
+        if (bundle.linter && (bundle.linter.hasErrors() || bundle.linter.hasWarnings())) {
+            app.log(bundle.linter.report());
         }
 
-        return manifest;
+        bundle.__fn = rollup;
+
+        return bundle;
     } catch (err) {
+        if (task) {
+            task();
+        }
         profile.end();
-        task();
         throw err;
     }
 }
@@ -77,38 +65,33 @@ async function rollup(app, options, profiler) {
 async function postcss(app, options, profiler) {
     const PostCSS = require('../../lib/Bundlers/PostCSS.js');
 
-    if (options.output) {
-        options.output = path.resolve(paths.cwd, options.output);
-        let final = options.output.split(path.sep).pop();
-        if (!final.match(/\./)) {
-            options.output = path.join(
-                options.output,
-                path.basename(options.input)
-            );
-        }
-    }
-
-    if (fs.existsSync(`${options.output}.map`)) {
-        fs.unlinkSync(`${options.output}.map`);
-    }
-
-    let task = app.log(`postcss... ${colors.grey(`(${path.relative(paths.cwd, options.input)})`)}`, true);
     let profile = profiler.task('postcss');
+    let task;
     try {
-        let bundler = new PostCSS(options);
-        let manifest = await bundler.build();
+        let bundle = options.bundle;
+        if (!bundle) {
+            bundle = new PostCSS(options);
+        }
+        task = app.log(`postcss... ${colors.grey(`(${utils.relativeToCwd(bundle.options.input)})`)}`, true);
+        await bundle.build();
+        await bundle.write();
         task();
         profile.end();
         app.log(colors.bold(colors.green('css ready!')));
-        app.log(fileSize(options.output));
+        let { size, zipped } = utils.size(bundle.options.output);
+        app.log(`${utils.relativeToCwd(bundle.options.output)} ${colors.grey(`(${utils.prettyByte(size)}, ${utils.prettyByte(zipped)} zipped)`)}`);
 
-        if (bundler.linter && (bundler.linter.hasErrors() || bundler.linter.hasWarnings())) {
-            app.log(bundler.linter.report());
+        if (bundle.linter && (bundle.linter.hasErrors() || bundle.linter.hasWarnings())) {
+            app.log(bundle.linter.report());
         }
 
-        return manifest;
+        bundle.__fn = postcss;
+
+        return bundle;
     } catch (err) {
-        task();
+        if (task) {
+            task();
+        }
         profile.end();
         throw err;
     }
@@ -272,12 +255,9 @@ module.exports = async function build(app, options = {}, profiler) {
                 let bundle = bundlesWithChanges[i];
                 promise = promise.then(async () => {
                     try {
-                        await build(app, Object.assign(options, {
-                            arguments: [bundle.input],
-                            output: bundle.output,
-                            cache: true,
-                            watch: false,
-                        }), profiler);
+                        await bundle.__fn(app, {
+                            bundle,
+                        }, profiler);
                     } catch (err) {
                         if (err) {
                             app.log(err);

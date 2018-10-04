@@ -94,13 +94,13 @@ module.exports = (app, options = {}) => new Promise((resolve, reject) => {
 
         if (options.watch) {
             // Configure watch.
-            let watcher = new Watcher(files, {
+            let watcher = new Watcher(base, {
                 log: false,
                 ignore: '**/*.map',
             });
 
-            watcher.watch((event, p) => {
-                let toReload = p.replace(base, '').replace(/^\/*/, '');
+            watcher.watch((event, file) => {
+                let toReload = file.replace(base, '').replace(/^\/*/, '');
                 // File updated: notify BrowserSync so that it can be reloaded.
                 browserSync.reload(toReload);
                 if (event !== 'unlink') {
