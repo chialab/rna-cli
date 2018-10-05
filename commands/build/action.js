@@ -44,13 +44,15 @@ async function rollup(app, options, profiler) {
         task();
         app.log(colors.bold(colors.green('bundle ready!')));
         let { size, zipped } = utils.size(bundle.options.output);
-        app.log(`${utils.relativeToCwd(bundle.options.output)} ${colors.grey(`(${utils.prettyByte(size)}, ${utils.prettyByte(zipped)} zipped)`)}`);
+        app.log(`${utils.relativeToCwd(bundle.options.output)} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
 
         if (bundle.linter && (bundle.linter.hasErrors() || bundle.linter.hasWarnings())) {
             app.log(bundle.linter.report());
         }
 
         bundle.__fn = rollup;
+
+        utils.gc();
 
         return bundle;
     } catch (err) {
@@ -79,13 +81,15 @@ async function postcss(app, options, profiler) {
         profile.end();
         app.log(colors.bold(colors.green('css ready!')));
         let { size, zipped } = utils.size(bundle.options.output);
-        app.log(`${utils.relativeToCwd(bundle.options.output)} ${colors.grey(`(${utils.prettyByte(size)}, ${utils.prettyByte(zipped)} zipped)`)}`);
+        app.log(`${utils.relativeToCwd(bundle.options.output)} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
 
         if (bundle.linter && (bundle.linter.hasErrors() || bundle.linter.hasWarnings())) {
             app.log(bundle.linter.report());
         }
 
         bundle.__fn = postcss;
+
+        utils.gc();
 
         return bundle;
     } catch (err) {

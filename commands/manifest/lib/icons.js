@@ -1,6 +1,8 @@
 const fs = require('fs-extra');
 const path = require('path');
-const SHARP_PATH = require.resolve('sharp');
+const SHARP_PATH = require.resolve('sharp', {
+    paths: [__dirname],
+});
 
 /**
  * @typedef {Object} Color

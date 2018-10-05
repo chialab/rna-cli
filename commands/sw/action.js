@@ -66,7 +66,7 @@ module.exports = async function sw(app, options) {
         task();
         app.log(colors.bold(colors.green('service worker generated!')));
         let { size, zipped } = utils.size(options.output);
-        app.log(`${utils.relativeToCwd(options.output)} ${colors.grey(`(${utils.prettyByte(size)}, ${utils.prettyByte(zipped)} zipped)`)}`);
+        app.log(`${utils.relativeToCwd(options.output)} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
         if (options.watch) {
             let watcher = new Watcher(input, {
                 log: false,

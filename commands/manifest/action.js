@@ -297,7 +297,7 @@ module.exports = async function(app, options = {}) {
             app.log(colors.bold(colors.green('icons generated!')));
             utils.size(`${dir}/icons`)
                 .forEach(({ file, size, zipped }) => {
-                    app.log(`${utils.relativeToCwd(file)} ${colors.grey(`(${utils.prettyByte(size)}, ${utils.prettyByte(zipped)} zipped)`)}`);
+                    app.log(`${utils.relativeToCwd(file)} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
                 });
         } catch (err) {
             task();
@@ -352,11 +352,11 @@ module.exports = async function(app, options = {}) {
         fs.writeFileSync(indexPath, `<!DOCTYPE html>\n${html}`);
         app.log(colors.bold(colors.green('index updated!')));
         let { size, zipped } = utils.size(indexPath);
-        app.log(`${utils.relativeToCwd(indexPath)} ${colors.grey(`(${utils.prettyByte(size)}, ${utils.prettyByte(zipped)} zipped)`)}`);
+        app.log(`${utils.relativeToCwd(indexPath)} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
     }
     // write the new manifest file.
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
     app.log(colors.bold(colors.green('manifest generated!')));
     let { size, zipped } = utils.size(manifestPath);
-    app.log(`${utils.relativeToCwd(manifestPath)} ${colors.grey(`(${utils.prettyByte(size)}, ${utils.prettyByte(zipped)} zipped)`)}`);
+    app.log(`${utils.relativeToCwd(manifestPath)} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
 };
