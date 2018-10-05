@@ -36,7 +36,7 @@ module.exports = async function serve(app, options = {}) {
     // Load configuration.
     let config = {
         base,
-        port: options.port || 8080,
+        port: options.port,
         directory: options.directory === true,
         static: [
             {
