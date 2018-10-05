@@ -1,12 +1,12 @@
-const fs = require('fs');
 const path = require('path');
-const url = require('url');
 const colors = require('colors/safe');
 const commondir = require('commondir');
+const { mix } = require('@chialab/proteins');
 const store = require('../../lib/store.js');
 const Watcher = require('../../lib/Watcher');
 const { cwd } = require('../../lib/paths.js');
 const Entry = require('../../lib/entry.js');
+const Server = require('../../lib/Servers/Server.js');
 
 /**
  * Command action to run a local development server.
@@ -15,7 +15,7 @@ const Entry = require('../../lib/entry.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = (app, options = {}) => new Promise((resolve, reject) => {
+module.exports = async function serve(app, options = {}) {
     // Load directory to be served.
     let entries = Entry.resolve(cwd, options.arguments);
     let files = entries.map((entry) => (entry.file ? entry.file.path : entry.package.path));
@@ -26,93 +26,65 @@ module.exports = (app, options = {}) => new Promise((resolve, reject) => {
         options.directory = true;
     }
 
+    let LiveReloadServer = mix(Server).with(...[
+        options.watch && require('../../lib/Servers/LiveReload.js'),
+        require('../../lib/Servers/Static.js'),
+        require('../../lib/Servers/Html5.js'),
+        options.tunnel && require('../../lib/Servers/Tunnel.js'),
+    ].filter(Boolean));
+
     // Load configuration.
     let config = {
-        server: {
-            baseDir: base,
-            directory: options.directory === true,
-        },
-        ghostMode: false,
-        tunnel: options.tunnel,
-        logFileChanges: false,
-        open: false,
-        notify: !!options.watch,
-        injectChanges: !!options.watch,
-        middleware: !options.directory && [
-            (req, res, next) => {
-                const headers = req.headers;
-                if (req.method === 'GET' && headers.accept && headers.accept.includes('text/html') && !headers.origin) {
-                    let parsed = url.parse(req.url);
-                    let file = path.join(base, parsed.pathname);
-                    if (!path.extname(file)) {
-                        file += '.html';
-                        req.url = `${parsed.pathname}.html`;
-                    }
-                    if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
-                        req.url = '/index.html';
-                    }
-                }
-                return next();
-            },
-        ],
-        serveStatic: [
+        base,
+        port: options.port || 8080,
+        directory: options.directory === true,
+        static: [
             {
                 route: '/node_modules',
                 dir: 'node_modules',
             },
-            base,
         ],
+        tunnel: options.tunnel,
     };
-    if (!options.watch) {
-        // Disable BrowserSync sockets and tunnels.
-        require('browser-sync/dist/async.js').startSockets = (bs, done) => { done(); };
-        config.ui = false;
-        config.snippetOptions = {
-            rule: {
-                match: /\${50}/i,
-            },
-        };
-    }
     if (options.https === true || options['https.key']) {
         config.https = {
             key: options['https.key'] || store.file('https/https.key').path,
             cert: options['https.cert'] || store.file('https/https.pem').path,
         };
     }
-    if (options.port) {
-        // Use custom port.
-        config.port = options.port;
+
+    let server = new LiveReloadServer(config);
+
+    await server.listen();
+
+    if (options.watch) {
+        // Configure watch.
+        let watcher = new Watcher(base, {
+            log: false,
+            ignore: '**/*.map',
+        });
+
+        watcher.watch((event, file) => {
+            let toReload = file.replace(base, '').replace(/^\/*/, '');
+            // File updated: notify BrowserSync so that it can be reloaded.
+            server.reload(toReload);
+            if (event !== 'unlink') {
+                app.log(colors.cyan(`${toReload} injected.`));
+            }
+        });
     }
 
-    const browserSync = require('browser-sync').create();
+    let { url, tunnel } = server.address;
+    app.log(`${colors.bold(colors.green('Server started:'))} ${colors.cyan(url)}${tunnel ? ` / ${colors.cyan(tunnel)}` : ''}`);
 
-    // Start BrowserSync server.
-    browserSync.init(config, (nil, server) => {
-        if (nil) {
-            return reject(nil);
-        }
-
-        if (options.watch) {
-            // Configure watch.
-            let watcher = new Watcher(base, {
-                log: false,
-                ignore: '**/*.map',
-            });
-
-            watcher.watch((event, file) => {
-                let toReload = file.replace(base, '').replace(/^\/*/, '');
-                // File updated: notify BrowserSync so that it can be reloaded.
-                browserSync.reload(toReload);
-                if (event !== 'unlink') {
-                    app.log(colors.cyan(`${toReload} injected.`));
-                }
-            });
-        }
-
-        resolve({
-            config,
-            bs: browserSync,
-            server,
-        });
+    process.on('exit', async () => {
+        await server.close();
     });
-});
+
+    process.on('SIGINT', async () => {
+        await server.close();
+        process.exit();
+    });
+
+    return server;
+};
