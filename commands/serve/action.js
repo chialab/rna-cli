@@ -81,10 +81,5 @@ module.exports = async function serve(app, options = {}) {
         await server.close();
     });
 
-    process.on('SIGINT', async () => {
-        await server.close();
-        process.exit();
-    });
-
     return server;
 };

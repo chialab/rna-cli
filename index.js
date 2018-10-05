@@ -44,3 +44,7 @@ require('./commands/run/index.js')(program);
         process.exit(1);
     }
 })();
+
+process.on('SIGINT', async () => {
+    process.exit();
+});
