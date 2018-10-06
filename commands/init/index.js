@@ -6,7 +6,7 @@
  */
 module.exports = (program) => {
     program
-        .command('setup')
+        .command('init')
         .description('Setup a new project.')
         .option('<dir>', 'The project root to create.')
         .option('[--no-git]', 'Skip git setup.')

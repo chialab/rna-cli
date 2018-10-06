@@ -22,7 +22,7 @@ require('./commands/test/index.js')(program);
 require('./commands/add/index.js')(program);
 require('./commands/remove/index.js')(program);
 require('./commands/install/index.js')(program);
-require('./commands/setup/index.js')(program);
+require('./commands/init/index.js')(program);
 require('./commands/lint/index.js')(program);
 require('./commands/build/index.js')(program);
 require('./commands/manifest/index.js')(program);
