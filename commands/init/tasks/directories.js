@@ -58,6 +58,9 @@ module.exports = async function directoriesTask() {
 
     if (json.workspaces) {
         // Ensure paths listed as workspaces are present.
-        json.workspaces.forEach((ws) => fs.ensureDirSync(path.dirname(ws)));
+        json.workspaces.forEach((ws) => {
+            let dir = path.join(cwd, path.dirname(ws));
+            fs.ensureDirSync(dir);
+        });
     }
 };

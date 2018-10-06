@@ -143,6 +143,20 @@ module.exports = async function npmTask(app, options) {
         json.workspaces = answers.workspaces.split(/,\s*/);
         json.private = true;
     }
+    if (!json.scripts) {
+        json.scripts = {
+            build: 'rna build --production',
+            watch: 'rna build --watch',
+            test: 'rna lint + unit',
+            lint: 'rna lint',
+            start: 'rna install + build --watch',
+            prepublish: 'rna run build',
+        };
+        if (json.structure === 'webapp') {
+            json.scripts.watch += ' + serve --watch';
+            json.scripts.start += ' + serve --watch';
+        }
+    }
     json.license = answers.license;
     json.author = answers.author;
     if (answers.repository || remote) {
