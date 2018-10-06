@@ -1,7 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
 const colors = require('colors/safe');
-const paths = require('../../lib/paths.js');
 const documentation = require('documentation');
 const Entry = require('../../lib/entry.js');
 
@@ -40,15 +39,17 @@ async function generate(app, sources, output) {
  * @returns {Promise}
  */
 module.exports = async function docs(app, options) {
-    let entries = Entry.resolve(paths.cwd, options.arguments);
+    const cwd = process.cwd();
+
+    let entries = Entry.resolve(cwd, options.arguments);
     if (!entries.length) {
         // no arguments
-        if (!paths.cwd) {
+        if (!cwd) {
             // Unable to detect project root.
             throw 'No project found.';
         }
         // use cwd sources.
-        entries = Entry.resolve(paths.cwd, path.join(paths.cwd, 'src/**/*.js'));
+        entries = Entry.resolve(cwd, path.join(cwd, 'src/**/*.js'));
     }
 
     if (!options.output) {
@@ -61,7 +62,7 @@ module.exports = async function docs(app, options) {
 
         if (entry.file) {
             // process file
-            let output = path.resolve(paths.cwd, options.output);
+            let output = path.resolve(cwd, options.output);
             if (!path.extname(output)) {
                 // `output` options is a folder
                 output = path.join(output, `${path.basename(entry.file.path, path.extname(entry.file.path))}.md`);

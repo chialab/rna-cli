@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
-const manager = require('../../../lib/package-manager.js');
+const PackageManager = require('../../../lib/package-manager.js');
 const configurator = require('../../../lib/configurator.js');
 
 /**
@@ -12,6 +12,7 @@ const configurator = require('../../../lib/configurator.js');
  * @returns {Promise}
  */
 module.exports = async function eslintTask(app, cwd, options) {
+    const manager = new PackageManager(cwd);
     const eslintIgnore = path.join(cwd, '.eslintignore');
     const eslintConfig = path.join(cwd, '.eslintrc.yml');
 
@@ -33,7 +34,7 @@ module.exports = async function eslintTask(app, cwd, options) {
     configurator(eslintConfig, content, '# RNA');
 
     if (isNew || options.force) {
-        await manager.dev(cwd, 'eslint', 'eslint-plugin-mocha', 'babel-eslint', 'eslint-plugin-babel');
+        await manager.dev('eslint', 'eslint-plugin-mocha', 'babel-eslint', 'eslint-plugin-babel');
     }
     app.log(`${colors.green(`.eslintrc.yml ${isNew ? 'created' : 'updated'}.`)} ${colors.grey(`(${eslintConfig.replace(cwd, '')})`)}`);
 };

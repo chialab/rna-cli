@@ -1,5 +1,4 @@
 const path = require('path');
-const paths = require('../../lib/paths.js');
 const Entry = require('../../lib/entry.js');
 const Watcher = require('../../lib/Watcher');
 const ext = require('../../lib/extensions.js');
@@ -12,7 +11,7 @@ function filterJSFiles(entries) {
                 filtered.push(entry.file.path);
             }
         } else if (entry.package) {
-            filtered.push(...Entry.resolve(paths.cwd, path.join(entry.package.path, 'src/**/*.{js,jsx,mjs}')));
+            filtered.push(...Entry.resolve(process.cwd(), path.join(entry.package.path, 'src/**/*.{js,jsx,mjs}')));
         }
     });
     return filtered;
@@ -26,7 +25,7 @@ function filterStyleFiles(entries) {
                 filtered.push(entry.file.path);
             }
         } else if (entry.package) {
-            Entry.resolve(paths.cwd, path.join(entry.package.path, 'src/**/*.{sass,scss}')).forEach((subEntry) => {
+            Entry.resolve(process.cwd(), path.join(entry.package.path, 'src/**/*.{sass,scss}')).forEach((subEntry) => {
                 filtered.push(subEntry.file.path);
             });
         }
@@ -114,12 +113,9 @@ async function stylelint(app, files, profiler) {
  * @property {Boolean} watch Should watch files.
  */
 module.exports = async function lint(app, options, profiler) {
-    if (!paths.cwd) {
-        // Unable to detect project root.
-        throw 'No project found.';
-    }
+    const cwd = process.cwd();
 
-    let entries = Entry.resolve(paths.cwd, options.arguments.length ? options.arguments : ['src/**/*', 'packages/*/src/**/*']);
+    let entries = Entry.resolve(cwd, options.arguments.length ? options.arguments : ['src/**/*', 'packages/*/src/**/*']);
     let jsFiles = filterJSFiles(entries);
     let cssFiles = filterStyleFiles(entries);
 
@@ -139,7 +135,7 @@ module.exports = async function lint(app, options, profiler) {
 
     if (options.watch) {
         let extensionsToWatch = ['.js', '.jsx', '.mjs', '.sass', '.scss', '.css'];
-        let watcher = new Watcher(paths.cwd);
+        let watcher = new Watcher(cwd);
 
         watcher.watch(async (event, fp) => {
             if (extensionsToWatch.includes(path.extname(fp))) {

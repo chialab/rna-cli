@@ -1,6 +1,5 @@
 const colors = require('colors/safe');
-const manager = require('../../lib/package-manager.js');
-const paths = require('../../lib/paths.js');
+const PackageManager = require('../../lib/package-manager.js');
 
 /**
  * Command action to install dependencies.
@@ -9,11 +8,8 @@ const paths = require('../../lib/paths.js');
  * @returns {Promise}
  */
 module.exports = async function install(app) {
-    if (!paths.cwd) {
-        // Unable to detect project root.
-        throw 'No project found.';
-    }
+    const manager = new PackageManager();
     // Run `yarn install`.
-    await manager.update(paths.cwd);
+    await manager.install();
     app.log(colors.green('dependencies successfully updated.'));
 };

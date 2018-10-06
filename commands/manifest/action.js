@@ -2,7 +2,6 @@ const fs = require('fs-extra');
 const path = require('path');
 const colors = require('colors/safe');
 const inquirer = require('inquirer');
-const { cwd } = require('../../lib/paths.js');
 const utils = require('../../lib/utils.js');
 const Proteins = require('@chialab/proteins');
 
@@ -86,6 +85,8 @@ const APPLE_ICONS = {
  * @return void
  */
 function defaults(manifest, json = {}) {
+    const cwd = process.cwd();
+
     manifest.name = manifest.name || json.name || path.basename(cwd);
     manifest.short_name = manifest.short_name || manifest.name || json.name || path.basename(cwd);
     manifest.description = manifest.description || json.description;
@@ -154,7 +155,9 @@ module.exports = async function(app, options = {}) {
         // missing webapp path for the manifest.
         throw 'Missing webapp path.';
     }
-    let dir = path.resolve(cwd, options.arguments[0]);
+    const cwd = process.cwd();
+    const dir = path.resolve(cwd, options.arguments[0]);
+
     if (!fs.statSync(dir).isDirectory()) {
         // the webapp path is not a directory.
         throw 'Webapp path is not a directory.';

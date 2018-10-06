@@ -1,8 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
-const manager = require('../../../lib/package-manager.js');
-const paths = require('../../../lib/paths.js');
+const PackageManager = require('../../../lib/package-manager.js');
 const configurator = require('../../../lib/configurator.js');
 
 /**
@@ -13,6 +12,8 @@ const configurator = require('../../../lib/configurator.js');
  * @returns {Promise}
  */
 module.exports = async function stylelintTask(app, cwd, options) {
+    const manager = new PackageManager();
+
     let stylelintConfig = path.join(cwd, '.stylelintrc.yml');
     let isNew = !fs.existsSync(stylelintConfig);
     let content = fs.readFileSync(
@@ -24,7 +25,7 @@ module.exports = async function stylelintTask(app, cwd, options) {
     configurator(stylelintConfig, content, '# RNA');
 
     if (isNew || options.force) {
-        await manager.dev(paths.cwd, 'stylelint', 'stylelint-order');
+        await manager.dev('stylelint', 'stylelint-order');
     }
     app.log(`${colors.green(`.stylelintrc ${isNew ? 'created' : 'updated'}.`)} ${colors.grey(`(${stylelintConfig.replace(cwd, '')})`)}`);
 };

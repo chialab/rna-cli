@@ -1,5 +1,4 @@
-const manager = require('../../lib/package-manager.js');
-const paths = require('../../lib/paths.js');
+const PackageManager = require('../../lib/package-manager.js');
 
 /**
  * Command action to run `yarn test`.
@@ -8,9 +7,6 @@ const paths = require('../../lib/paths.js');
  * @returns {Promise}
  */
 module.exports = async function test() {
-    if (!paths.cwd) {
-        // Unable to detect project root.
-        throw 'No project found.';
-    }
-    return await manager.test(paths.cwd);
+    const manager = new PackageManager();
+    return await manager.test();
 };

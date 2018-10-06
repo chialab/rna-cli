@@ -2,7 +2,6 @@ const fs = require('fs-extra');
 const path = require('path');
 const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
-const paths = require('../../lib/paths.js');
 const Entry = require('../../lib/entry.js');
 const Watcher = require('../../lib/Watcher');
 const ext = require('../../lib/extensions.js');
@@ -127,13 +126,11 @@ function changedBundles(bundles, file) {
  * @property {Boolean} cache Use cache if available.
  */
 module.exports = async function build(app, options = {}, profiler) {
-    options = Proteins.clone(options);
-    if (!options.arguments.length && !paths.cwd) {
-        // Unable to detect project root.
-        throw 'No project found.';
-    }
+    const cwd = process.cwd();
 
-    let entries = Entry.resolve(paths.cwd, options.arguments);
+    options = Proteins.clone(options);
+
+    let entries = Entry.resolve(cwd, options.arguments);
     let bundles = [];
 
     // Process entries.
@@ -233,7 +230,7 @@ module.exports = async function build(app, options = {}, profiler) {
         // setup a bundles priority chain.
         let queue = new PriorityQueues();
         // start the watch task
-        let watcher = new Watcher(paths.cwd, {
+        let watcher = new Watcher(cwd, {
             log: true,
             ignore: (file) => !changedBundles(bundles, file).length,
         });

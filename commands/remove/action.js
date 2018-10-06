@@ -1,6 +1,5 @@
 const colors = require('colors/safe');
-const manager = require('../../lib/package-manager.js');
-const paths = require('../../lib/paths.js');
+const PackageManager = require('../../lib/package-manager.js');
 
 /**
  * Command action to remove a bunch of packages off dependencies.
@@ -10,16 +9,8 @@ const paths = require('../../lib/paths.js');
  * @returns {Promise|void}
  */
 module.exports = async function remove(app, options = {}) {
-    if (!paths.cwd) {
-        // Unable to detect project root.
-        throw 'No project found.';
-    }
-    let args = options.arguments || [];
-    if (args.length === 0) {
-        // Nothing to remove.
-        throw 'Specify the package to remove.';
-    }
+    const manager = new PackageManager();
     // Remove requested packages.
-    await manager.remove(paths.cwd, ...options.arguments);
+    await manager.remove(...options.arguments);
     app.log(colors.green('packages successfully removed.'));
 };

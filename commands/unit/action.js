@@ -4,11 +4,11 @@ const colors = require('colors/safe');
 const Proteins = require('@chialab/proteins');
 const karma = require('karma');
 const Mocha = require('mocha');
-const paths = require('../../lib/paths.js');
 const saucelabs = require('../../lib/saucelabs.js');
 const Entry = require('../../lib/entry.js');
 const browserslist = require('../../lib/browserslist.js');
 const store = require('../../lib/store.js');
+const utils = require('../../lib/utils.js');
 const Rollup = require('../../lib/Bundlers/Rollup.js');
 const runNativeScriptTest = require('./lib/ns.js');
 
@@ -32,16 +32,17 @@ const ENVIRONMENTS = {
  * @returns {string|Object}
  */
 function getConfig(app, options) {
-    let localConf = path.join(paths.cwd, 'karma.conf.js');
+    let cwd = process.cwd();
+    let localConf = utils.relativeToCwd('karma.conf.js');
     if (fs.existsSync(localConf)) {
         // Local Karma config exists. Use that.
         return localConf;
     }
-    let entry = Entry.resolve(paths.cwd, paths.cwd)[0];
+    let entry = Entry.resolve(cwd, cwd)[0];
 
     let conf = {
         // base path that will be used to resolve all patterns (eg. files, exclude)
-        basePath: paths.cwd,
+        basePath: cwd,
 
         // frameworks to use
         // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
@@ -156,9 +157,9 @@ function getConfig(app, options) {
                 recordScreenshots: true,
             };
             if (entry && entry.package) {
-                conf.sauceLabs.testName = saucelabs.getTestName(paths.cwd, entry.package.name, 'Unit');
+                conf.sauceLabs.testName = saucelabs.getTestName(cwd, entry.package.name, 'Unit');
             }
-            let saucelabsBrowsers = saucelabs.launchers(options.targets ? browserslist.elaborate(options.targets) : browserslist.load(paths.cwd));
+            let saucelabsBrowsers = saucelabs.launchers(options.targets ? browserslist.elaborate(options.targets) : browserslist.load(cwd));
             conf.customLaunchers = saucelabsBrowsers;
             conf.browsers = Object.keys(saucelabsBrowsers);
             if (conf.browsers.length === 0) {
@@ -210,11 +211,7 @@ function getConfig(app, options) {
  * @returns {Promise}
  */
 module.exports = async function unit(app, options = {}) {
-    if (!paths.cwd) {
-        // Unable to detect project root.
-        throw 'No project found.';
-    }
-
+    let cwd = process.cwd();
     // check sauce values
     if (options.saucelabs) {
         if (options['saucelabs.username']) {
@@ -246,18 +243,18 @@ module.exports = async function unit(app, options = {}) {
 
     // Load list of files to be tested.
     let files = [];
-    let entries = Entry.resolve(paths.cwd, options.arguments);
+    let entries = Entry.resolve(cwd, options.arguments);
     entries.forEach((entry) => {
         if (entry.file) {
             // process file
             if (fs.statSync(entry.file.path).isDirectory()) {
-                files.push(...Entry.resolve(paths.cwd, path.join(entry.file.path, 'test/unit/**/*.js')));
+                files.push(...Entry.resolve(cwd, path.join(entry.file.path, 'test/unit/**/*.js')));
             } else {
                 files.push(entry);
             }
         } else {
             // process package
-            files.push(...Entry.resolve(paths.cwd, path.join(entry.package.path, 'test/unit/**/*.js')));
+            files.push(...Entry.resolve(cwd, path.join(entry.package.path, 'test/unit/**/*.js')));
         }
     });
 

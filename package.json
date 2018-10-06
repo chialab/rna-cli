@@ -62,6 +62,7 @@
     "mocha": "^5.2.0",
     "postcss": "^7.0.0",
     "postcss-all-unset": "^1.1.0",
+    "resolve": "^1.8.1",
     "rollup": "^0.66.0",
     "rollup-plugin-json": "^3.0.0",
     "rollup-plugin-node-resolve": "^3.4.0",

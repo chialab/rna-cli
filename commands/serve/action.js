@@ -4,7 +4,6 @@ const commondir = require('commondir');
 const { mix } = require('@chialab/proteins');
 const store = require('../../lib/store.js');
 const Watcher = require('../../lib/Watcher');
-const { cwd } = require('../../lib/paths.js');
 const Entry = require('../../lib/entry.js');
 const Server = require('../../lib/Servers/Server.js');
 
@@ -16,6 +15,7 @@ const Server = require('../../lib/Servers/Server.js');
  * @returns {Promise}
  */
 module.exports = async function serve(app, options = {}) {
+    const cwd = process.cwd();
     // Load directory to be served.
     let entries = Entry.resolve(cwd, options.arguments);
     let files = entries.map((entry) => (entry.file ? entry.file.path : entry.package.path));
