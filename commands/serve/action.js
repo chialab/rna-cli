@@ -2,7 +2,6 @@ const path = require('path');
 const colors = require('colors/safe');
 const commondir = require('commondir');
 const { mix } = require('@chialab/proteins');
-const store = require('../../lib/store.js');
 const Watcher = require('../../lib/Watcher');
 const Entry = require('../../lib/entry.js');
 const Server = require('../../lib/Servers/Server.js');
@@ -48,8 +47,8 @@ module.exports = async function serve(app, options = {}) {
     };
     if (options.https === true || options['https.key']) {
         config.https = {
-            key: options['https.key'] || store.file('https/https.key').path,
-            cert: options['https.cert'] || store.file('https/https.pem').path,
+            key: options['https.key'] || app.store.file('https/https.key').path,
+            cert: options['https.cert'] || app.store.file('https/https.pem').path,
         };
     }
 

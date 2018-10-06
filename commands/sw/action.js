@@ -3,7 +3,6 @@ const path = require('path');
 const colors = require('colors/safe');
 const workbox = require('workbox-build');
 const Watcher = require('../../lib/Watcher');
-const store = require('../../lib/store.js');
 const utils = require('../../lib/utils.js');
 
 /**
@@ -38,7 +37,7 @@ module.exports = async function sw(app, options) {
     try {
         let res;
         if (fs.existsSync(output)) {
-            let tmpFile = store.tmpfile('sw.js');
+            let tmpFile = app.store.tmpfile('sw.js');
             tmpFile.write(fs.readFileSync(output, 'utf8').replace(/\.(precache|precacheAndRoute)\s*\(\s*\[([^\]]*)\]\)/gi, '.$1([])'));
             try {
                 res = await workbox.injectManifest({

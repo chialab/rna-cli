@@ -24,6 +24,7 @@ async function rollup(app, options, profiler) {
         let bundle = options.bundle;
         if (!bundle) {
             let config = await Rollup.detectConfig();
+            config.cacheRoot = app.store.tmpdir('rollup');
             bundle = new Rollup(
                 Object.assign({
                     config,

@@ -7,7 +7,6 @@ const Mocha = require('mocha');
 const saucelabs = require('../../lib/saucelabs.js');
 const Entry = require('../../lib/entry.js');
 const browserslist = require('../../lib/browserslist.js');
-const store = require('../../lib/store.js');
 const utils = require('../../lib/utils.js');
 const Rollup = require('../../lib/Bundlers/Rollup.js');
 const runNativeScriptTest = require('./lib/ns.js');
@@ -171,6 +170,12 @@ function getConfig(app, options) {
         if (options.electron) {
             // Test on Electron.
             conf.browsers = ['Electron'];
+            conf.customLaunchers = {
+                Electron: {
+                    base: 'Electron',
+                    tmpdir: app.store.tmpdir('ElectronTest').path,
+                },
+            };
             conf.plugins.push(require('./plugins/karma-electron-launcher/index.js'));
         }
     }
@@ -272,8 +277,8 @@ module.exports = async function unit(app, options = {}) {
     const unitCode = `${files.map((entry) => `import '${entry.file.path}';`).join('\n')}`;
 
     // build tests
-    let tempSource = store.tmpfile('unit-source.js');
-    let tempUnit = store.tmpfile('unit-build.js');
+    let tempSource = app.store.tmpfile('unit-source.js');
+    let tempUnit = app.store.tmpfile('unit-build.js');
     tempSource.write(unitCode);
 
     let config = await Rollup.detectConfig();
@@ -382,7 +387,7 @@ module.exports = async function unit(app, options = {}) {
                 throw 'Invalid nativescript platform. Valid platforms are `ios` and `android`.';
             }
             // Create fake NS application.
-            await runNativeScriptTest(options.nativescript, tempUnit.path);
+            await runNativeScriptTest(app, options.nativescript, tempUnit.path);
         }
     }
 };
