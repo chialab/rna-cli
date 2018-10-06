@@ -11,12 +11,10 @@ const configurator = require('../../../lib/configurator.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = (app, options) => {
-    if (options.config === false) {
-        return;
-    }
+module.exports = (app) => {
     const cwd = paths.cwd;
-    let editorConfig = path.join(cwd, '.editorconfig');
+    const editorConfig = path.join(cwd, '.editorconfig');
+
     let isNew = !fs.existsSync(editorConfig);
     let content = fs.readFileSync(
         path.join(paths.cli, './configs/editorconfig'),

@@ -11,10 +11,6 @@ const paths = require('../../../lib/paths.js');
  * @returns {Promise}
  */
 module.exports = async function licenseTask(app, options) {
-    if (options.license === false) {
-        return;
-    }
-
     const cwd = paths.cwd;
     const jsonFile = path.join(cwd, 'package.json');
     if (!fs.existsSync(jsonFile)) {

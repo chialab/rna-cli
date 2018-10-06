@@ -12,10 +12,6 @@ const Entry = require('../../../lib/entry.js');
  * @returns {Promise}
  */
 module.exports = async function readmeTask(app, options) {
-    if (options.readme === false) {
-        return;
-    }
-
     const cwd = paths.cwd;
     const jsonFile = path.join(cwd, 'package.json');
     if (!fs.existsSync(jsonFile)) {

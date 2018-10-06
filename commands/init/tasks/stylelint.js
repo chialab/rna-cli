@@ -13,9 +13,6 @@ const configurator = require('../../../lib/configurator.js');
  * @returns {Promise}
  */
 module.exports = async function stylelintTask(app, options) {
-    if (options.lint === false) {
-        return;
-    }
     const cwd = paths.cwd;
     let stylelintConfig = path.join(cwd, '.stylelintrc.yml');
     let isNew = !fs.existsSync(stylelintConfig);

@@ -13,12 +13,10 @@ const configurator = require('../../../lib/configurator.js');
  * @returns {Promise}
  */
 module.exports = async function eslintTask(app, options) {
-    if (options.lint === false) {
-        return;
-    }
-
     const cwd = paths.cwd;
-    let eslintIgnore = path.join(cwd, '.eslintignore');
+    const eslintIgnore = path.join(cwd, '.eslintignore');
+    const eslintConfig = path.join(cwd, '.eslintrc.yml');
+
     let ignoreContent = fs.readFileSync(
         path.join(paths.cli, './configs/lint/eslintignore'),
         'utf8'
@@ -27,7 +25,6 @@ module.exports = async function eslintTask(app, options) {
     // "Append" configuration to `.eslintignore`.
     configurator(eslintIgnore, ignoreContent, '# RNA');
 
-    let eslintConfig = path.join(cwd, '.eslintrc.yml');
     let isNew = !fs.existsSync(eslintConfig);
     let content = fs.readFileSync(
         path.join(paths.cli, './configs/lint/eslintrc.yml'),

@@ -14,10 +14,6 @@ const configurator = require('../../../lib/configurator.js');
  * @returns {Promise}
  */
 module.exports = async function npmTask(app, options) {
-    if (options.npm === false) {
-        return;
-    }
-
     let cwd = paths.cwd;
     let jsonFile = path.join(cwd, 'package.json');
     let json = {};

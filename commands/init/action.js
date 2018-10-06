@@ -14,12 +14,20 @@ module.exports = async function setup(app, options) {
     paths.cwd = options.arguments.length ? path.resolve(process.cwd(), options.arguments[0]) : (paths.cwd || process.cwd());
     fs.ensureDirSync(paths.cwd);
 
-    await require('./tasks/git.js')(app, options);
-    await require('./tasks/npm.js')(app, options);
+    // active all flags if none is selected
+    const flags = ['git', 'npm', 'lint', 'license', 'readme'];
+    if (!flags.some((key) => options[key] === true)) {
+        flags.forEach((key) => {
+            options[key] = true;
+        });
+    }
+
+    options.git && await require('./tasks/git.js')(app, options);
+    options.npm && await require('./tasks/npm.js')(app, options);
     await require('./tasks/directories.js')(app, options);
-    await require('./tasks/config.js')(app, options);
-    await require('./tasks/eslint.js')(app, options);
-    await require('./tasks/stylelint.js')(app, options);
-    await require('./tasks/license.js')(app, options);
-    await require('./tasks/readme.js')(app, options);
+    options.lint && await require('./tasks/config.js')(app, options);
+    options.lint && await require('./tasks/eslint.js')(app, options);
+    options.lint && await require('./tasks/stylelint.js')(app, options);
+    options.license && await require('./tasks/license.js')(app, options);
+    options.readme && await require('./tasks/readme.js')(app, options);
 };

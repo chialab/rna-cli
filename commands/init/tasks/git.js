@@ -14,11 +14,8 @@ const configurator = require('../../../lib/configurator.js');
  * @returns {Promise}
  */
 module.exports = async function gitTask(app, options) {
-    if (options.git === false) {
-        return;
-    }
-    let cwd = paths.cwd;
-    let gitPath = path.join(cwd, '.git');
+    const cwd = paths.cwd;
+    const gitPath = path.join(cwd, '.git');
 
     // Initialize repository if `.git` directory doesn't already exist.
     if (!fs.existsSync(gitPath)) {
