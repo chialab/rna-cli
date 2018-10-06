@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
-const paths = require('../../../lib/paths.js');
 const Entry = require('../../../lib/entry.js');
 
 /**
@@ -11,8 +10,7 @@ const Entry = require('../../../lib/entry.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async function readmeTask(app, options) {
-    const cwd = paths.cwd;
+module.exports = async function readmeTask(app, cwd, options) {
     const jsonFile = path.join(cwd, 'package.json');
     if (!fs.existsSync(jsonFile)) {
         return;

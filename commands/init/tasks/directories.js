@@ -1,6 +1,5 @@
 const fs = require('fs-extra');
 const path = require('path');
-const paths = require('../../../lib/paths.js');
 
 /**
  * Ensure basic tree structure is present.
@@ -9,8 +8,7 @@ const paths = require('../../../lib/paths.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async function directoriesTask() {
-    const cwd = paths.cwd;
+module.exports = async function directoriesTask(app, cwd) {
     const jsonFile = path.join(cwd, 'package.json');
     if (!fs.existsSync(jsonFile)) {
         // No `package.json` is present: nothing to do.

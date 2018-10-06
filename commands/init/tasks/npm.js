@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const inquirer = require('inquirer');
-const paths = require('../../../lib/paths.js');
 const git = require('../../../lib/git.js');
 const configurator = require('../../../lib/configurator.js');
 
@@ -13,9 +12,9 @@ const configurator = require('../../../lib/configurator.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async function npmTask(app, options) {
-    let cwd = paths.cwd;
-    let jsonFile = path.join(cwd, 'package.json');
+module.exports = async function npmTask(app, cwd, options) {
+    const jsonFile = path.join(cwd, 'package.json');
+
     let json = {};
     if (fs.existsSync(jsonFile)) {
         json = require(jsonFile);
@@ -189,7 +188,7 @@ module.exports = async function npmTask(app, options) {
         // NPMIGNORE
         let npmIgnore = path.join(cwd, '.npmignore');
         content = fs.readFileSync(
-            path.join(paths.cli, './configs/npm/npmignore'),
+            path.join(__dirname, 'templates/npmignore'),
             'utf8'
         );
 

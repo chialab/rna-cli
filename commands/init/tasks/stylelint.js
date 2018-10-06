@@ -12,12 +12,11 @@ const configurator = require('../../../lib/configurator.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async function stylelintTask(app, options) {
-    const cwd = paths.cwd;
+module.exports = async function stylelintTask(app, cwd, options) {
     let stylelintConfig = path.join(cwd, '.stylelintrc.yml');
     let isNew = !fs.existsSync(stylelintConfig);
     let content = fs.readFileSync(
-        path.join(paths.cli, './configs/lint/stylelintrc.yml'),
+        path.join(__dirname, 'templates/stylelintrc.yml'),
         'utf8'
     );
 

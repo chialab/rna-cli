@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
-const paths = require('../../../lib/paths.js');
 
 /**
  * Ensure package has a license.
@@ -10,8 +9,7 @@ const paths = require('../../../lib/paths.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async function licenseTask(app, options) {
-    const cwd = paths.cwd;
+module.exports = async function licenseTask(app, cwd, options) {
     const jsonFile = path.join(cwd, 'package.json');
     if (!fs.existsSync(jsonFile)) {
         return;

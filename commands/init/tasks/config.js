@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
-const paths = require('../../../lib/paths.js');
 const configurator = require('../../../lib/configurator.js');
 
 /**
@@ -11,13 +10,12 @@ const configurator = require('../../../lib/configurator.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = (app) => {
-    const cwd = paths.cwd;
+module.exports = (app, cwd) => {
     const editorConfig = path.join(cwd, '.editorconfig');
 
     let isNew = !fs.existsSync(editorConfig);
     let content = fs.readFileSync(
-        path.join(paths.cli, './configs/editorconfig'),
+        path.join(__dirname, 'templates/editorconfig'),
         'utf8'
     );
 

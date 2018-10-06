@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
 const inquirer = require('inquirer');
-const paths = require('../../../lib/paths.js');
 const git = require('../../../lib/git.js');
 const configurator = require('../../../lib/configurator.js');
 
@@ -13,8 +12,7 @@ const configurator = require('../../../lib/configurator.js');
  * @param {Object} options Options.
  * @returns {Promise}
  */
-module.exports = async function gitTask(app, options) {
-    const cwd = paths.cwd;
+module.exports = async function gitTask(app, cwd, options) {
     const gitPath = path.join(cwd, '.git');
 
     // Initialize repository if `.git` directory doesn't already exist.
@@ -56,7 +54,7 @@ module.exports = async function gitTask(app, options) {
         // Write contents to `.gitignore`.
         let gitIgnore = path.join(cwd, '.gitignore');
         let content = fs.readFileSync(
-            path.join(paths.cli, './configs/git/gitignore'),
+            path.join(__dirname, 'templates/gitignore'),
             'utf8'
         );
 

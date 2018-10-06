@@ -1,6 +1,5 @@
 const fs = require('fs-extra');
 const path = require('path');
-const paths = require('../../lib/paths.js');
 
 /**
  * Command action to setup a new project.
@@ -11,8 +10,13 @@ const paths = require('../../lib/paths.js');
  */
 module.exports = async function setup(app, options) {
     // Detect directory to use as project root, and ensure it is present.
-    paths.cwd = options.arguments.length ? path.resolve(process.cwd(), options.arguments[0]) : (paths.cwd || process.cwd());
-    fs.ensureDirSync(paths.cwd);
+    let cwd;
+    if (options.arguments.length) {
+        cwd = path.resolve(process.cwd(), options.arguments[0]);
+    } else {
+        cwd = process.cwd();
+    }
+    fs.ensureDirSync(cwd);
 
     // active all flags if none is selected
     const flags = ['git', 'npm', 'lint', 'license', 'readme'];
@@ -22,12 +26,12 @@ module.exports = async function setup(app, options) {
         });
     }
 
-    options.git && await require('./tasks/git.js')(app, options);
-    options.npm && await require('./tasks/npm.js')(app, options);
-    await require('./tasks/directories.js')(app, options);
-    options.lint && await require('./tasks/config.js')(app, options);
-    options.lint && await require('./tasks/eslint.js')(app, options);
-    options.lint && await require('./tasks/stylelint.js')(app, options);
-    options.license && await require('./tasks/license.js')(app, options);
-    options.readme && await require('./tasks/readme.js')(app, options);
+    options.git && await require('./tasks/git.js')(app, cwd, options);
+    options.npm && await require('./tasks/npm.js')(app, cwd, options);
+    await require('./tasks/directories.js')(app, cwd, options);
+    options.lint && await require('./tasks/config.js')(app, cwd, options);
+    options.lint && await require('./tasks/eslint.js')(app, cwd, options);
+    options.lint && await require('./tasks/stylelint.js')(app, cwd, options);
+    options.license && await require('./tasks/license.js')(app, cwd, options);
+    options.readme && await require('./tasks/readme.js')(app, cwd, options);
 };
