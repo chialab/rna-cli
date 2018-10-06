@@ -13,8 +13,9 @@ if (version[0] < 8 || (version[0] == 8 && version[1] < 9)) {
 require('dotenv').config();
 
 const CLI = require('./lib/cli.js');
+const packageJson = require('./package.json');
 
-const program = new CLI('@chialab/rna-cli').version(require('./package.json').version);
+const program = new CLI('rna-cli', packageJson.version);
 
 require('./commands/help/index.js')(program);
 require('./commands/start/index.js')(program);

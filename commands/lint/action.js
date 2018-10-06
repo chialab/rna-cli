@@ -42,10 +42,10 @@ function filterStyleFiles(entries) {
  * @namespace options
  * @property {Boolean} warnings Should include warnings in the response.
  */
-async function eslint(app, files, profiler) {
+async function eslint(app, files) {
     const ESLint = require('../../lib/Linters/ESLint.js');
 
-    let profile = profiler.task('eslint');
+    let profile = app.profiler.task('eslint');
     let task = app.log('running ESLint...', true);
     try {
         const linter = new ESLint();
@@ -70,15 +70,14 @@ async function eslint(app, files, profiler) {
  *
  * @param {CLI} app The current CLI instance.
  * @param {Array<string>} files The list of files to lint.
- * @param {string|Array<string>} files Glob string or array of files to lint.
  *
  * @namespace options
  * @property {Boolean} warnings Should include warnings in the response.
  */
-async function stylelint(app, files, profiler) {
+async function stylelint(app, files) {
     const Stylelint = require('../../lib/Linters/Stylelint.js');
 
-    let profile = profiler.task('stylelint');
+    let profile = app.profiler.task('stylelint');
     let task = app.log('running stylelint...', true);
     try {
         let linter = new Stylelint();
@@ -103,7 +102,6 @@ async function stylelint(app, files, profiler) {
  *
  * @param {CLI} app CLI instance.
  * @param {Object} options Options.
- * @param {Profiler} profiler The command profiler instance.
  * @returns {Promise}
  *
  * @namespace options
@@ -112,7 +110,7 @@ async function stylelint(app, files, profiler) {
  * @property {Boolean} styles Should run linter for Sass files.
  * @property {Boolean} watch Should watch files.
  */
-module.exports = async function lint(app, options, profiler) {
+module.exports = async function lint(app, options) {
     const cwd = process.cwd();
 
     let entries = Entry.resolve(cwd, options.arguments.length ? options.arguments : ['src/**/*', 'packages/*/src/**/*']);
@@ -120,14 +118,14 @@ module.exports = async function lint(app, options, profiler) {
     let cssFiles = filterStyleFiles(entries);
 
     if (jsFiles.length) {
-        let eslintRes = await eslint(app, jsFiles, profiler);
+        let eslintRes = await eslint(app, jsFiles);
         if (eslintRes) {
             throw 'ESLint found some errors.';
         }
     }
 
     if (cssFiles.length) {
-        let sassRes = await stylelint(app, cssFiles, profiler);
+        let sassRes = await stylelint(app, cssFiles);
         if (sassRes) {
             throw 'Stylelint found some errors';
         }

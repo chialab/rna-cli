@@ -47,7 +47,7 @@ module.exports = (app, options) => {
     if (!options.lite) {
         // Display introduction unless a "lite" help was requested.
         app.log('');
-        app.log(colors.bold(colors.cyan(`Welcome to RNA CLI (v${app.v})`)));
+        app.log(colors.bold(colors.cyan(`Welcome to ${app.name} (v${app.v})`)));
         app.log(colors.grey('"A CLI to rule them all."'));
         app.log('');
         app.log(colors.bold(colors.white('🔧  GENERAL')));

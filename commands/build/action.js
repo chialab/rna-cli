@@ -9,7 +9,7 @@ const browserslist = require('../../lib/browserslist.js');
 const PriorityQueues = require('../../lib/PriorityQueues');
 const utils = require('../../lib/utils.js');
 
-async function rollup(app, options, profiler) {
+async function rollup(app, options) {
     const Rollup = require('../../lib/Bundlers/Rollup.js');
 
     if (options.production && !process.env.hasOwnProperty('NODE_ENV')) {
@@ -18,16 +18,16 @@ async function rollup(app, options, profiler) {
         process.env.NODE_ENV = 'production';
     }
 
-    let profile = profiler.task('rollup');
+    let profile = app.profiler.task('rollup');
     let task;
     try {
         let bundle = options.bundle;
         if (!bundle) {
             let config = await Rollup.detectConfig();
-            config.cacheRoot = app.store.tmpdir('rollup');
             bundle = new Rollup(
                 Object.assign({
                     config,
+                    cacheRoot: app.store.tmpdir('rollup'),
                 }, options)
             );
         }
@@ -64,10 +64,10 @@ async function rollup(app, options, profiler) {
     }
 }
 
-async function postcss(app, options, profiler) {
+async function postcss(app, options) {
     const PostCSS = require('../../lib/Bundlers/PostCSS.js');
 
-    let profile = profiler.task('postcss');
+    let profile = app.profiler.task('postcss');
     let task;
     try {
         let bundle = options.bundle;
@@ -114,7 +114,6 @@ function changedBundles(bundles, file) {
  *
  * @param {CLI} app CLI instance.
  * @param {Object} options Options.
- * @param {Profiler} profiler The command profiler instance.
  * @returns {Promise}
  *
  * @namespace options
@@ -126,7 +125,7 @@ function changedBundles(bundles, file) {
  * @property {Boolean} watch Should watch files.
  * @property {Boolean} cache Use cache if available.
  */
-module.exports = async function build(app, options = {}, profiler) {
+module.exports = async function build(app, options = {}) {
     const cwd = process.cwd();
 
     options = Proteins.clone(options);
@@ -149,13 +148,13 @@ module.exports = async function build(app, options = {}, profiler) {
             opts.targets = opts.targets ? browserslist.elaborate(opts.targets) : browserslist.load(opts.input);
             if (ext.isStyleFile(entry.file.path)) {
                 // Style file
-                let manifest = await postcss(app, opts, profiler);
+                let manifest = await postcss(app, opts);
                 // collect the generated Bundle
                 bundles.push(manifest);
                 continue;
             }
             // Javascript file
-            let manifest = await rollup(app, opts, profiler);
+            let manifest = await rollup(app, opts);
             // collect the generated Bundle
             bundles.push(manifest);
             continue;
@@ -189,7 +188,7 @@ module.exports = async function build(app, options = {}, profiler) {
         if (jsOptions.input) {
             jsOptions.targets = options.targets ? browserslist.elaborate(options.targets) : browserslist.load(json);
             // a javascript source has been detected.
-            let manifest = await rollup(app, jsOptions, profiler);
+            let manifest = await rollup(app, jsOptions);
             bundles.push(manifest);
         }
 
@@ -220,7 +219,7 @@ module.exports = async function build(app, options = {}, profiler) {
         if (styleOptions.input) {
             styleOptions.targets = options.targets ? browserslist.elaborate(options.targets) : browserslist.load(json);
             // a style source has been detected.
-            let manifest = await postcss(app, styleOptions, profiler);
+            let manifest = await postcss(app, styleOptions);
             // collect the generated Bundle
             bundles.push(manifest);
         }
@@ -259,7 +258,7 @@ module.exports = async function build(app, options = {}, profiler) {
                     try {
                         await bundle.__fn(app, {
                             bundle,
-                        }, profiler);
+                        });
                     } catch (err) {
                         if (err) {
                             app.log(err);
