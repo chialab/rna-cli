@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const colors = require('colors/safe');
-const PackageManager = require('../../../lib/package-manager.js');
+const PackageManager = require('../../../lib/PackageManager.js');
 const configurator = require('../../../lib/configurator.js');
 
 /**

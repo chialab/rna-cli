@@ -1,5 +1,5 @@
 const colors = require('colors/safe');
-const PackageManager = require('../../lib/package-manager.js');
+const PackageManager = require('../../lib/PackageManager.js');
 
 /**
  * Command action to install dependencies.

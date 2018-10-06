@@ -1,4 +1,4 @@
-const PackageManager = require('../../lib/package-manager.js');
+const PackageManager = require('../../lib/PackageManager.js');
 
 /**
  * Command action to run a project command.
