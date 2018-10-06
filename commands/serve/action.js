@@ -75,7 +75,7 @@ module.exports = async function serve(app, options = {}) {
     }
 
     let { url, tunnel } = server.address;
-    app.log(`${colors.bold(colors.green('Server started:'))} ${colors.cyan(url)}${tunnel ? ` / ${colors.cyan(tunnel)}` : ''}`);
+    app.log(colors.bold(`${colors.green('server started:')} ${colors.cyan(url)}${tunnel ? ` / ${colors.cyan(tunnel)}` : ''}`));
 
     process.on('exit', async () => {
         await server.close();

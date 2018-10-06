@@ -189,16 +189,18 @@ module.exports = async function(app, options = {}) {
     // create a fake DOM document for the index.html
     if (typeof options.index === 'string') {
         indexPath = path.resolve(cwd, options.index);
-        index = new JSDOM(
-            fs.readFileSync(indexPath)
-        ).window.document;
+        index = new JSDOM(fs.readFileSync(indexPath), {
+            url: 'https://example.org/',
+            referrer: 'https://example.com/',
+        }).window.document;
     } else if (options.index !== false) {
         // try to auto detect index.html
         indexPath = path.resolve(cwd, 'index.html');
         if (fs.existsSync(indexPath)) {
-            index = new JSDOM(
-                fs.readFileSync(indexPath)
-            ).window.document;
+            index = new JSDOM(fs.readFileSync(indexPath), {
+                url: 'https://example.org/',
+                referrer: 'https://example.com/',
+            }).window.document;
         }
     }
 
