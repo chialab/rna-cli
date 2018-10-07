@@ -1,9 +1,8 @@
-const path = require('path');
 const colors = require('colors/safe');
 const commondir = require('commondir');
 const { mix } = require('@chialab/proteins');
 const Watcher = require('../../lib/Watcher');
-const Entry = require('../../lib/entry.js');
+const Project = require('../../lib/Project.js');
 const Server = require('../../lib/Servers/Server.js');
 
 /**
@@ -15,11 +14,25 @@ const Server = require('../../lib/Servers/Server.js');
  */
 module.exports = async function serve(app, options = {}) {
     const cwd = process.cwd();
+    const project = new Project(cwd);
+
     // Load directory to be served.
-    let entries = Entry.resolve(cwd, options.arguments);
-    let files = entries.map((entry) => (entry.file ? entry.file.path : entry.package.path));
-    let base = files.length ? commondir(files) : './public';
-    base = path.resolve(cwd, base);
+    let entries;
+    if (options.arguments.length) {
+        entries = project.resolve(options.arguments);
+    } else {
+        let publicPath = project.directories.public;
+        if (publicPath) {
+            entries = [publicPath];
+        } else {
+            entries = [project];
+        }
+    }
+
+    let base = commondir(
+        entries.map((entry) => entry.path)
+    );
+
     if (options.arguments.length > 1) {
         // serving multi path, force directory option
         options.directory = true;
