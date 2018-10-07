@@ -1,5 +1,3 @@
-const fs = require('fs');
-const path = require('path');
 const colors = require('colors/safe');
 const PackageManager = require('../../../lib/PackageManager.js');
 const configurator = require('../../../lib/configurator.js');
@@ -8,33 +6,25 @@ const configurator = require('../../../lib/configurator.js');
  * Ensure ESLint configuration file is present.
  *
  * @param {CLI} app CLI.
- * @param {Object} options Options.
+ * @param {Object} options The command options.
+ * @param {Project} project The current project.
+ * @param {NavigationDirectory} templates The templates directory.
  * @returns {Promise}
  */
-module.exports = async function eslintTask(app, cwd, options) {
-    const manager = new PackageManager(cwd);
-    const eslintIgnore = path.join(cwd, '.eslintignore');
-    const eslintConfig = path.join(cwd, '.eslintrc.yml');
+module.exports = async function eslintTask(app, options, project, templates) {
+    const manager = new PackageManager(project.path);
+    const eslintIgnore = project.file('.eslintignore');
+    const eslintConfig = project.file('.eslintrc.yml');
 
-    let ignoreContent = fs.readFileSync(
-        path.join(__dirname, 'templates/eslintignore'),
-        'utf8'
-    );
+    const ignoreTemplate = templates.file('eslintignore');
+    const configTemplate = templates.file('eslintrc.yml');
 
     // "Append" configuration to `.eslintignore`.
-    configurator(eslintIgnore, ignoreContent, '# RNA');
-
-    let isNew = !fs.existsSync(eslintConfig);
-    let content = fs.readFileSync(
-        path.join(__dirname, 'templates/eslintrc.yml'),
-        'utf8'
-    );
+    configurator(eslintIgnore, ignoreTemplate.read(), '# RNA');
 
     // "Append" configuration to `.eslintrc.yml`.
-    configurator(eslintConfig, content, '# RNA');
+    configurator(eslintConfig, configTemplate.read(), '# RNA');
 
-    if (isNew || options.force) {
-        await manager.dev('eslint', 'eslint-plugin-mocha', 'babel-eslint', 'eslint-plugin-babel');
-    }
-    app.log(`${colors.green(`.eslintrc.yml ${isNew ? 'created' : 'updated'}.`)} ${colors.grey(`(${eslintConfig.replace(cwd, '')})`)}`);
+    await manager.dev('eslint', 'eslint-plugin-mocha', 'babel-eslint', 'eslint-plugin-babel');
+    app.log(`${colors.green('.eslintrc.yml updated.')} ${colors.grey(`(${eslintConfig.localPath})`)}`);
 };

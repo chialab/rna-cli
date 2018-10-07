@@ -1,117 +1,53 @@
-const fs = require('fs');
-const path = require('path');
 const colors = require('colors/safe');
-const Entry = require('../../../lib/entry.js');
+const configurator = require('../../../lib/configurator.js');
+const _ = require('lodash');
 
 /**
  * Ensure README file is present.
  *
  * @param {CLI} app CLI.
- * @param {Object} options Options.
+ * @param {Object} options The command options.
+ * @param {Project} project The current project.
+ * @param {NavigationDirectory} templates The templates directory.
  * @returns {Promise}
  */
-module.exports = async function readmeTask(app, cwd, options) {
-    const jsonFile = path.join(cwd, 'package.json');
-    if (!fs.existsSync(jsonFile)) {
-        return;
+module.exports = async function readmeTask(app, options, project, templates) {
+    const readmeFile = project.file('README.md');
+    const headerTemplate = templates.file('README.header.md');
+    const workspacesTemplate = templates.file('README.workspaces.md');
+    const devTemplate = templates.file('README.dev.md');
+    const headerPlaceholder = '<!-- RNA-HEADER -->';
+    const workspacesPlaceholder = '<!-- RNA-WORKSPACES -->';
+    const devPlaceholder = '<!-- RNA-DEV -->';
+
+
+    const isNew = !readmeFile.exists();
+    const content = isNew ? '' : readmeFile.read();
+
+    if (isNew || content.includes(headerPlaceholder)) {
+        const template = _.template(headerTemplate.read());
+        configurator(readmeFile, template({
+            project,
+        }), headerPlaceholder);
     }
-    const json = require(jsonFile);
-    let readme = path.join(cwd, 'README.md');
-    if (fs.existsSync(readme) && !options.force) {
-        // README already there: leave it as is.
-        app.log(`${colors.green('readme found.')} ${colors.grey(`(${readme})`)}`);
-        return;
-    }
 
-    let requirements = `### Requirements
-
-* Node (>= 10)
-* RNA cli (\`npm install @chialab/rna-cli\`)
-`;
-
-    let content = `# ${json.name}
-
-${json.description || ''}
-`;
-    if (json.structure === 'webapp') {
-        // README for Web applications.
-        content += `${requirements}
-
-### Build the project.
-
-\`\`\`
-$ rna install
-$ rna build --production
-\`\`\`
-
-### Develpment mode.
-\`\`\`
-$ rna build --watch + serve ./public --watch
-\`\`\`
-`;
-    } else if (json.structure === 'module') {
-        // README for modules.
-        content += `[![NPM](https://img.shields.io/npm/v/${json.name}.svg)](https://www.npmjs.com/package/${json.name})
-
-## Install
-
-\`\`\`sh
-$ npm install ${json.name}
-\`\`\`
-
-## Development
-${requirements}
-
-### Build the project.
-
-\`\`\`
-$ rna install
-$ rna build --production
-\`\`\`
-
-### Watch the project.
-\`\`\`
-$ rna install
-$ rna build --watch
-\`\`\`
-`;
-    } else if (json.structure === 'monorepo') {
-        // README for repositories that contain multiple modules.
-        let packages = Entry.resolve(cwd, []);
-        if (packages.length) {
-            content += `
-| **Package** | **Path** | **Status** |
-|---------|--------|--------|
-${packages.map((entry) => `| ${entry.package.name} | ./${path.relative(cwd, entry.package.path)} | [![NPM](https://img.shields.io/npm/v/${entry.package.name}.svg)](https://www.npmjs.com/package/${entry.package.name}) |`).join('\n')}
-`;
+    if (isNew || content.includes(workspacesPlaceholder)) {
+        if (project.get('workspaces')) {
+            const template = _.template(workspacesTemplate.read());
+            configurator(readmeFile, template({
+                project,
+            }), workspacesPlaceholder);
+        } else {
+            configurator(readmeFile, '', workspacesPlaceholder);
         }
-        content += `
-## Development
-${requirements}
-
-### Build all projects.
-
-\`\`\`
-$ rna install
-$ rna build --production
-\`\`\`
-
-### Build projects selectively.
-
-\`\`\`
-$ rna install
-$ rna build [package-name] [package-name] --production
-\`\`\`
-
-### Watch the projects.
-\`\`\`
-$ rna install
-$ rna build --watch
-\`\`\`
-`;
     }
 
-    // Write file contents.
-    fs.writeFileSync(readme, content);
-    app.log(`${colors.green('readme created.')} ${colors.grey(`(${readme})`)}`);
+    if (isNew || content.includes(devPlaceholder)) {
+        const template = _.template(devTemplate.read());
+        configurator(readmeFile, template({
+            project,
+        }), devPlaceholder);
+    }
+
+    app.log(`${colors.green('readme updated.')} ${colors.grey(`(${readmeFile.localPath})`)}`);
 };

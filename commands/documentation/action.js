@@ -2,7 +2,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const colors = require('colors/safe');
 const documentation = require('documentation');
-const Entry = require('../../lib/entry.js');
+const Project = require('../../lib/Project.js');
 
 /**
  * Generate the API reference file.
@@ -39,26 +39,40 @@ async function generate(app, sources, output) {
  * @returns {Promise}
  */
 module.exports = async function docs(app, options) {
-    const cwd = process.cwd();
-
-    let entries = Entry.resolve(cwd, options.arguments);
-    if (!entries.length) {
-        // no arguments
-        if (!cwd) {
-            // Unable to detect project root.
-            throw 'No project found.';
-        }
-        // use cwd sources.
-        entries = Entry.resolve(cwd, path.join(cwd, 'src/**/*.js'));
-    }
-
     if (!options.output) {
         throw 'Missing \'output\' property.';
+    }
+
+    const cwd = process.cwd();
+    const project = new Project(cwd);
+
+    let entries = project.resolve(options.arguments);
+    if (!entries.length) {
+        // use cwd sources.
+        entries = project.resolve('src/**/*.js');
     }
 
     // process entries
     for (let i = 0; i < entries.length; i++) {
         let entry = entries[i];
+
+        if (entry instanceof Project) {
+            // process package
+            let output = path.resolve(entry.package.path, options.output);
+            if (!path.extname(output)) {
+                // `output` options is a folder
+                let shortName = entry.package.name.split('/')[1];
+                // generate a file with the name of the package.
+                output = path.join(output, `${shortName.toLowerCase()}.md`);
+            }
+            await generate(
+                app,
+                [path.join(entry.package.path, entry.package.json.module || entry.package.json.main)],
+                output
+            );
+
+            continue;
+        }
 
         if (entry.file) {
             // process file
@@ -74,18 +88,5 @@ module.exports = async function docs(app, options) {
             );
             continue;
         }
-        // process package
-        let output = path.resolve(entry.package.path, options.output);
-        if (!path.extname(output)) {
-            // `output` options is a folder
-            let shortName = entry.package.name.split('/')[1];
-            // generate a file with the name of the package.
-            output = path.join(output, `${shortName.toLowerCase()}.md`);
-        }
-        await generate(
-            app,
-            [path.join(entry.package.path, entry.package.json.module || entry.package.json.main)],
-            output
-        );
     }
 };

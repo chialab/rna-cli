@@ -1,51 +1,31 @@
-const fs = require('fs');
-const path = require('path');
 const colors = require('colors/safe');
 const inquirer = require('inquirer');
-const git = require('../../../lib/git.js');
+const Git = require('../../../lib/Git.js');
 const configurator = require('../../../lib/configurator.js');
 
 /**
  * Ensure package is ready for the wonderful world of NPM.
  *
  * @param {CLI} app CLI.
- * @param {Object} options Options.
+ * @param {Object} options The command options.
+ * @param {Project} project The current project.
+ * @param {NavigationDirectory} templates The templates directory.
  * @returns {Promise}
  */
-module.exports = async function npmTask(app, cwd, options) {
-    const jsonFile = path.join(cwd, 'package.json');
+module.exports = async function npmTask(app, options, project, templates) {
+    const gitClient = new Git(project.path);
+    const remote = project.get('repository.url') || await gitClient.getRemote();
 
-    let json = {};
-    if (fs.existsSync(jsonFile)) {
-        json = require(jsonFile);
-        json.structure = json.structure || (json.workspaces ? 'monorepo' : 'module');
-    }
-
-    if (json.name) {
-        if (!options.force) {
-            // `package.json` already present: leave it as is.
-            app.log(`${colors.green('package.json found.')} ${colors.grey(`(${jsonFile})`)}`);
-            return;
-        }
-    }
-
-    let remote;
-    try {
-        remote = await git.getRemote(cwd);
-    } catch (err) {
-        //
-    }
-
-    let formatQuestion = (msg) => `${colors.cyan('package')} > ${msg}:`;
-    let prompt = inquirer.createPromptModule();
+    const formatQuestion = (msg) => `${colors.cyan('package')} > ${msg}:`;
+    const prompt = inquirer.createPromptModule();
 
     // Ask user a shitload of questions about its new package.
-    let answers = await prompt([
+    const answers = await prompt([
         {
             type: 'input',
             name: 'name',
             message: formatQuestion('name'),
-            default: (json.name || path.basename(cwd)).toLowerCase().replace(/\s+/g, '_'),
+            default: project.get('name'),
             validate: (input) => input.length > 0
                 && input.length <= 214
                 && !input.match(/A-Z/)
@@ -58,92 +38,102 @@ module.exports = async function npmTask(app, cwd, options) {
             type: 'input',
             name: 'version',
             message: formatQuestion('version'),
-            default: json.version || '1.0.0',
+            default: project.get('version') || '1.0.0',
             validate: (input) => /\bv?(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[\da-z-]+(?:\.[\da-z-]+)*)?(?:\+[\da-z-]+(?:\.[\da-z-]+)*)?\b/ig.test(input),
         },
         {
             type: 'input',
             name: 'description',
             message: formatQuestion('description'),
-            default: json.description,
-        },
-        {
-            type: 'list',
-            name: 'structure',
-            message: formatQuestion('structure'),
-            choices: ['module', 'monorepo', 'webapp'],
-            default: ['module', 'monorepo', 'webapp'].indexOf(json.structure) || 0,
+            default: project.get('description'),
         },
         {
             type: 'input',
-            name: 'module',
-            message: formatQuestion('source entry point'),
-            default: json.module || 'src/index.js',
-            when: (answers) => answers.structure === 'module' || answers.structure === 'webapp',
+            name: 'src',
+            message: formatQuestion('src path'),
+            default: project.get('directories.src'),
         },
         {
             type: 'input',
-            name: 'style',
-            message: formatQuestion('style entry point'),
-            default: json.style || 'src/index.scss',
-            when: (answers) => answers.structure === 'webapp',
-        },
-        {
-            type: 'input',
-            name: 'main',
-            message: formatQuestion('entry point'),
-            default: json.main || 'dist/index.js',
-            when: (answers) => answers.structure === 'module',
-        },
-
-        {
-            type: 'input',
-            name: 'main',
+            name: 'public',
             message: formatQuestion('public path'),
-            default: json.main || 'public',
-            when: (answers) => answers.structure === 'webapp',
+            default: project.get('directories.public'),
         },
         {
             type: 'input',
             name: 'workspaces',
             message: formatQuestion('workspaces'),
-            default: json.workspaces && json.workspaces.join(', ') || 'packages/*',
-            when: (answers) => answers.structure === 'monorepo',
+            default: project.get('workspaces') && project.get('workspaces').join(', '),
+        },
+        {
+            type: 'input',
+            name: 'module',
+            message: formatQuestion('source entry point'),
+            default: project.get('module') || 'src/index.js',
+            when: (answers) => !answers.workspaces,
+        },
+        {
+            type: 'input',
+            name: 'main',
+            message: formatQuestion('entry point'),
+            default: project.get('main') || 'dist/index.js',
+            when: (answers) => !answers.workspaces,
+        },
+        {
+            type: 'input',
+            name: 'style',
+            message: formatQuestion('style entry point'),
+            default: project.get('style') || 'src/index.scss',
+            when: (answers) => !answers.workspaces,
         },
         {
             type: 'input',
             name: 'author',
             message: formatQuestion('author'),
-            default: json.author,
+            default: project.get('author'),
         },
         {
             type: 'input',
             name: 'license',
             message: formatQuestion('license'),
-            default: json.license || 'MIT',
+            default: project.get('license') || 'MIT',
         },
     ]);
 
     // User answered all questions. Are we done here? Not quite yet…
-    json.name = answers.name;
-    json.version = answers.version;
-    json.description = answers.description || '';
-    json.structure = answers.structure;
+    project.set({
+        name: answers.name,
+        version: answers.version,
+        description: answers.description,
+    });
+    if (!project.get('directories')) {
+        project.set('directories', {});
+    }
+    if (answers.src) {
+        project.set('directories.src', answers.src);
+    } else {
+        project.unset('directories.src');
+    }
+    if (answers.public) {
+        project.set('directories.public', answers.public);
+    } else {
+        project.unset('directories.public');
+    }
     if (answers.main) {
-        json.main = answers.main;
+        project.set('main', answers.main);
     }
     if (answers.module) {
-        json.module = answers.module;
+        project.set('module', answers.module);
     }
     if (answers.style) {
-        json.style = answers.style;
+        project.set('style', answers.style);
     }
     if (answers.workspaces) {
-        json.workspaces = answers.workspaces.split(/,\s*/);
-        json.private = true;
+        project.set('workspaces', answers.workspaces.split(/,\s*/));
+        project.set('private', true);
     }
-    if (!json.scripts) {
-        json.scripts = {
+    if (!project.get('scripts')) {
+        let scripts = {
             build: 'rna build --production',
             watch: 'rna build --watch',
             test: 'rna lint + unit',
@@ -151,48 +141,32 @@ module.exports = async function npmTask(app, cwd, options) {
             start: 'rna install + build --watch',
             prepublish: 'rna run build',
         };
-        if (json.structure === 'webapp') {
-            json.scripts.watch += ' + serve --watch';
-            json.scripts.start += ' + serve --watch';
+        if (project.get('directories.public')) {
+            scripts.watch += ' + serve --watch';
+            scripts.start += ' + serve --watch';
         }
+        project.set('scripts', scripts);
     }
-    json.license = answers.license;
-    json.author = answers.author;
+    project.set({
+        license: answers.license,
+        author: answers.author,
+    });
+
     if (answers.repository || remote) {
-        json.repository = json.repository || {};
-        json.repository.type = json.repository.type || 'git';
-        json.repository.url = answers.repository || json.repository.url || remote;
+        project.setRepository(answers.repository || remote);
     }
 
     // Write `package.json`.
-    fs.writeFileSync(jsonFile, JSON.stringify(json, null, 2));
-    app.log(`${colors.green('package.json created.')} ${colors.grey(`(${jsonFile})`)}`);
+    project.save();
 
-    if (options.ignore === false) {
-        return;
-    }
-
-    // GITIGNORE
-    let gitIgnore = path.join(cwd, '.gitignore');
-    let content = '';
-    if (json.structure === 'module') {
-        content = path.dirname(json.main);
-    } else if (json.structure === 'webapp') {
-        content = path.join(json.main, '*.{js,css,map}');
-    }
-
-    // "Append" configuration to `.gitignore`.
-    configurator(gitIgnore, content, '# RNA-STRUCTURE');
-
-    if (!json.private) {
+    if (!project.get('private')) {
         // NPMIGNORE
-        let npmIgnore = path.join(cwd, '.npmignore');
-        content = fs.readFileSync(
-            path.join(__dirname, 'templates/npmignore'),
-            'utf8'
-        );
+        const ignoreFile = project.file('.npmignore');
+        const ignoreTemplate = templates.file('npmignore');
 
         // "Append" configuration to `.npmignore`.
-        configurator(npmIgnore, content, '# RNA-STRUCTURE');
+        configurator(ignoreFile, ignoreTemplate.read(), '# RNA');
     }
+
+    app.log(`${colors.green('package.json updated.')} ${colors.grey(`(${project.path})`)}`);
 };

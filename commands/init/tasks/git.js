@@ -1,34 +1,28 @@
-const fs = require('fs');
-const path = require('path');
 const colors = require('colors/safe');
 const inquirer = require('inquirer');
-const git = require('../../../lib/git.js');
+const Git = require('../../../lib/Git.js');
 const configurator = require('../../../lib/configurator.js');
 
 /**
  * Ensure project is a Git repository.
  *
  * @param {CLI} app CLI.
- * @param {Object} options Options.
+ * @param {Object} options The command options.
+ * @param {Project} project The current project.
+ * @param {NavigationDirectory} templates The templates directory.
  * @returns {Promise}
  */
-module.exports = async function gitTask(app, cwd, options) {
-    const gitPath = path.join(cwd, '.git');
+module.exports = async function gitTask(app, options, project, templates) {
+    const gitPath = project.directory('.git');
+    const gitClient = new Git(project.path);
 
     // Initialize repository if `.git` directory doesn't already exist.
-    if (!fs.existsSync(gitPath)) {
-        await git.init(cwd);
+    if (!gitPath.exists()) {
+        await gitClient.init();
     }
 
-    let remote;
-    try {
-        remote = await git.getRemote(cwd);
-        if (remote && !options.force) {
-            app.log(`${colors.green('git project found.')} ${colors.grey(`(${remote})`)}`);
-            return;
-        }
-        throw remote;
-    } catch(err) {
+    let remote = project.get('repository.url');
+    if (!remote) {
         let prompt = inquirer.createPromptModule();
         // Ask user if they already have a remote ready for their repo.
         let opts = {
@@ -36,29 +30,27 @@ module.exports = async function gitTask(app, cwd, options) {
             name: 'repository',
             message: `${colors.cyan('git')} > remote repository:`,
         };
-        if (remote) {
-            opts.default = remote;
-        }
         let answers = await prompt([opts]);
-        if (answers.repository) {
-            // Configure remote.
-            await git.addRemote(cwd, answers.repository);
-            app.log(`${colors.green('git project created.')} ${colors.grey(`(${cwd})`)}`);
-        } else {
-            // Remove remote.
-            // Is this needed? We don't end up here if a remote is configured already. ~~fquffio
-            await git.removeRemote(cwd);
-            app.log(`${colors.green('git project created without remote.')} ${colors.grey(`(${cwd})`)}`);
-        }
-
-        // Write contents to `.gitignore`.
-        let gitIgnore = path.join(cwd, '.gitignore');
-        let content = fs.readFileSync(
-            path.join(__dirname, 'templates/gitignore'),
-            'utf8'
-        );
-
-        // "Append" configuration to `.gitignore`.
-        configurator(gitIgnore, content, '# RNA-CORE');
+        remote = answers.repository;
     }
+
+    if (!remote) {
+        await gitClient.removeRemote();
+        app.log(`${colors.green('git project created without remote.')} ${colors.grey(`(${project.path})`)}`);
+        return;
+    }
+
+    // Configure remote.
+    await gitClient.addRemote(remote);
+    project.setRepository(remote);
+    project.save();
+
+    // Write contents to `.gitignore`.
+    let gitIgnore = project.file('.gitignore');
+    let ignoreTemplate = templates.file('gitignore');
+
+    // "Append" configuration to `.gitignore`.
+    configurator(gitIgnore, ignoreTemplate.read(), '# RNA-CORE');
+
+    app.log(`${colors.green('git project updated.')} ${colors.grey(`(${project.path})`)}`);
 };

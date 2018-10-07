@@ -1,49 +1,48 @@
-const fs = require('fs');
-const path = require('path');
 const colors = require('colors/safe');
 
 /**
  * Ensure package has a license.
  *
  * @param {CLI} app CLI.
- * @param {Object} options Options.
+ * @param {Object} options The command options.
+ * @param {Project} project The current project.
+ * @param {NavigationDirectory} templates The templates directory.
  * @returns {Promise}
  */
-module.exports = async function licenseTask(app, cwd, options) {
-    const jsonFile = path.join(cwd, 'package.json');
-    if (!fs.existsSync(jsonFile)) {
-        return;
-    }
-    const json = require(jsonFile);
-    const license = path.join(cwd, 'LICENSE');
-    if (fs.existsSync(license) && !options.force) {
-        // License already exists: leave it as is.
-        app.log(`${colors.green('license found.')} ${colors.grey(`(${license})`)}`);
-        return;
-    }
-    let licenseCode = json.license.toLowerCase();
+module.exports = async function licenseTask(app, options, project) {
+    const licenseFile = project.file('LICENSE');
+    const licenseCode = (project.get('license') || 'unlicensed').toLowerCase();
+
     if (licenseCode === 'unlicensed') {
         // Package is unlicensed.
-        app.log(`${colors.yellow('no license found.')} ${colors.grey(`(${jsonFile})`)}`);
+        if (licenseFile.exists()) {
+            licenseFile.unlink();
+        }
+        app.log(`${colors.yellow('no license found.')} ${colors.grey(`(${project.path})`)}`);
         return;
     }
     // Package actually is licensed.
-    let list = require('spdx-license-list/spdx-full.json');
-    let licenses = {};
-    Object.keys(list).forEach((key) => {
-        licenses[key.toLowerCase()] = list[key].licenseText;
-    });
-    let text = licenses[licenseCode];
-    if (!text) {
+    const list = require('spdx-license-list/spdx-full.json');
+    const licenses = Object.keys(list).reduce((obj, key) => {
+        obj[key.toLowerCase()] = list[key].licenseText;
+        return obj;
+    }, {});
+
+    if (!(licenseCode in licenses)) {
         // We don't have a license document for the specified license code.
-        app.log(`${colors.red('invalid license.')} ${colors.grey(`(${jsonFile})`)}`);
+        app.log(`${colors.red('invalid license.')} ${colors.grey(`(${project.path})`)}`);
         return;
     }
+
     // Replace placeholders with actual values.
-    text = text.replace(/<year>/gi, (new Date()).getFullYear());
-    if (json.author) {
-        text = text.replace(/<(owner|author|copyright\sholders)>/gi, json.author);
-    }
-    fs.writeFileSync(license, text);
-    app.log(`${colors.green('license created.')} ${colors.grey(`(${license.replace(cwd, '')})`)}`);
+    const text = licenses[licenseCode]
+        .replace(/<year>/gi, (new Date()).getFullYear())
+        .replace(/<(owner|author|copyright\sholders)>/gi, () => {
+            if (project.get('author')) {
+                return project.get('author');
+            }
+        });
+
+    licenseFile.write(text);
+    app.log(`${colors.green('license updated.')} ${colors.grey(`(${licenseFile.localPath})`)}`);
 };

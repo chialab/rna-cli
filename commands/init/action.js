@@ -1,5 +1,7 @@
 const fs = require('fs-extra');
 const path = require('path');
+const Project = require('../../lib/Project');
+const { NavigatorDirectory } = require('../../lib/Navigator.js');
 
 /**
  * Command action to setup a new project.
@@ -18,6 +20,9 @@ module.exports = async function setup(app, options) {
     }
     fs.ensureDirSync(cwd);
 
+    const project = new Project(cwd);
+    const templates = new NavigatorDirectory(__dirname).directory('templates');
+
     // active all flags if none is selected
     const flags = ['git', 'npm', 'lint', 'license', 'readme'];
     if (!flags.some((key) => options[key] === true)) {
@@ -26,12 +31,17 @@ module.exports = async function setup(app, options) {
         });
     }
 
-    options.git && await require('./tasks/git.js')(app, cwd, options);
-    options.npm && await require('./tasks/npm.js')(app, cwd, options);
-    await require('./tasks/directories.js')(app, cwd, options);
-    options.lint && await require('./tasks/config.js')(app, cwd, options);
-    options.lint && await require('./tasks/eslint.js')(app, cwd, options);
-    options.lint && await require('./tasks/stylelint.js')(app, cwd, options);
-    options.license && await require('./tasks/license.js')(app, cwd, options);
-    options.readme && await require('./tasks/readme.js')(app, cwd, options);
+    // ensure the file exists
+    if (project.isNew) {
+        project.save();
+    }
+
+    options.npm && await require('./tasks/npm.js')(app, options, project, templates);
+    options.git && await require('./tasks/git.js')(app, options, project, templates);
+    await require('./tasks/directories.js')(app, options, project, templates);
+    options.lint && await require('./tasks/config.js')(app, options, project, templates);
+    options.lint && await require('./tasks/eslint.js')(app, options, project, templates);
+    options.lint && await require('./tasks/stylelint.js')(app, options, project, templates);
+    options.license && await require('./tasks/license.js')(app, options, project, templates);
+    options.readme && await require('./tasks/readme.js')(app, options, project, templates);
 };

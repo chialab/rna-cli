@@ -1,5 +1,3 @@
-const fs = require('fs');
-const path = require('path');
 const colors = require('colors/safe');
 const PackageManager = require('../../../lib/PackageManager.js');
 const configurator = require('../../../lib/configurator.js');
@@ -8,24 +6,19 @@ const configurator = require('../../../lib/configurator.js');
  * Ensure stylelint configuration file is present.
  *
  * @param {CLI} app CLI.
- * @param {Object} options Options.
+ * @param {Object} options The command options.
+ * @param {Project} project The current project.
+ * @param {NavigationDirectory} templates The templates directory.
  * @returns {Promise}
  */
-module.exports = async function stylelintTask(app, cwd, options) {
-    const manager = new PackageManager();
-
-    let stylelintConfig = path.join(cwd, '.stylelintrc.yml');
-    let isNew = !fs.existsSync(stylelintConfig);
-    let content = fs.readFileSync(
-        path.join(__dirname, 'templates/stylelintrc.yml'),
-        'utf8'
-    );
+module.exports = async function stylelintTask(app, options, project, templates) {
+    const manager = new PackageManager(project.path);
+    const stylelintConfig = project.file('.stylelintrc.yml');
+    const stylelintTemplate = templates.file('stylelintrc.yml');
 
     // "Append" configuration to `.stylelintrc`.
-    configurator(stylelintConfig, content, '# RNA');
+    configurator(stylelintConfig, stylelintTemplate.read(), '# RNA');
 
-    if (isNew || options.force) {
-        await manager.dev('stylelint', 'stylelint-order');
-    }
-    app.log(`${colors.green(`.stylelintrc ${isNew ? 'created' : 'updated'}.`)} ${colors.grey(`(${stylelintConfig.replace(cwd, '')})`)}`);
+    await manager.dev('stylelint', 'stylelint-order');
+    app.log(`${colors.green('.stylelintrc updated.')} ${colors.grey(`(${stylelintConfig.localPath})`)}`);
 };

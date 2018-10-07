@@ -1,5 +1,3 @@
-const fs = require('fs');
-const path = require('path');
 const colors = require('colors/safe');
 const configurator = require('../../../lib/configurator.js');
 
@@ -7,24 +5,17 @@ const configurator = require('../../../lib/configurator.js');
  * Ensure EditorConfig configuration file is present.
  *
  * @param {CLI} app CLI.
- * @param {Object} options Options.
+ * @param {Object} options The command options.
+ * @param {Project} project The current project.
+ * @param {NavigationDirectory} templates The templates directory.
  * @returns {Promise}
  */
-module.exports = (app, cwd) => {
-    const editorConfig = path.join(cwd, '.editorconfig');
-
-    let isNew = !fs.existsSync(editorConfig);
-    let content = fs.readFileSync(
-        path.join(__dirname, 'templates/editorconfig'),
-        'utf8'
-    );
+module.exports = (app, options, project, templates) => {
+    const editorConfig = project.file('.editorconfig');
+    const template = templates.file('editorconfig');
 
     // "Append" configuration to `.editorconfig`.
-    configurator(editorConfig, content, '# RNA');
+    configurator(editorConfig, template.read(), '# RNA');
 
-    if (isNew) {
-        app.log(`${colors.green('.editorconfig created.')} ${colors.grey(`(${editorConfig})`)}`);
-        return;
-    }
-    app.log(`${colors.green('.editorconfig found.')} ${colors.grey(`(${editorConfig})`)}`);
+    app.log(`${colors.green('.editorconfig updated.')} ${colors.grey(`(${editorConfig.localPath})`)}`);
 };
