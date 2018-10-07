@@ -1,46 +1,11 @@
-const path = require('path');
-const Entry = require('../../lib/entry.js');
+const Project = require('../../lib/Project');
+const { isJSFile, isStyleFile } = require('../../lib/extensions');
 const Watcher = require('../../lib/Watcher');
-const ext = require('../../lib/extensions.js');
-
-function filterJSFiles(entries) {
-    let filtered = [];
-    entries.forEach((entry) => {
-        if (entry.file) {
-            if (ext.isJSFile(entry.file.path)) {
-                filtered.push(entry.file.path);
-            }
-        } else if (entry.package) {
-            filtered.push(...Entry.resolve(process.cwd(), path.join(entry.package.path, 'src/**/*.{js,jsx,mjs}')));
-        }
-    });
-    return filtered;
-}
-
-function filterStyleFiles(entries) {
-    let filtered = [];
-    entries.forEach((entry) => {
-        if (entry.file) {
-            if (ext.isStyleFile(entry.file.path)) {
-                filtered.push(entry.file.path);
-            }
-        } else if (entry.package) {
-            Entry.resolve(process.cwd(), path.join(entry.package.path, 'src/**/*.{sass,scss}')).forEach((subEntry) => {
-                filtered.push(subEntry.file.path);
-            });
-        }
-    });
-    return filtered;
-}
 
 /**
  * Lint JS files with ESlint.
  * @param {CLI} app The current CLI instance.
  * @param {Array<string>} files The list of files to lint.
- * @param {string|Array<string>} files Glob string or array of files to lint.
- *
- * @namespace options
- * @property {Boolean} warnings Should include warnings in the response.
  */
 async function eslint(app, files) {
     const ESLint = require('../../lib/Linters/ESLint.js');
@@ -70,9 +35,6 @@ async function eslint(app, files) {
  *
  * @param {CLI} app The current CLI instance.
  * @param {Array<string>} files The list of files to lint.
- *
- * @namespace options
- * @property {Boolean} warnings Should include warnings in the response.
  */
 async function stylelint(app, files) {
     const Stylelint = require('../../lib/Linters/Stylelint.js');
@@ -105,46 +67,57 @@ async function stylelint(app, files) {
  * @returns {Promise}
  *
  * @namespace options
- * @property {Boolean} warnings Should include warnings in the response.
- * @property {Boolean} js Should run linter for JavaScript files.
- * @property {Boolean} styles Should run linter for Sass files.
- * @property {Boolean} watch Should watch files.
+ * @property {boolean} watch Should watch files.
  */
 module.exports = async function lint(app, options) {
     const cwd = process.cwd();
+    const project = new Project(cwd);
 
-    let entries = Entry.resolve(cwd, options.arguments.length ? options.arguments : ['src/**/*', 'packages/*/src/**/*']);
-    let jsFiles = filterJSFiles(entries);
-    let cssFiles = filterStyleFiles(entries);
+    let entries;
+    if (options.arguments.length) {
+        entries = project.resolve(options.arguments);
+    } else {
+        const workspaces = project.workspaces;
+        if (workspaces) {
+            workspaces.forEach((ws) => {
+                let styleDirectory = ws.directories.src;
+                if (styleDirectory) {
+                    entries.push(...styleDirectory.resolve('**/*'));
+                }
+            });
+        } else {
+            let styleDirectory = project.directories.src;
+            if (styleDirectory) {
+                entries.push(...styleDirectory.resolve('**/*'));
+            }
+        }
+    }
+
+    const jsFiles = entries
+        .filter((entry) => isJSFile(entry.path))
+        .map((entry) => entry.path);
+
+    const styleFiles = entries
+        .filter((entry) => isStyleFile(entry.path))
+        .map((entry) => entry.path);
 
     if (jsFiles.length) {
-        let eslintRes = await eslint(app, jsFiles);
-        if (eslintRes) {
+        if (await eslint(app, jsFiles)) {
             throw 'ESLint found some errors.';
         }
     }
 
-    if (cssFiles.length) {
-        let sassRes = await stylelint(app, cssFiles);
-        if (sassRes) {
+    if (styleFiles.length) {
+        if (await stylelint(app, styleFiles)) {
             throw 'Stylelint found some errors';
         }
     }
 
     if (options.watch) {
-        let extensionsToWatch = ['.js', '.jsx', '.mjs', '.sass', '.scss', '.css'];
-        let watcher = new Watcher(cwd);
+        const watcher = new Watcher(cwd);
 
-        watcher.watch(async (event, fp) => {
-            if (extensionsToWatch.includes(path.extname(fp))) {
-                await app.exec('lint', {
-                    arguments: [fp],
-                    warnings: options.warnings,
-                    styles: options.styles,
-                    js: options.js,
-                    watch: false,
-                });
-            }
+        watcher.watch(async () => {
+            await lint(app);
         });
     }
 };

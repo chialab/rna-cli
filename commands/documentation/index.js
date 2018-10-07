@@ -8,6 +8,6 @@ module.exports = (program) => {
     program
         .command('documentation')
         .description('Generate API references.')
-        .option('--output', 'The markdown file to create.')
+        .option('--output', 'The markdown output directory.')
         .action(`${__dirname}/action.js`);
 };

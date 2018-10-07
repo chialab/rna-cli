@@ -23,7 +23,7 @@ async function generate(app, sources, output) {
         fs.ensureDirSync(path.dirname(output));
         fs.writeFileSync(output, contents);
         task();
-        app.log(`${colors.bold(colors.green('API references created.'))} ${colors.grey(`(${output})`)}`);
+        app.log(`${colors.bold(colors.green('documentation created.'))} ${colors.grey(`(${output.localPath})`)}`);
     } catch(err) {
         // ops.
         task();
@@ -46,10 +46,21 @@ module.exports = async function docs(app, options) {
     const cwd = process.cwd();
     const project = new Project(cwd);
 
-    let entries = project.resolve(options.arguments);
-    if (!entries.length) {
+    let entries;
+    if (options.arguments.length) {
+        entries = project.resolve(options.arguments);
+    } else {
         // use cwd sources.
-        entries = project.resolve('src/**/*.js');
+        const workspaces = project.workspaces;
+        if (workspaces) {
+            entries = workspaces;
+        } else {
+            entries = [project];
+        }
+
+        if (!entries.length) {
+            throw 'no files for documentation found.';
+        }
     }
 
     // process entries
@@ -58,35 +69,32 @@ module.exports = async function docs(app, options) {
 
         if (entry instanceof Project) {
             // process package
-            let output = path.resolve(entry.package.path, options.output);
-            if (!path.extname(output)) {
-                // `output` options is a folder
-                let shortName = entry.package.name.split('/')[1];
-                // generate a file with the name of the package.
-                output = path.join(output, `${shortName.toLowerCase()}.md`);
+            let output = entry.entry(options.output);
+            if (!output.extname) {
+                output = output.file(project.scopeModule);
             }
+            let script = entry.get('module') ?
+                entry.file(entry.get('module')) :
+                entry.file(entry.get('main'));
             await generate(
                 app,
-                [path.join(entry.package.path, entry.package.json.module || entry.package.json.main)],
+                [script.path],
                 output
             );
 
             continue;
         }
 
-        if (entry.file) {
-            // process file
-            let output = path.resolve(cwd, options.output);
-            if (!path.extname(output)) {
-                // `output` options is a folder
-                output = path.join(output, `${path.basename(entry.file.path, path.extname(entry.file.path))}.md`);
-            }
-            await generate(
-                app,
-                [entry.file.path],
-                options.output
-            );
-            continue;
+        // process file
+        let output = project.entry(options.output);
+        if (!output.extname) {
+            output = output.file(entry.basename.replace(entry.extname, '.md'));
         }
+        await generate(
+            app,
+            [entry.path],
+            options.output
+        );
+        continue;
     }
 };
