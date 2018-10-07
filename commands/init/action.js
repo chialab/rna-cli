@@ -31,17 +31,12 @@ module.exports = async function setup(app, options) {
         });
     }
 
-    // ensure the file exists
-    if (project.isNew) {
-        project.save();
-    }
-
     options.npm && await require('./tasks/npm.js')(app, options, project, templates);
-    options.git && await require('./tasks/git.js')(app, options, project, templates);
+    !project.hasWorkspace && options.git && await require('./tasks/git.js')(app, options, project, templates);
     await require('./tasks/directories.js')(app, options, project, templates);
-    options.lint && await require('./tasks/config.js')(app, options, project, templates);
-    options.lint && await require('./tasks/eslint.js')(app, options, project, templates);
-    options.lint && await require('./tasks/stylelint.js')(app, options, project, templates);
+    !project.hasWorkspace && options.lint && await require('./tasks/config.js')(app, options, project, templates);
+    !project.hasWorkspace && options.lint && await require('./tasks/eslint.js')(app, options, project, templates);
+    !project.hasWorkspace && options.lint && await require('./tasks/stylelint.js')(app, options, project, templates);
     options.license && await require('./tasks/license.js')(app, options, project, templates);
     options.readme && await require('./tasks/readme.js')(app, options, project, templates);
 };

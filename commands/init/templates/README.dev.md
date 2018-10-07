@@ -7,12 +7,12 @@
 
 ### Build the project.
 
-\`\`\`sh
+```sh
 $ rna install
 $ rna run build
-\`\`\`
+```
 
 ### Develpment mode.
-\`\`\`sh
+```sh
 $ rna run watch
-\`\`\`
+```

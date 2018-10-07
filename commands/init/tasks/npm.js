@@ -49,41 +49,44 @@ module.exports = async function npmTask(app, options, project, templates) {
         },
         {
             type: 'input',
+            name: 'workspaces',
+            message: formatQuestion('workspaces'),
+            default: project.get('workspaces') && project.get('workspaces').join(', '),
+            when: () => !project.hasWorkspace,
+        },
+        {
+            type: 'input',
             name: 'src',
             message: formatQuestion('src path'),
             default: project.get('directories.src'),
+            when: (answers) => !answers.workspaces,
         },
         {
             type: 'input',
             name: 'public',
             message: formatQuestion('public path'),
             default: project.get('directories.public'),
-        },
-        {
-            type: 'input',
-            name: 'workspaces',
-            message: formatQuestion('workspaces'),
-            default: project.get('workspaces') && project.get('workspaces').join(', '),
+            when: (answers) => !answers.workspaces,
         },
         {
             type: 'input',
             name: 'module',
             message: formatQuestion('source entry point'),
-            default: project.get('module') || 'src/index.js',
+            default: project.get('module'),
             when: (answers) => !answers.workspaces,
         },
         {
             type: 'input',
             name: 'main',
             message: formatQuestion('entry point'),
-            default: project.get('main') || 'dist/index.js',
+            default: project.get('main'),
             when: (answers) => !answers.workspaces,
         },
         {
             type: 'input',
             name: 'style',
             message: formatQuestion('style entry point'),
-            default: project.get('style') || 'src/index.scss',
+            default: project.get('style'),
             when: (answers) => !answers.workspaces,
         },
         {
@@ -131,6 +134,8 @@ module.exports = async function npmTask(app, options, project, templates) {
     if (answers.workspaces) {
         project.set('workspaces', answers.workspaces.split(/,\s*/));
         project.set('private', true);
+    } else {
+        project.unset('workspaces');
     }
     if (!project.get('scripts')) {
         let scripts = {
@@ -166,6 +171,24 @@ module.exports = async function npmTask(app, options, project, templates) {
 
         // "Append" configuration to `.npmignore`.
         configurator(ignoreFile, ignoreTemplate.read(), '# RNA');
+    }
+
+    if (project.get('workspaces')) {
+        const lernaJson = project.file('lerna.json');
+        if (!lernaJson.exists()) {
+            const lernaPackage = require('lerna/package.json');
+            lernaJson.writeJson({
+                lerna: lernaPackage.version,
+                version: project.get('version') || '0.0.0',
+                npmClient: 'yarn',
+                useWorkspaces: true,
+                command: {
+                    init: {
+                        exact: true,
+                    },
+                },
+            });
+        }
     }
 
     app.log(`${colors.green('package.json updated.')} ${colors.grey(`(${project.path})`)}`);

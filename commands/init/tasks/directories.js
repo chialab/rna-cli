@@ -17,6 +17,10 @@ module.exports = async function directoriesTask(app, otpions, project, templates
     const moduleFile = project.get('module') && project.file(project.get('module'));
     const mainFile = project.get('main') && project.file(project.get('main'));
 
+    for (let dir in directories) {
+        directories[dir].ensureExists();
+    }
+
     // Ensure path specified in `package.json` "main" key is present.
     if (publicDir) {
         // Using a simple HTML file as main entrypoint.
