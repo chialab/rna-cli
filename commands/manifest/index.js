@@ -16,8 +16,6 @@ module.exports = (program) => {
         .action(async (app, options = {}) => {
             const path = require('path');
             const colors = require('colors/safe');
-            const inquirer = require('inquirer');
-            const Proteins = require('@chialab/proteins');
             const Project = require('../../lib/Project');
             const utils = require('../../lib/utils');
             const JSDOM = require('jsdom').JSDOM;
@@ -27,7 +25,7 @@ module.exports = (program) => {
 
             let root;
             if (options.arguments.length) {
-                root = project.directory(options.arguments);
+                root = project.directory(options.arguments[0]);
             } else {
                 root = project;
             }
@@ -52,14 +50,14 @@ module.exports = (program) => {
             let indexPath;
             // create a fake DOM document for the index.html
             if (typeof options.index === 'string') {
-                indexPath = root.file(options.index);
+                indexPath = project.file(options.index);
                 index = new JSDOM(indexPath.read(), {
                     url: 'https://example.org/',
                     referrer: 'https://example.com/',
                 }).window.document;
             } else if (options.index !== false) {
                 // try to auto detect index.html
-                indexPath = root.file('index.html');
+                indexPath = project.file('index.html');
                 if (indexPath.exists()) {
                     index = new JSDOM(indexPath.read(), {
                         url: 'https://example.org/',
@@ -79,79 +77,6 @@ module.exports = (program) => {
             manifest.theme_color = manifest.theme_color || '#000';
             manifest.background_color = manifest.background_color || '#fff';
             manifest.lang = manifest.lang || 'en-US';
-
-            if (!process.env.CI) {
-                // create the prompt.
-                let formatQuestion = (msg) => `${colors.cyan('manifest')} > ${msg}:`;
-                let prompt = inquirer.createPromptModule();
-                // @see https://developer.mozilla.org/en-US/docs/Web/Manifest
-                let answers = await prompt([
-                    {
-                        type: 'input',
-                        name: 'name',
-                        message: formatQuestion('name'),
-                        default: manifest.name,
-                    },
-                    {
-                        type: 'input',
-                        name: 'shot_name',
-                        message: formatQuestion('short mame'),
-                        default: manifest.short_name,
-                    },
-                    {
-                        type: 'input',
-                        name: 'description',
-                        message: formatQuestion('description'),
-                        default: manifest.description,
-                    },
-                    {
-                        type: 'input',
-                        name: 'start_url',
-                        message: formatQuestion('start url'),
-                        default: manifest.start_url,
-                    },
-                    options.scope ? undefined : {
-                        type: 'input',
-                        name: 'scope',
-                        message: formatQuestion('scope'),
-                        default: manifest.scope,
-                    },
-                    {
-                        type: 'list',
-                        name: 'display',
-                        message: formatQuestion('display'),
-                        choices: ['standalone', 'fullscreen', 'minimal-ui', 'browser'],
-                        default: ['standalone', 'fullscreen', 'minimal-ui', 'browser'].indexOf(manifest.display),
-                    },
-                    {
-                        type: 'list',
-                        name: 'orientation',
-                        message: formatQuestion('orientation'),
-                        choices: ['any', 'natural', 'landscape', 'landscape-primary', 'landscape-secondary', 'portrait', 'portrait-primary', 'portrait-secondary'],
-                        default: ['any', 'natural', 'landscape', 'landscape-primary', 'landscape-secondary', 'portrait', 'portrait-primary', 'portrait-secondary'].indexOf(manifest.orientation),
-                    },
-                    {
-                        type: 'input',
-                        name: 'theme_color',
-                        message: formatQuestion('main color'),
-                        default: manifest.theme_color,
-                    },
-                    {
-                        type: 'input',
-                        name: 'background_color',
-                        message: formatQuestion('main background'),
-                        default: manifest.background_color,
-                    },
-                    {
-                        type: 'input',
-                        name: 'lang',
-                        message: formatQuestion('default lang'),
-                        default: manifest.lang,
-                    },
-                ].filter(/* filter active commands */(cmd) => !!cmd));
-                // merge answers with the current manifest.
-                manifest = Proteins.merge(manifest, answers);
-            }
 
             if (typeof options.icon !== 'string') {
                 // generate icons.

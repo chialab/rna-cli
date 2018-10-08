@@ -104,7 +104,7 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
             const tempUnit = app.store.tmpfile('unit-build.js');
             tempSource.write(unitCode);
 
-            const config = await Rollup.detectConfig(project, {
+            const config = Rollup.detectConfig(app, project, {
                 'input': tempSource.path,
                 'output': tempUnit.path,
                 'map': 'inline',

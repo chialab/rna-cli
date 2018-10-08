@@ -55,13 +55,13 @@ Anyway, the developer can use a custom configuration if the \`.stylelintrc\` fil
                 .map((entry) => entry.path);
 
             if (jsFiles.length) {
-                if (await eslint(app, jsFiles)) {
+                if (await eslint(app, project, jsFiles)) {
                     throw 'ESLint found some errors.';
                 }
             }
 
             if (styleFiles.length) {
-                if (await stylelint(app, styleFiles)) {
+                if (await stylelint(app, project, styleFiles)) {
                     throw 'Stylelint found some errors';
                 }
             }
@@ -79,15 +79,19 @@ Anyway, the developer can use a custom configuration if the \`.stylelintrc\` fil
 /**
  * Lint JS files with ESlint.
  * @param {CLI} app The current CLI instance.
+ * @param {Project} project The current project.
  * @param {Array<string>} files The list of files to lint.
  */
-async function eslint(app, files) {
+async function eslint(app, project, files) {
     const ESLint = require('../../lib/Linters/ESLint.js');
+    const profile = app.profiler.task('eslint');
+    const task = app.log('running ESLint...', true);
 
-    let profile = app.profiler.task('eslint');
-    let task = app.log('running ESLint...', true);
     try {
-        const linter = new ESLint();
+        const linter = new ESLint({
+            configFile: ESLint.detectConfigFile(app, project),
+            cwd: project.path,
+        });
         const report = await linter.lint(files);
         if (report.errorCount || report.warningCount) {
             app.log(linter.report());
@@ -108,16 +112,19 @@ async function eslint(app, files) {
  * Run Stylelint.
  *
  * @param {CLI} app The current CLI instance.
+ * @param {Project} project The current project
  * @param {Array<string>} files The list of files to lint.
  */
-async function stylelint(app, files) {
+async function stylelint(app, project, files) {
     const Stylelint = require('../../lib/Linters/Stylelint.js');
+    const profile = app.profiler.task('stylelint');
+    const task = app.log('running stylelint...', true);
 
-    let profile = app.profiler.task('stylelint');
-    let task = app.log('running stylelint...', true);
     try {
-        let linter = new Stylelint();
-        let report = await linter.lint(files);
+        const linter = new Stylelint({
+            configFile: Stylelint.detectConfigFile(app, project),
+        });
+        const report = await linter.lint(files);
         if (report.errorCount || report.warningCount) {
             app.log(linter.report());
         }

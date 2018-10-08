@@ -26,8 +26,7 @@ module.exports = (program) => {
             const cwd = process.cwd();
             const project = new Project(cwd);
 
-            let input = project.resolve(options.arguments)
-                .map((entry) => entry.path);
+            let input = project.directory(options.arguments[0]);
 
             let output;
             if (options.output) {
@@ -57,7 +56,7 @@ module.exports = (program) => {
                         res = await workbox.injectManifest({
                             swSrc: tmpFile.path,
                             swDest: output.path,
-                            globDirectory: input,
+                            globDirectory: input.path,
                             globPatterns: ['**/*'],
                             globIgnores: exclude,
                             maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
@@ -68,7 +67,7 @@ module.exports = (program) => {
                     }
                 } else {
                     res = await workbox.generateSW({
-                        globDirectory: input,
+                        globDirectory: input.path,
                         swDest: output.path,
                         globPatterns: ['**/*'],
                         globIgnores: exclude,
@@ -80,10 +79,10 @@ module.exports = (program) => {
 
                 let { size, zipped } = output.size;
                 app.log(colors.bold(colors.green('service worker generated!')));
-                app.log(`${options.output.localPath} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
+                app.log(`${output.localPath} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
 
                 if (options.watch) {
-                    let watcher = new Watcher(input, {
+                    let watcher = new Watcher(input.path, {
                         log: false,
                         ignore: '**/*.map',
                     });

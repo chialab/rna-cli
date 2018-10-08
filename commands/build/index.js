@@ -100,28 +100,28 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
 
                     if (moduleFile) {
                         // a javascript source has been detected.
-                        let manifest = await rollup(app, {
+                        let manifest = await rollup(app, entry, {
                             input: moduleFile,
                             output,
                             targets,
                             production: options.lint,
                             map: options.map,
                             lint: options.lint,
-                        }, entry);
+                        });
                         // collect the generated Bundle.
                         bundles.push(manifest);
                     }
 
                     if (styleFile) {
                         // a style source has been detected.
-                        let manifest = await postcss(app, {
+                        let manifest = await postcss(app, entry, {
                             input: styleFile,
                             output,
                             targets,
                             production: options.lint,
                             map: options.map,
                             lint: options.lint,
-                        }, entry);
+                        });
                         // collect the generated Bundle.
                         bundles.push(manifest);
                     }
@@ -142,14 +142,14 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
 
                 if (isJSFile(entry.path)) {
                     // Javascript file
-                    let manifest = await rollup(app, {
+                    let manifest = await rollup(app, project, {
                         input: entry,
                         output,
                         targets,
                         production: options.lint,
                         map: options.map,
                         lint: options.lint,
-                    }, project);
+                    });
                     // collect the generated Bundle
                     bundles.push(manifest);
                     continue;
@@ -157,14 +157,14 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
 
                 if (isStyleFile(entry.path)) {
                     // Style file
-                    let manifest = await postcss(app, {
+                    let manifest = await postcss(app, project, {
                         input: entry,
                         output,
                         targets,
                         production: options.lint,
                         map: options.map,
                         lint: options.lint,
-                    }, project);
+                    });
                     // collect the generated Bundle
                     bundles.push(manifest);
                     continue;
@@ -202,9 +202,7 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
                         let bundle = bundlesWithChanges[i];
                         promise = promise.then(async () => {
                             try {
-                                await bundle.__fn(app, {
-                                    bundle,
-                                });
+                                await bundle.rebuild();
                             } catch (err) {
                                 if (err) {
                                     app.log(err);
@@ -221,7 +219,7 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
         });
 };
 
-async function rollup(app, options, project) {
+async function rollup(app, project, options, previousBundle) {
     const colors = require('colors/safe');
     const utils = require('../../lib/utils');
     const Rollup = require('../../lib/Bundlers/Rollup.js');
@@ -229,7 +227,7 @@ async function rollup(app, options, project) {
     let profile = app.profiler.task('rollup');
     let task;
     try {
-        let bundle = options.bundle;
+        let bundle = previousBundle;
         let input = options.input;
         let output = options.output;
         if (output.isDirectory()) {
@@ -241,7 +239,7 @@ async function rollup(app, options, project) {
         }
 
         if (!bundle && project) {
-            let config = await Rollup.detectConfig(project, {
+            let config = Rollup.detectConfig(app, project, {
                 cacheRoot: app.store.tmpdir('rollup'),
                 input: input.path,
                 output: output.path,
@@ -272,7 +270,9 @@ async function rollup(app, options, project) {
             app.log(bundle.linter.report());
         }
 
-        bundle.__fn = rollup;
+        bundle.rebuild = async function() {
+            return await rollup(app, project, options, bundle);
+        };
 
         utils.gc();
 
@@ -286,7 +286,7 @@ async function rollup(app, options, project) {
     }
 }
 
-async function postcss(app, options) {
+async function postcss(app, project, options, previousBundle) {
     const utils = require('../../lib/utils');
     const colors = require('colors/safe');
     const PostCSS = require('../../lib/Bundlers/PostCSS.js');
@@ -294,7 +294,7 @@ async function postcss(app, options) {
     let profile = app.profiler.task('postcss');
     let task;
     try {
-        let bundle = options.bundle;
+        let bundle = previousBundle;
         let input = options.input;
         let output = options.output;
         if (output.isDirectory()) {
@@ -306,7 +306,7 @@ async function postcss(app, options) {
         }
 
         if (!bundle) {
-            bundle = new PostCSS({
+            let config = PostCSS.detectConfig(app, project, {
                 input: input.path,
                 output: output.path,
                 production: options.production,
@@ -314,6 +314,7 @@ async function postcss(app, options) {
                 lint: options.lint,
                 targets: options.targets,
             });
+            bundle = new PostCSS(config);
         }
         task = app.log(`postcss... ${colors.grey(`(${input.localPath})`)}`, true);
         await bundle.build();
@@ -329,7 +330,9 @@ async function postcss(app, options) {
             app.log(bundle.linter.report());
         }
 
-        bundle.__fn = postcss;
+        bundle.rebuild = async function() {
+            return await postcss(app, project, options, bundle);
+        };
 
         utils.gc();
 
