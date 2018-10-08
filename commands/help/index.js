@@ -11,7 +11,6 @@ module.exports = (program) => {
         .option('[--deprecated]', 'Show deprecated commands.')
         .action((app, options) => {
             const colors = require('colors/safe');
-            const utils = require('../../lib/utils.js');
 
             if (!options.lite) {
                 // Display introduction unless a "lite" help was requested.
@@ -36,11 +35,15 @@ module.exports = (program) => {
             names.forEach((name) => {
                 // Display command-specific help text.
                 let cmd = app.commands[name];
-                app.log(`${!options.lite ? '   ' : ''}${colors.cyan(utils.rightPad(name, space - name.length))}  ${colors.grey(cmd.desc)} ${cmd.deprecated ? colors.red(`Deprecated since ${cmd.deprecated}`) : ''}`);
-                let h = defaultOptionsHelp(cmd);
-                if (h) {
-                    app.log(`${h.replace(/^/gm, `${utils.rightPad('', space + (!options.lite ? 4 : 0))} `)}`);
+                app.log(`${!options.lite ? '   ' : ''}${colors.cyan(name.padEnd(space))}  ${colors.grey(cmd.desc)} ${cmd.deprecated ? colors.red(`Deprecated since ${cmd.deprecated}`) : ''}`);
+                let optionsHelp = defaultOptionsHelp(cmd);
+                if (optionsHelp) {
+                    optionsHelp.split('\n')
+                        .forEach((optionHelp) => {
+                            app.log(optionHelp.padStart(optionHelp.length + space + (!options.lite ? 5 : 2), ' '));
+                        });
                 }
+                app.log('');
             });
             app.log('');
         });
@@ -68,13 +71,12 @@ function getNameLength(names) {
  */
 function defaultOptionsHelp(cmd) {
     const colors = require('colors/safe');
-    const utils = require('../../lib/utils.js');
 
     let options = cmd.options;
     if (options.length) {
         let length = getNameLength(options.map((cmd) => cmd.name));
         return options.map((option) => {
-            let res = `${utils.rightPad(option.name, length - option.name.length)}  ${colors.grey(option.description)} `;
+            let res = `${option.name.padEnd(length)}  ${colors.grey(option.description)} `;
             if (option.required) {
                 res = res.bold;
             }

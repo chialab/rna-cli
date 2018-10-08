@@ -221,7 +221,6 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
 
 async function rollup(app, project, options, previousBundle) {
     const colors = require('colors/safe');
-    const utils = require('../../lib/utils');
     const Rollup = require('../../lib/Bundlers/Rollup.js');
 
     let profile = app.profiler.task('rollup');
@@ -264,7 +263,7 @@ async function rollup(app, project, options, previousBundle) {
 
         let { size, zipped } = output.size;
         app.log(colors.bold(colors.green('bundle ready!')));
-        app.log(`${output.localPath} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
+        app.log(`${output.localPath} ${colors.grey(`(${size}, ${zipped} zipped)`)}`);
 
         if (bundle.linter && (bundle.linter.hasErrors() || bundle.linter.hasWarnings())) {
             app.log(bundle.linter.report());
@@ -274,7 +273,11 @@ async function rollup(app, project, options, previousBundle) {
             return await rollup(app, project, options, bundle);
         };
 
-        utils.gc();
+        try {
+            global.gc();
+        } catch (err) {
+            //
+        }
 
         return bundle;
     } catch (err) {
@@ -287,7 +290,6 @@ async function rollup(app, project, options, previousBundle) {
 }
 
 async function postcss(app, project, options, previousBundle) {
-    const utils = require('../../lib/utils');
     const colors = require('colors/safe');
     const PostCSS = require('../../lib/Bundlers/PostCSS.js');
 
@@ -324,7 +326,7 @@ async function postcss(app, project, options, previousBundle) {
 
         let { size, zipped } = output.size;
         app.log(colors.bold(colors.green('css ready!')));
-        app.log(`${output.localPath} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
+        app.log(`${output.localPath} ${colors.grey(`(${size}, ${zipped} zipped)`)}`);
 
         if (bundle.linter && (bundle.linter.hasErrors() || bundle.linter.hasWarnings())) {
             app.log(bundle.linter.report());
@@ -334,7 +336,11 @@ async function postcss(app, project, options, previousBundle) {
             return await postcss(app, project, options, bundle);
         };
 
-        utils.gc();
+        try {
+            global.gc();
+        } catch (err) {
+            //
+        }
 
         return bundle;
     } catch (err) {

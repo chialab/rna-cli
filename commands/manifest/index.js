@@ -17,7 +17,6 @@ module.exports = (program) => {
             const path = require('path');
             const colors = require('colors/safe');
             const Project = require('../../lib/Project');
-            const utils = require('../../lib/utils');
             const JSDOM = require('jsdom').JSDOM;
 
             const cwd = process.cwd();
@@ -93,7 +92,7 @@ module.exports = (program) => {
                     app.log(colors.bold(colors.green('icons generated!')));
                     iconsPath.files().forEach((iconPath) => {
                         let { size, zipped } = iconPath.size;
-                        app.log(`${iconPath.localPath} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
+                        app.log(`${iconPath.localPath} ${colors.grey(`(${size}, ${zipped} zipped)`)}`);
                     });
                 } catch (err) {
                     task();
@@ -148,13 +147,13 @@ module.exports = (program) => {
                 indexPath.write(`<!DOCTYPE html>\n${html}`);
                 let { size, zipped } = indexPath.size;
                 app.log(colors.bold(colors.green('index updated!')));
-                app.log(`${indexPath.localPath} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
+                app.log(`${indexPath.localPath} ${colors.grey(`(${size}, ${zipped} zipped)`)}`);
             }
             // write the new manifest file.
             manifestPath.writeJson(manifest);
             let { size, zipped } = manifestPath.size;
             app.log(colors.bold(colors.green('manifest generated!')));
-            app.log(`${manifestPath.localPath} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
+            app.log(`${manifestPath.localPath} ${colors.grey(`(${size}, ${zipped} zipped)`)}`);
         });
 };
 

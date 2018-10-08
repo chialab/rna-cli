@@ -21,7 +21,6 @@ module.exports = (program) => {
             const workbox = require('workbox-build');
             const Watcher = require('../../lib/Watcher');
             const Project = require('../../lib/Project');
-            const utils = require('../../lib/utils.js');
 
             const cwd = process.cwd();
             const project = new Project(cwd);
@@ -79,7 +78,7 @@ module.exports = (program) => {
 
                 let { size, zipped } = output.size;
                 app.log(colors.bold(colors.green('service worker generated!')));
-                app.log(`${output.localPath} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
+                app.log(`${output.localPath} ${colors.grey(`(${size}, ${zipped} zipped)`)}`);
 
                 if (options.watch) {
                     let watcher = new Watcher(input.path, {
