@@ -229,7 +229,7 @@ async function rollup(app, project, options, previousBundle) {
         let bundle = previousBundle;
         let input = options.input;
         let output = options.output;
-        if (output.isDirectory()) {
+        if (output.exists() && output.isDirectory()) {
             output = output.file(input.basename.replace(input.extname, '.js'));
         }
 
@@ -299,7 +299,7 @@ async function postcss(app, project, options, previousBundle) {
         let bundle = previousBundle;
         let input = options.input;
         let output = options.output;
-        if (output.isDirectory()) {
+        if (output.exists() && output.isDirectory()) {
             output = output.file(input.basename.replace(input.extname, '.css'));
         }
 
@@ -319,8 +319,10 @@ async function postcss(app, project, options, previousBundle) {
             bundle = new PostCSS(config);
         }
         task = app.log(`postcss... ${colors.grey(`(${input.localPath})`)}`, true);
+
         await bundle.build();
         await bundle.write();
+
         task();
         profile.end();
 
