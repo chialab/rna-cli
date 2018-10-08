@@ -73,12 +73,12 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
                 let entry = entries[i];
 
                 if (entry instanceof Project) {
-                    let directories = entry.directories;
-                    let moduleFile = entry.file(entry.get('module'));
-                    let mainFile = entry.file(entry.get('main'));
-                    let styleFile = entry.file(entry.get('style'));
+                    const directories = entry.directories;
+                    const moduleFile = entry.file(entry.get('module'));
+                    const mainFile = entry.file(entry.get('main'));
+                    const styleFile = entry.file(entry.get('style'));
 
-                    let targets = options.targets ? browserslist(options.targets) : project.browserslist;
+                    const targets = options.targets ? browserslist(options.targets) : project.browserslist;
 
                     let output;
                     if (options.output) {
@@ -107,7 +107,7 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
                             production: options.lint,
                             map: options.map,
                             lint: options.lint,
-                        });
+                        }, entry);
                         // collect the generated Bundle.
                         bundles.push(manifest);
                     }
@@ -121,7 +121,7 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
                             production: options.lint,
                             map: options.map,
                             lint: options.lint,
-                        });
+                        }, entry);
                         // collect the generated Bundle.
                         bundles.push(manifest);
                     }
@@ -138,22 +138,7 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
                     throw 'missing `output` option';
                 }
 
-                let targets = options.targets ? browserslist(options.targets) : project.browserslist;
-
-                if (isStyleFile(entry.path)) {
-                    // Style file
-                    let manifest = await postcss(app, {
-                        input: entry,
-                        output,
-                        targets,
-                        production: options.lint,
-                        map: options.map,
-                        lint: options.lint,
-                    });
-                    // collect the generated Bundle
-                    bundles.push(manifest);
-                    continue;
-                }
+                const targets = options.targets ? browserslist(options.targets) : project.browserslist;
 
                 if (isJSFile(entry.path)) {
                     // Javascript file
@@ -164,9 +149,25 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
                         production: options.lint,
                         map: options.map,
                         lint: options.lint,
-                    });
+                    }, project);
                     // collect the generated Bundle
                     bundles.push(manifest);
+                    continue;
+                }
+
+                if (isStyleFile(entry.path)) {
+                    // Style file
+                    let manifest = await postcss(app, {
+                        input: entry,
+                        output,
+                        targets,
+                        production: options.lint,
+                        map: options.map,
+                        lint: options.lint,
+                    }, project);
+                    // collect the generated Bundle
+                    bundles.push(manifest);
+                    continue;
                 }
             }
 
@@ -220,7 +221,7 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
         });
 };
 
-async function rollup(app, options) {
+async function rollup(app, options, project) {
     const colors = require('colors/safe');
     const utils = require('../../lib/utils');
     const Rollup = require('../../lib/Bundlers/Rollup.js');
@@ -239,10 +240,8 @@ async function rollup(app, options) {
             output.mapFile.unlink();
         }
 
-        if (!bundle) {
-            let config = await Rollup.detectConfig();
-            bundle = new Rollup({
-                config,
+        if (!bundle && project) {
+            let config = await Rollup.detectConfig(project, {
                 cacheRoot: app.store.tmpdir('rollup'),
                 input: input.path,
                 output: output.path,
@@ -251,6 +250,7 @@ async function rollup(app, options) {
                 lint: options.lint,
                 targets: options.targets,
             });
+            bundle = new Rollup(config);
         }
         task = app.log(`bundling... ${colors.grey(`(${input.localPath})`)}`, true);
         await bundle.build();

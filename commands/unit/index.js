@@ -31,12 +31,15 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
             const Proteins = require('@chialab/proteins');
             const karma = require('karma');
             const Mocha = require('mocha');
+            const browserslist = require('browserslist');
             const Project = require('../../lib/Project');
             const Rollup = require('../../lib/Bundlers/Rollup');
             const runNativeScriptTest = require('./lib/ns');
 
             const cwd = process.cwd();
             const project = new Project(cwd);
+
+            const targets = options.targets ? browserslist(options.targets) : project.browserslist;
 
             // check sauce values
             if (options.saucelabs) {
@@ -97,25 +100,20 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
             const unitCode = `${files.map((entry) => `import '${entry.path}';`).join('\n')}`;
 
             // build tests
-            let tempSource = app.store.tmpfile('unit-source.js');
-            let tempUnit = app.store.tmpfile('unit-build.js');
+            const tempSource = app.store.tmpfile('unit-source.js');
+            const tempUnit = app.store.tmpfile('unit-build.js');
             tempSource.write(unitCode);
 
-            let config = await Rollup.detectConfig();
-            let bundler = new Rollup(Object.assign(
-                {
-                    'coverage': options.coverage,
-                    'targets': options.targets,
-                    'jsx.pragma': options['jsx.pragma'],
-                    'jsx.module': options['jsx.module'],
-                },
-                config,
-                {
-                    input: tempSource.path,
-                    output: tempUnit.path,
-                    map: 'inline',
-                }
-            ));
+            const config = await Rollup.detectConfig(project, {
+                'input': tempSource.path,
+                'output': tempUnit.path,
+                'map': 'inline',
+                'coverage': options.coverage,
+                targets,
+                'jsx.pragma': options['jsx.pragma'],
+                'jsx.module': options['jsx.module'],
+            });
+            const bundler = new Rollup(config);
 
             await bundler.build();
 
@@ -142,7 +140,7 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
 
                 if (taskEnv.runner === 'karma') {
                     // Startup Karma.
-                    let karmaOptions = getConfig(app, project, {
+                    const karmaOptions = getConfig(app, project, {
                         ci: options.ci,
                         server: options.server,
                         coverage: options.coverage,
@@ -156,7 +154,7 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
                     karmaOptions.preprocessors = {
                         [tempUnit.path]: ['sourcemap'],
                     };
-                    let server = await new Promise((resolve, reject) => {
+                    const server = await new Promise((resolve, reject) => {
                         let s = new karma.Server(karmaOptions, (exitCode) => {
                             if (exitCode && !options.server) {
                                 reject();

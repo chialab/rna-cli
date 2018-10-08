@@ -80,7 +80,7 @@ module.exports = (program) => {
 
                 let { size, zipped } = output.size;
                 app.log(colors.bold(colors.green('service worker generated!')));
-                app.log(`${utils.relativeToCwd(options.output)} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
+                app.log(`${options.output.localPath} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
 
                 if (options.watch) {
                     let watcher = new Watcher(input, {
