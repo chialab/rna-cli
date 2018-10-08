@@ -10,5 +10,15 @@ module.exports = (program) => {
         .description('Remove project dependencies.')
         .help('A simple alias to `yarn add` command.')
         .option('<module1> <module2> <module3>', 'The modules to remove')
-        .action(`${__dirname}/action.js`);
+        .action(async (app, options = {}) => {
+            const colors = require('colors/safe');
+            const Project = require('../../lib/Project');
+
+            const cwd = process.cwd();
+            const project = new Project(cwd);
+
+            // Remove requested packages.
+            await project.packageManager.remove(...options.arguments);
+            app.log(colors.green('packages successfully removed.'));
+        });
 };

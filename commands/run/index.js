@@ -9,5 +9,12 @@ module.exports = (program) => {
         .command('run')
         .description('Trigger project script.')
         .help('A simple alias to `yarn run` command.')
-        .action(`${__dirname}/action.js`);
+        .action(async () => {
+            const Project = require('../../lib/Project');
+
+            const cwd = process.cwd();
+            const project = new Project(cwd);
+
+            return await project.packageManager.run(process.argv[3], process.argv.slice(4));
+        });
 };

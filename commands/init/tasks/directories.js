@@ -18,7 +18,7 @@ module.exports = async function directoriesTask(app, otpions, project, templates
     const mainFile = project.get('main') && project.file(project.get('main'));
 
     for (let dir in directories) {
-        directories[dir].ensureExists();
+        directories[dir].ensure();
     }
 
     // Ensure path specified in `package.json` "main" key is present.
@@ -57,7 +57,7 @@ module.exports = async function directoriesTask(app, otpions, project, templates
     if (project.get('workspaces')) {
         // Ensure paths listed as workspaces are present.
         project.get('workspaces').forEach((ws) => {
-            project.directory(path.dirname(ws)).ensureExists();
+            project.directory(path.dirname(ws)).ensure();
         });
     }
 };

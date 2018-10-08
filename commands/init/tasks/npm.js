@@ -52,13 +52,20 @@ module.exports = async function npmTask(app, options, project, templates) {
             name: 'workspaces',
             message: formatQuestion('workspaces'),
             default: project.get('workspaces') && project.get('workspaces').join(', '),
-            when: () => !project.hasWorkspace,
+            when: () => !project.parent,
         },
         {
             type: 'input',
             name: 'src',
             message: formatQuestion('src path'),
             default: project.get('directories.src'),
+            when: (answers) => !answers.workspaces,
+        },
+        {
+            type: 'input',
+            name: 'lib',
+            message: formatQuestion('distribution path'),
+            default: project.get('directories.lib'),
             when: (answers) => !answers.workspaces,
         },
         {
@@ -116,6 +123,11 @@ module.exports = async function npmTask(app, options, project, templates) {
         project.set('directories.src', answers.src);
     } else {
         project.unset('directories.src');
+    }
+    if (answers.lib) {
+        project.set('directories.lib', answers.lib);
+    } else {
+        project.unset('directories.lib');
     }
     if (answers.public) {
         project.set('directories.public', answers.public);

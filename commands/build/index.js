@@ -37,5 +37,316 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
         .option('[--jsx.module]', 'The module to auto import for JSX pragma.')
         .option('[--polyfill]', 'Auto add polyfills. [⚠️  experimental]')
         .option('[--optimize]', 'Run OptimizeJS after bundle. [⚠️  experimental]')
-        .action(`${__dirname}/action.js`);
+        .action(async (app, options = {}) => {
+            const colors = require('colors/safe');
+            const browserslist = require('browserslist');
+            const Project = require('../../lib/Project');
+            const Watcher = require('../../lib/Watcher');
+            const { isJSFile, isStyleFile } = require('../../lib/extensions');
+            const PriorityQueues = require('../../lib/PriorityQueues');
+
+            const cwd = process.cwd();
+            const project = new Project(cwd);
+
+            if (options.production && !process.env.hasOwnProperty('NODE_ENV')) {
+                // Set NODE_ENV environment variable if `--production` flag is set.
+                app.log(colors.yellow('🚢  setting "production" environment.'));
+                process.env.NODE_ENV = 'production';
+            }
+
+            let entries;
+            if (options.arguments.length) {
+                entries = project.resolve(options.arguments);
+            } else {
+                let workspaces = project.workspaces;
+                if (workspaces) {
+                    entries = workspaces;
+                } else {
+                    entries = [project];
+                }
+            }
+
+            let bundles = [];
+
+            // Process entries.
+            for (let i = 0; i < entries.length; i++) {
+                let entry = entries[i];
+
+                if (entry instanceof Project) {
+                    let directories = entry.directories;
+                    let moduleFile = entry.file(entry.get('module'));
+                    let mainFile = entry.file(entry.get('main'));
+                    let styleFile = entry.file(entry.get('style'));
+
+                    let targets = options.targets ? browserslist(options.targets) : project.browserslist;
+
+                    let output;
+                    if (options.output) {
+                        output = project.file(options.output);
+                        if (!output.extname) {
+                            if (mainFile) {
+                                output = mainFile;
+                            } else {
+                                output = project.directory(options.output);
+                            }
+                        }
+                    } else if (directories.public || directories.lib) {
+                        output = directories.public || directories.lib;
+                    } else if (mainFile) {
+                        output = project.directory(mainFile.dirname);
+                    } else {
+                        throw 'missing `output` option';
+                    }
+
+                    if (moduleFile) {
+                        // a javascript source has been detected.
+                        let manifest = await rollup(app, {
+                            input: moduleFile,
+                            output,
+                            targets,
+                            production: options.lint,
+                            map: options.map,
+                            lint: options.lint,
+                        });
+                        // collect the generated Bundle.
+                        bundles.push(manifest);
+                    }
+
+                    if (styleFile) {
+                        // a style source has been detected.
+                        let manifest = await postcss(app, {
+                            input: styleFile,
+                            output,
+                            targets,
+                            production: options.lint,
+                            map: options.map,
+                            lint: options.lint,
+                        });
+                        // collect the generated Bundle.
+                        bundles.push(manifest);
+                    }
+                    continue;
+                }
+
+                let output;
+                if (options.output) {
+                    output = project.file(options.output);
+                    if (!output.extname) {
+                        output = project.directory(options.output);
+                    }
+                } else {
+                    throw 'missing `output` option';
+                }
+
+                let targets = options.targets ? browserslist(options.targets) : project.browserslist;
+
+                if (isStyleFile(entry.path)) {
+                    // Style file
+                    let manifest = await postcss(app, {
+                        input: entry,
+                        output,
+                        targets,
+                        production: options.lint,
+                        map: options.map,
+                        lint: options.lint,
+                    });
+                    // collect the generated Bundle
+                    bundles.push(manifest);
+                    continue;
+                }
+
+                if (isJSFile(entry.path)) {
+                    // Javascript file
+                    let manifest = await rollup(app, {
+                        input: entry,
+                        output,
+                        targets,
+                        production: options.lint,
+                        map: options.map,
+                        lint: options.lint,
+                    });
+                    // collect the generated Bundle
+                    bundles.push(manifest);
+                }
+            }
+
+            // once bundles are generated, check for watch option.
+            if (options.watch) {
+                // setup a bundles priority chain.
+                let queue = new PriorityQueues();
+                // start the watch task
+                let watcher = new Watcher(cwd, {
+                    log: true,
+                    ignore: (file) => !filterChangedBundles(bundles, file).length,
+                });
+
+                watcher.watch(async (event, file) => {
+                    let promise = Promise.resolve();
+                    let bundlesWithChanges = filterChangedBundles(bundles, file);
+
+                    if (bundlesWithChanges.length === 0) {
+                        return true;
+                    }
+
+                    let ticks = await Promise.all(
+                        // find out manifests with changed file dependency.
+                        bundlesWithChanges.map((bundle) => queue.tick(bundle, 100))
+                    );
+
+                    for (let i = 0; i < ticks.length; i++) {
+                        if (!ticks[i]) {
+                            continue;
+                        }
+
+                        let bundle = bundlesWithChanges[i];
+                        promise = promise.then(async () => {
+                            try {
+                                await bundle.__fn(app, {
+                                    bundle,
+                                });
+                            } catch (err) {
+                                if (err) {
+                                    app.log(err);
+                                }
+                            }
+                        });
+                    }
+
+                    await promise;
+                });
+            }
+            // resolve build task with the list of generated manifests.
+            return bundles;
+        });
 };
+
+async function rollup(app, options) {
+    const colors = require('colors/safe');
+    const utils = require('../../lib/utils');
+    const Rollup = require('../../lib/Bundlers/Rollup.js');
+
+    let profile = app.profiler.task('rollup');
+    let task;
+    try {
+        let bundle = options.bundle;
+        let input = options.input;
+        let output = options.output;
+        if (output.isDirectory()) {
+            output = output.file(input.basename.replace(input.extname, '.js'));
+        }
+
+        if (output.mapFile.exists()) {
+            output.mapFile.unlink();
+        }
+
+        if (!bundle) {
+            let config = await Rollup.detectConfig();
+            bundle = new Rollup({
+                config,
+                cacheRoot: app.store.tmpdir('rollup'),
+                input: input.path,
+                output: output.path,
+                production: options.production,
+                map: options.map,
+                lint: options.lint,
+                targets: options.targets,
+            });
+        }
+        task = app.log(`bundling... ${colors.grey(`(${input.localPath})`)}`, true);
+        await bundle.build();
+        await bundle.write();
+        if (app.options.profile) {
+            let tasks = bundle.timings;
+            for (let k in tasks) {
+                profile.task(k, false).set(tasks[k]);
+            }
+        }
+        profile.end();
+        task();
+
+        let { size, zipped } = output.size;
+        app.log(colors.bold(colors.green('bundle ready!')));
+        app.log(`${output.localPath} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
+
+        if (bundle.linter && (bundle.linter.hasErrors() || bundle.linter.hasWarnings())) {
+            app.log(bundle.linter.report());
+        }
+
+        bundle.__fn = rollup;
+
+        utils.gc();
+
+        return bundle;
+    } catch (err) {
+        if (task) {
+            task();
+        }
+        profile.end();
+        throw err;
+    }
+}
+
+async function postcss(app, options) {
+    const utils = require('../../lib/utils');
+    const colors = require('colors/safe');
+    const PostCSS = require('../../lib/Bundlers/PostCSS.js');
+
+    let profile = app.profiler.task('postcss');
+    let task;
+    try {
+        let bundle = options.bundle;
+        let input = options.input;
+        let output = options.output;
+        if (output.isDirectory()) {
+            output = output.file(input.basename.replace(input.extname, '.css'));
+        }
+
+        if (output.mapFile.exists()) {
+            output.mapFile.unlink();
+        }
+
+        if (!bundle) {
+            bundle = new PostCSS({
+                input: input.path,
+                output: output.path,
+                production: options.production,
+                map: options.map,
+                lint: options.lint,
+                targets: options.targets,
+            });
+        }
+        task = app.log(`postcss... ${colors.grey(`(${input.localPath})`)}`, true);
+        await bundle.build();
+        await bundle.write();
+        task();
+        profile.end();
+
+        let { size, zipped } = output.size;
+        app.log(colors.bold(colors.green('css ready!')));
+        app.log(`${output.localPath} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
+
+        if (bundle.linter && (bundle.linter.hasErrors() || bundle.linter.hasWarnings())) {
+            app.log(bundle.linter.report());
+        }
+
+        bundle.__fn = postcss;
+
+        utils.gc();
+
+        return bundle;
+    } catch (err) {
+        if (task) {
+            task();
+        }
+        profile.end();
+        throw err;
+    }
+}
+
+function filterChangedBundles(bundles, file) {
+    return bundles
+        .filter((bundle) => {
+            let bundleFiles = bundle.files || [];
+            return bundleFiles.includes(file);
+        });
+}

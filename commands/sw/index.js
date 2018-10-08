@@ -12,5 +12,96 @@ module.exports = (program) => {
         .option('--output', 'The service worker to generate or update.')
         .option('[--exclude]', 'A glob of files to exclude from the precache.')
         .option('[--watch]', 'Regenerated service worker on source changes.')
-        .action(`${__dirname}/action.js`);
+        .action(async function sw(app, options) {
+            if (!options.arguments.length) {
+                throw 'missing input files.';
+            }
+
+            const colors = require('colors/safe');
+            const workbox = require('workbox-build');
+            const Watcher = require('../../lib/Watcher');
+            const Project = require('../../lib/Project');
+            const utils = require('../../lib/utils.js');
+
+            const cwd = process.cwd();
+            const project = new Project(cwd);
+
+            let input = project.resolve(options.arguments)
+                .map((entry) => entry.path);
+
+            let output;
+            if (options.output) {
+                output = project.file(options.output);
+            } else {
+                project.file('service-worker.js');
+            }
+            let task = app.log('generating service worker...', true);
+            let exclude = [
+                'service-worker.js',
+                '*.map',
+            ];
+            if (options.exclude) {
+                exclude.push(options.exclude);
+            }
+
+            if (output.mapFile.exists()) {
+                output.mapFile.unlink();
+            }
+
+            try {
+                let res;
+                if (output.exists()) {
+                    let tmpFile = app.store.tmpfile('sw.js');
+                    tmpFile.write(output.read().replace(/\.(precache|precacheAndRoute)\s*\(\s*\[([^\]]*)\]\)/gi, '.$1([])'));
+                    try {
+                        res = await workbox.injectManifest({
+                            swSrc: tmpFile.path,
+                            swDest: output.path,
+                            globDirectory: input,
+                            globPatterns: ['**/*'],
+                            globIgnores: exclude,
+                            maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
+                        });
+                    } catch (err) {
+                        tmpFile.unlink();
+                        throw err;
+                    }
+                } else {
+                    res = await workbox.generateSW({
+                        globDirectory: input,
+                        swDest: output.path,
+                        globPatterns: ['**/*'],
+                        globIgnores: exclude,
+                        maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
+                    });
+                }
+
+                task();
+
+                let { size, zipped } = output.size;
+                app.log(colors.bold(colors.green('service worker generated!')));
+                app.log(`${utils.relativeToCwd(options.output)} ${colors.grey(`(${utils.prettyBytes(size)}, ${utils.prettyBytes(zipped)} zipped)`)}`);
+
+                if (options.watch) {
+                    let watcher = new Watcher(input, {
+                        log: false,
+                        ignore: '**/*.map',
+                    });
+
+                    watcher.watch(async (event, file) => {
+                        if (file === output.path) {
+                            const content = output.read();
+                            if (!content.match(/\.(precache|precacheAndRoute)\(\[\]\)/)) {
+                                return;
+                            }
+                        }
+                        await sw(app, Object.assign({}, options, { watch: false }));
+                    });
+                }
+                return res;
+            } catch(err) {
+                task();
+                throw err;
+            }
+        });
 };
