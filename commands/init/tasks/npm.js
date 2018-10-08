@@ -73,6 +73,13 @@ module.exports = async function npmTask(app, options, project, templates) {
             name: 'public',
             message: formatQuestion('public path'),
             default: project.get('directories.public'),
+            when: (answers) => !answers.workspaces && !answers.lib,
+        },
+        {
+            type: 'input',
+            name: 'test',
+            message: formatQuestion('test path'),
+            default: project.get('directories.test'),
             when: (answers) => !answers.workspaces,
         },
         {
@@ -133,6 +140,11 @@ module.exports = async function npmTask(app, options, project, templates) {
         project.set('directories.public', answers.public);
     } else {
         project.unset('directories.public');
+    }
+    if (answers.test) {
+        project.set('directories.test', answers.test);
+    } else {
+        project.unset('directories.test');
     }
     if (answers.main) {
         project.set('main', answers.main);
