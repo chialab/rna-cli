@@ -74,9 +74,9 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
 
                 if (entry instanceof Project) {
                     const directories = entry.directories;
-                    const moduleFile = entry.file(entry.get('module'));
-                    const mainFile = entry.file(entry.get('main'));
-                    const styleFile = entry.file(entry.get('style'));
+                    const moduleFile = entry.get('module') && entry.file(entry.get('module'));
+                    const mainFile = entry.get('main') && entry.file(entry.get('main'));
+                    const styleFile = entry.get('style') && entry.file(entry.get('style'));
 
                     const targets = options.targets ? browserslist(options.targets) : project.browserslist;
 
