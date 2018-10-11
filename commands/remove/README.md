@@ -12,7 +12,7 @@ remove  Remove project dependencies.
 This command is an alias to `yarn remove` command.
 
 ### Usage
-```
+```sh
 $ rna remove @dnajs/idom
 ```
 

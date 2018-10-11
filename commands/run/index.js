@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('run')
         .description('Trigger project script.')
+        .option('<script>', 'The script to trigger.')
         .action(async () => {
             const Project = require('../../lib/Project');
 

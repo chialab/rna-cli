@@ -2,7 +2,7 @@
 
 A CLI to rule them all.
 
-## Prerequistes
+## Requisites
 
 * [Git](https://git-scm.com/)
 * [Yarn](https://yarnpkg.com)
@@ -40,7 +40,7 @@ $ docker run chialab/rna-cli rna --version
 * **serve** - Setup a server for your project.
 * **unit** - Run project unit tests.
 * **publish** - Publish to NPM.
-* **documentation** - Generate API references.
+* [**documentation**](./commands/documentation) - Generate API references.
 * [**start**](./commands/start) - `yarn start` alias.
 * [**run**](./commands/run) - `yarn run` alias.
 * [**test**](./commands/test) - `yarn test` alias.

@@ -17,7 +17,7 @@ This command is an alias to `yarn add` command.
 * `--dev` Install the module as dev dependency.
 
 ### Usage
-```
+```sh
 $ rna add @dnajs/idom
 $ rna add eslint --dev
 ```

@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('documentation')
         .description('Generate API references.')
+        .option('<file>', 'The files to documentate.')
         .option('--output', 'The markdown output directory.')
         .action(async (app, options) => {
             const Project = require('../../lib/Project.js');
@@ -32,7 +33,7 @@ module.exports = (program) => {
                 }
 
                 if (!entries.length) {
-                    throw 'no files for documentation found.';
+                    throw 'no files for documentation found';
                 }
             }
 

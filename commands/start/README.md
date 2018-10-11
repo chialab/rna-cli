@@ -11,7 +11,7 @@ start  Trigger project `start` script.
 This command is an alias to `yarn start` command.
 
 ### Usage
-```
+```sh
 $ rna start
 ```
 

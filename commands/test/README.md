@@ -11,7 +11,7 @@ test  Trigger project `test` script.
 This command is an alias to `yarn test` command.
 
 ### Usage
-```
+```sh
 $ rna test
 ```
 
