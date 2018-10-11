@@ -2,10 +2,10 @@
 
 require('dotenv').config();
 
-const CLI = require('./lib/cli.js');
+const CLI = require('./lib/Cli/Cli');
 const packageJson = require('./package.json');
 
-const program = new CLI('rna-cli', packageJson.version);
+const program = new CLI('rna', packageJson.name, packageJson.version);
 
 require('./commands/help/index.js')(program);
 require('./commands/start/index.js')(program);
@@ -26,7 +26,7 @@ require('./commands/run/index.js')(program);
 
 (async () => {
     try {
-        await program.start();
+        await program.start(process.argv.slice(2));
     } catch (err) {
         if (err) {
             // eslint-disable-next-line

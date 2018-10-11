@@ -13,7 +13,7 @@ module.exports = (program) => {
             if (!options.lite) {
                 // Display introduction unless a "lite" help was requested.
                 app.logger.newline();
-                app.logger.info(`   Welcome to ${app.name} (v${app.v})`);
+                app.logger.info(`   Welcome to ${app.bin} v${app.v}`);
                 app.logger.log('   A CLI to rule them all.');
                 app.logger.newline();
                 app.logger.heading('   GENERAL');
