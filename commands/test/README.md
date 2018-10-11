@@ -1,5 +1,7 @@
 # RNA CLI
 
+> Although the command has been retained for backward compatibility with version 1.0, you really should use the `yarn test` original command instead of this alias.
+
 ### Command: `test`
 
 ```sh

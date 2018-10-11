@@ -33,7 +33,7 @@ $ docker run chialab/rna-cli rna --version
 * [**install**](./commands/install) - Sync project dependencies. `yarn install` alias.
 * [**add**](./commands/add) - Add a project dependency. `yarn add` alias.
 * [**remove**](./commands/remove) - Remove a project dependency. `yarn remove` alias.
-* **lint** - Lint your source files.
+* [**lint**](./commands/lint) - Lint your source files.
 * [**build**](./commands/build) - Build the project.
 * [**manifest**](./commands/manifest) - Generate webapp manifest.
 * [**sw**](./commands/sw) - Generate Service Worker with precached files.

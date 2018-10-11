@@ -8,7 +8,7 @@ module.exports = (program) => {
     program
         .command('lint')
         .description('Lint your source files.')
-        .option('<file1> <file2> <package1> <package2> <package3>', 'The packages or the files to lint.')
+        .option('<file|package>', 'The packages or the files to lint.')
         .option('[--fix]', 'Should autofix warnings.')
         .option('[--watch]', 'Watch files and re-lint on changes.')
         .action(async function lint(app, options) {
