@@ -8,14 +8,12 @@ module.exports = (program) => {
     program
         .command('serve')
         .description('Setup a server for your project.')
-        .option('<file>', 'The server directory.')
+        .option('<path>', 'The server directory.')
         .option('[--port]', 'The server port.')
         .option('[--watch]', 'Should watch server directory.')
         .option('[--tunnel]', 'Create a tunnel for the server')
         .option('[--directory]', 'Should list directories.')
         .option('[--https]', 'Start a server using SSL.')
-        .option('[--https.key]', 'Path to server https key.')
-        .option('[--https.cert]', 'Path to server https certificate.')
         .action(async (app, options = {}) => {
             const { mix } = require('@chialab/proteins');
             const Watcher = require('../../lib/Watcher');
@@ -59,10 +57,10 @@ module.exports = (program) => {
                 tunnel: options.tunnel,
             };
 
-            if (options.https === true || options['https.key']) {
+            if (options.https === true) {
                 config.https = {
-                    key: options['https.key'] || app.store.file('https/https.key').path,
-                    cert: options['https.cert'] || app.store.file('https/https.pem').path,
+                    key: app.store.file('https/https.key').path,
+                    cert: app.store.file('https/https.pem').path,
                 };
             }
 

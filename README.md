@@ -37,7 +37,7 @@ $ docker run chialab/rna-cli rna --version
 * [**build**](./commands/build) - Build the project.
 * [**manifest**](./commands/manifest) - Generate webapp manifest.
 * [**sw**](./commands/sw) - Generate Service Worker with precached files.
-* **serve** - Setup a server for your project.
+* [**serve**](./commands/serve) - Setup a server for your project.
 * **unit** - Run project unit tests.
 * **publish** - Publish to NPM.
 * [**documentation**](./commands/documentation) - Generate API references.
