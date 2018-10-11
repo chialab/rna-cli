@@ -84,7 +84,6 @@
     "stylelint-order": "^0.8.1",
     "sync-request": "^4.1.0",
     "typescript": "^3.0.3",
-    "workbox-build": "^3.4.1",
-    "yarn": "^1.9.4"
+    "workbox-build": "^3.4.1"
   }
 }
