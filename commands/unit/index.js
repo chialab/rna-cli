@@ -61,7 +61,7 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
 
             if (!process.env.hasOwnProperty('NODE_ENV')) {
                 // Set NODE_ENV environment variable.
-                app.logger.info('🔍 setting "test" environment.');
+                app.logger.info('setting "test" environment');
                 process.env.NODE_ENV = 'test';
             }
 

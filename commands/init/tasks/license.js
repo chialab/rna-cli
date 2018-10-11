@@ -16,7 +16,7 @@ module.exports = async function licenseTask(app, options, project) {
         if (licenseFile.exists()) {
             licenseFile.unlink();
         }
-        app.logger.warn('no license found.', project.localPath);
+        app.logger.warn('no license found', project.localPath);
         return;
     }
     // Package actually is licensed.
@@ -28,7 +28,7 @@ module.exports = async function licenseTask(app, options, project) {
 
     if (!(licenseCode in licenses)) {
         // We don't have a license document for the specified license code.
-        app.logger.error('invalid license.', project.localPath);
+        app.logger.error('invalid license', project.localPath);
         return;
     }
 

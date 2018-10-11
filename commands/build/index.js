@@ -35,8 +35,8 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
         .option('[--no-lint]', 'Do not lint files before bundle.')
         .option('[--jsx.pragma]', 'The JSX pragma to use.')
         .option('[--jsx.module]', 'The module to auto import for JSX pragma.')
-        .option('[--polyfill]', 'Auto add polyfills. [⚠️  experimental]')
-        .option('[--optimize]', 'Run OptimizeJS after bundle. [⚠️  experimental]')
+        .option('[--polyfill]', 'Auto add polyfills. [experimental]')
+        .option('[--optimize]', 'Run OptimizeJS after bundle. [experimental]')
         .action(async (app, options = {}) => {
             const browserslist = require('browserslist');
             const Project = require('../../lib/Project');
@@ -49,7 +49,7 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
 
             if (options.production && !process.env.hasOwnProperty('NODE_ENV')) {
                 // Set NODE_ENV environment variable if `--production` flag is set.
-                app.logger.info('🚢  setting "production" environment.');
+                app.logger.info('setting "production" environment');
                 process.env.NODE_ENV = 'production';
             }
 

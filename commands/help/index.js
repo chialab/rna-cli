@@ -13,17 +13,17 @@ module.exports = (program) => {
             if (!options.lite) {
                 // Display introduction unless a "lite" help was requested.
                 app.logger.newline();
-                app.logger.info(`Welcome to ${app.name} (v${app.v})`);
-                app.logger.log('A CLI to rule them all.');
+                app.logger.info(`   Welcome to ${app.name} (v${app.v})`);
+                app.logger.log('   A CLI to rule them all.');
                 app.logger.newline();
-                app.logger.heading('🔧  GENERAL');
+                app.logger.heading('   GENERAL');
                 app.logger.newline();
                 app.logger.log('   -v --version    Get CLI version.');
                 app.logger.log('   --verbose       Run CLI commands in verbose mode (show all logs).');
                 app.logger.log('   --profile       Profile CLI tasks.');
                 app.logger.log('   <command> help  Display a command specific help.');
                 app.logger.newline();
-                app.logger.heading('⚡️  COMMANDS');
+                app.logger.heading('   COMMANDS');
                 app.logger.newline();
             }
             let names = options.commands || Object.keys(app.commands);
