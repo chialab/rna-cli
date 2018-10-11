@@ -1,0 +1,29 @@
+# RNA CLI
+
+### Command: `sw`
+
+```sh
+$ rna sw --help
+
+sw  Generate a service worker.
+    <path>       Root of the app to cache.
+    --output     The service worker to generate or update.
+    [--exclude]  A glob of files to exclude from the precache.
+    [--watch]    Regenerated service worker on source changes.
+```
+
+This command uses [workbox](https://developers.google.com/web/tools/workbox/) by Google to generate a Service Worker with precached files.
+
+## Options
+* `--output` The output file name of the [Service Worker](https://developers.google.com/web/fundamentals/primers/service-workers/). If not defined, it tries to create or detect a `service-worker.js` file in the path. If the output already exists, it just update the list of files to cache.
+* `--exclude` By default, the command scan the path directory and cache all files it finds. You can exclude some files from the cache using a glob pattern.
+* `--watch` Enable the watch mode on the path in order to update Service Worker cache every time an element has changed.
+
+### Usage
+```sh
+$ rna sw public/ --exclude 'articles/**/*.png'
+```
+
+### See also
+
+* [`rna manifest`](../manifest/)

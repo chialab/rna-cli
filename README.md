@@ -35,8 +35,8 @@ $ docker run chialab/rna-cli rna --version
 * [**remove**](./commands/remove) - Remove a project dependency. `yarn remove` alias.
 * **lint** - Lint your source files.
 * [**build**](./commands/build) - Build the project.
-* **manifest** - Generate webapp manifest.
-* **sw** - Generate Service Worker with precached files.
+* [**manifest**](./commands/manifest) - Generate webapp manifest.
+* [**sw**](./commands/sw) - Generate Service Worker with precached files.
 * **serve** - Setup a server for your project.
 * **unit** - Run project unit tests.
 * **publish** - Publish to NPM.

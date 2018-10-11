@@ -30,7 +30,7 @@ module.exports = (program) => {
             if (options.output) {
                 output = project.file(options.output);
             } else {
-                project.file('service-worker.js');
+                input.file('service-worker.js');
             }
             app.logger.play('generating service worker...');
             let exclude = [
