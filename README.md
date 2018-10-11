@@ -29,7 +29,6 @@ $ docker run chialab/rna-cli rna --version
 
 ## Commands
 
-* **help** - Show CLI help
 * **init** - Setup a new project.
 * [**install**](./commands/install) - Sync project dependencies. `yarn install` alias.
 * [**add**](./commands/add) - Add a project dependency. `yarn add` alias.

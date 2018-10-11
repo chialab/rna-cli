@@ -7,7 +7,6 @@ const packageJson = require('./package.json');
 
 const program = new CLI('rna', packageJson.name, packageJson.version);
 
-require('./commands/help/index.js')(program);
 require('./commands/start/index.js')(program);
 require('./commands/test/index.js')(program);
 require('./commands/add/index.js')(program);

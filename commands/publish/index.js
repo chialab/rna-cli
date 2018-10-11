@@ -12,7 +12,6 @@ module.exports = (program) => {
         .option('[--beta]', 'Deploy a beta version of the packages.')
         .option('[--no-git]', 'Do not commit version changes to Git.')
         .option('[--no-npm]', 'Do not commit version changes to NPM.')
-        .help('Use `lerna` to handle to publish monorepos.\n')
         .action(async (app, options) => {
             const exec = require('../../lib/exec.js');
             const BIN = require.resolve('lerna/cli.js');

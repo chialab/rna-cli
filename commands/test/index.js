@@ -8,7 +8,6 @@ module.exports = (program) => {
     program
         .command('test')
         .description('Trigger project `test` script.')
-        .help('A simple alias to `yarn test` command.')
         .action(async () => {
             const Project = require('../../lib/Project');
 
