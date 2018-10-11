@@ -12,17 +12,17 @@ const configurator = require('../../../lib/configurator.js');
  */
 module.exports = async function eslintTask(app, options, project, templates) {
     const manager = new PackageManager(project.path);
-    const eslintIgnore = project.file('.eslintignore');
     const eslintConfig = project.file('.eslintrc.yml');
+    const eslintIgnore = project.file('.eslintignore');
 
-    const ignoreTemplate = templates.file('eslintignore');
     const configTemplate = templates.file('eslintrc.yml');
-
-    // "Append" configuration to `.eslintignore`.
-    configurator(eslintIgnore, ignoreTemplate.read(), '# RNA');
+    const ignoreTemplate = templates.file('eslintignore');
 
     // "Append" configuration to `.eslintrc.yml`.
     configurator(eslintConfig, configTemplate.read(), '# RNA');
+
+    // "Append" configuration to `.eslintignore`.
+    configurator(eslintIgnore, ignoreTemplate.read(), '# RNA');
 
     await manager.dev('eslint', 'eslint-plugin-mocha', 'babel-eslint', 'eslint-plugin-babel');
     app.logger.success('.eslintrc.yml updated.', eslintConfig.localPath);
