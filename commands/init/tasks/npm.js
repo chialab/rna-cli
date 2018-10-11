@@ -207,11 +207,6 @@ module.exports = async function npmTask(app, options, project, templates) {
                 version: project.get('version') || '0.0.0',
                 npmClient: 'yarn',
                 useWorkspaces: true,
-                command: {
-                    init: {
-                        exact: true,
-                    },
-                },
             });
         }
     }
