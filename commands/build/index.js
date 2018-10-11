@@ -38,6 +38,7 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
         .option('[--polyfill]', 'Auto add polyfills. [experimental]')
         .option('[--optimize]', 'Run OptimizeJS after bundle. [experimental]')
         .action(async (app, options = {}) => {
+            const path = require('path');
             const browserslist = require('browserslist');
             const Project = require('../../lib/Project');
             const Watcher = require('../../lib/Watcher');
@@ -54,7 +55,9 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
             }
 
             let entries;
+            let outputRelative = false;
             if (options.arguments.length) {
+                outputRelative = options.arguments.length > 1 || options.arguments[0].includes('*');
                 entries = project.resolve(options.arguments);
             } else {
                 let workspaces = project.workspaces;
@@ -81,13 +84,14 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
 
                     let output;
                     if (options.output) {
-                        output = project.file(options.output);
-                        if (!output.extname) {
-                            if (mainFile) {
-                                output = mainFile;
-                            } else {
-                                output = project.directory(options.output);
-                            }
+                        if (outputRelative) {
+                            output = moduleFile.directory.file(options.output);
+                        }  else if (path.extname(options.output)) {
+                            output = project.file(options.output);
+                        } else if (mainFile) {
+                            output = mainFile;
+                        } else {
+                            output = project.directory(options.output);
                         }
                     } else if (directories.public || directories.lib) {
                         output = directories.public || directories.lib;
@@ -133,8 +137,11 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
 
                 let output;
                 if (options.output) {
-                    output = project.file(options.output);
-                    if (!output.extname) {
+                    if (outputRelative) {
+                        output = entry.directory.file(options.output);
+                    } else if (path.extname(options.output)) {
+                        output = project.file(options.output);
+                    } else {
                         output = project.directory(options.output);
                     }
                 } else {
