@@ -179,14 +179,28 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
                 // setup a bundles priority chain.
                 let queue = new PriorityQueues();
                 // start the watch task
-                let watcher = new Watcher(cwd, {
-                    log: true,
+                let watcher = new Watcher(project, {
                     ignore: (file) => !filterChangedBundles(bundles, file).length,
                 });
 
-                watcher.watch(async (event, file) => {
+                watcher.on('change', (event, file) => {
+                    let label;
+                    switch (event) {
+                        case 'add':
+                            label = 'created';
+                            break;
+                        case 'unlink':
+                            label = 'removed';
+                            break;
+                        default:
+                            label = 'changed';
+                    }
+                    app.logger.info(`${file.localPath} ${label}.`);
+                });
+
+                await watcher.watch(async (event, file) => {
                     let promise = Promise.resolve();
-                    let bundlesWithChanges = filterChangedBundles(bundles, file);
+                    let bundlesWithChanges = filterChangedBundles(bundles, file.path);
 
                     if (bundlesWithChanges.length === 0) {
                         return true;
@@ -275,7 +289,7 @@ async function rollup(app, project, options, bundle = {}) {
         app.logger.stop();
 
         let { size, zipped } = output.size;
-        app.logger.success('bundle ready!');
+        app.logger.success('bundle ready');
         app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
 
         if (rollupBundle.linter && (rollupBundle.linter.hasErrors() || rollupBundle.linter.hasWarnings())) {
@@ -337,7 +351,7 @@ async function postcss(app, project, options, bundle = {}) {
         profile.end();
 
         let { size, zipped } = output.size;
-        app.logger.success('css ready!');
+        app.logger.success('css ready');
         app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
 
         if (postCSSBundle.linter && (postCSSBundle.linter.hasErrors() || postCSSBundle.linter.hasWarnings())) {

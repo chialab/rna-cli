@@ -76,17 +76,16 @@ module.exports = (program) => {
                 app.logger.stop();
 
                 let { size, zipped } = output.size;
-                app.logger.success('service worker generated!');
+                app.logger.success('service worker generated');
                 app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
 
                 if (options.watch) {
-                    let watcher = new Watcher(input.path, {
-                        log: false,
+                    let watcher = new Watcher(input, {
                         ignore: '**/*.map',
                     });
 
-                    watcher.watch(async (event, file) => {
-                        if (file === output.path) {
+                    await watcher.watch(async (event, file) => {
+                        if (file.path === output.path) {
                             const content = output.read();
                             if (!content.match(/\.(precache|precacheAndRoute)\(\[\]\)/)) {
                                 return;

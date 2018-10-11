@@ -72,10 +72,10 @@ Anyway, the developer can use a custom configuration if the \`.stylelintrc.yml\`
             }
 
             if (options.watch) {
-                const watcher = new Watcher(cwd);
+                const watcher = new Watcher(project);
 
-                watcher.watch(async () => {
-                    await lint(app);
+                await watcher.watch(async () => {
+                    await lint(app, options);
                 });
             }
         });

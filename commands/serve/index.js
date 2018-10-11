@@ -17,7 +17,6 @@ module.exports = (program) => {
         .option('[--https.key]', 'Path to server https key.')
         .option('[--https.cert]', 'Path to server https certificate.')
         .action(async (app, options = {}) => {
-            const commondir = require('commondir');
             const { mix } = require('@chialab/proteins');
             const Watcher = require('../../lib/Watcher');
             const Project = require('../../lib/Project.js');
@@ -27,25 +26,16 @@ module.exports = (program) => {
             const project = new Project(cwd);
 
             // Load directory to be served.
-            let entries;
+            let base;
             if (options.arguments.length) {
-                entries = project.resolve(options.arguments);
+                base = project.directory(options.arguments[0]);
             } else {
                 let publicPath = project.directories.public;
                 if (publicPath) {
-                    entries = [publicPath];
+                    base = publicPath;
                 } else {
-                    entries = [project];
+                    base = project;
                 }
-            }
-
-            let base = commondir(
-                entries.map((entry) => entry.path)
-            );
-
-            if (options.arguments.length > 1) {
-                // serving multi path, force directory option
-                options.directory = true;
             }
 
             let LiveReloadServer = mix(Server).with(...[
@@ -57,7 +47,7 @@ module.exports = (program) => {
 
             // Load configuration.
             let config = {
-                base,
+                base: base.path,
                 port: options.port,
                 directory: options.directory === true,
                 static: [
@@ -68,6 +58,7 @@ module.exports = (program) => {
                 ],
                 tunnel: options.tunnel,
             };
+
             if (options.https === true || options['https.key']) {
                 config.https = {
                     key: options['https.key'] || app.store.file('https/https.key').path,
@@ -82,22 +73,20 @@ module.exports = (program) => {
             if (options.watch) {
                 // Configure watch.
                 let watcher = new Watcher(base, {
-                    log: false,
                     ignore: '**/*.map',
                 });
 
-                watcher.watch((event, file) => {
-                    let toReload = file.replace(base, '').replace(/^\/*/, '');
+                await watcher.watch((event, file) => {
                     // File updated: notify BrowserSync so that it can be reloaded.
-                    server.reload(toReload);
+                    server.reload(base.relative(file));
                     if (event !== 'unlink') {
-                        app.logger.info(`${toReload} injected.`);
+                        app.logger.info(`${file.localPath} injected.`);
                     }
                 });
             }
 
             let { url, tunnel } = server.address;
-            app.logger.success(`server started: ${url}${tunnel ? ` / ${tunnel}` : ''}`);
+            app.logger.success(`server started at ${url}${tunnel ? ` / ${tunnel}` : ''}`);
 
             process.on('exit', async () => {
                 await server.close();

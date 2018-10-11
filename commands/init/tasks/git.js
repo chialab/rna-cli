@@ -36,7 +36,7 @@ module.exports = async function gitTask(app, options, project, templates) {
 
     if (!remote) {
         await gitClient.removeRemote();
-        app.logger.success('git project created without remote.', project.localPath);
+        app.logger.success('git project created without remote', project.localPath);
         return;
     }
 
@@ -52,5 +52,5 @@ module.exports = async function gitTask(app, options, project, templates) {
     // "Append" configuration to `.gitignore`.
     configurator(gitIgnore, ignoreTemplate.read(), '# RNA-CORE');
 
-    app.logger.success('git project updated.', project.localPath);
+    app.logger.success('git project updated', project.localPath);
 };

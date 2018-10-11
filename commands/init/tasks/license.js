@@ -42,5 +42,5 @@ module.exports = async function licenseTask(app, options, project) {
         });
 
     licenseFile.write(text);
-    app.logger.success('license updated.', licenseFile.localPath);
+    app.logger.success('license updated', licenseFile.localPath);
 };

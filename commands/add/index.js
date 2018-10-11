@@ -23,6 +23,6 @@ module.exports = (program) => {
             }
 
             await project.packageManager.add(...options.arguments);
-            app.logger.success('packages successfully added.');
+            app.logger.success('packages successfully added');
         });
 };

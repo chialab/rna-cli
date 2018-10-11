@@ -88,7 +88,7 @@ module.exports = (program) => {
                 try {
                     const iconsPath = await generateIcons(manifest, index, icon, root);
                     app.logger.stop();
-                    app.logger.succes('icons generated.');
+                    app.logger.succes('icons generated');
                     iconsPath.files().forEach((iconPath) => {
                         let { size, zipped } = iconPath.size;
                         app.logger.info(iconPath.localPath, `${size}, ${zipped} zipped`);
@@ -145,13 +145,13 @@ module.exports = (program) => {
                 );
                 indexPath.write(`<!DOCTYPE html>\n${html}`);
                 let { size, zipped } = indexPath.size;
-                app.logger.success('index updated!');
+                app.logger.success('index updated');
                 app.logger.info(indexPath.localPath, `${size}, ${zipped} zipped`);
             }
             // write the new manifest file.
             manifestPath.writeJson(manifest);
             let { size, zipped } = manifestPath.size;
-            app.logger.success('manifest generated!');
+            app.logger.success('manifest generated');
             app.logger.info(manifestPath.localPath, `${size}, ${zipped} zipped`);
         });
 };

@@ -96,7 +96,7 @@ async function generate(app, sources, output) {
         fs.ensureDirSync(path.dirname(output));
         fs.writeFileSync(output, contents);
         app.logger.stop();
-        app.logger.success('documentation created.', output.localPath);
+        app.logger.success('documentation created', output.localPath);
     } catch(err) {
         // ops.
         app.logger.stop();

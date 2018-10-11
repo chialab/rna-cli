@@ -25,5 +25,5 @@ module.exports = async function stylelintTask(app, options, project, templates) 
     configurator(stylelintIgnore, ignoreTemplate.read(), '# RNA');
 
     await manager.dev('stylelint', 'stylelint-order');
-    app.logger.success('.stylelintrc updated.', stylelintConfig.localPath);
+    app.logger.success('.stylelintrc updated', stylelintConfig.localPath);
 };

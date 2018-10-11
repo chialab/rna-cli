@@ -18,6 +18,6 @@ module.exports = (program) => {
 
             // Remove requested packages.
             await project.packageManager.remove(...options.arguments);
-            app.logger.success('packages successfully removed.');
+            app.logger.success('packages successfully removed');
         });
 };

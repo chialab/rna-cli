@@ -16,6 +16,6 @@ module.exports = (program) => {
 
             // Run `yarn install`.
             await project.packageManager.install();
-            app.logger.success('dependencies successfully updated.');
+            app.logger.success('dependencies successfully updated');
         });
 };

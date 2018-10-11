@@ -48,5 +48,5 @@ module.exports = async function readmeTask(app, options, project, templates) {
         }), devPlaceholder);
     }
 
-    app.logger.success('readme updated.', readmeFile.localPath);
+    app.logger.success('readme updated', readmeFile.localPath);
 };
