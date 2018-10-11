@@ -16,6 +16,9 @@
     "rna": "index.js"
   },
   "homepage": "https://gitlab.com/chialab/rna-cli#README",
+  "engines": {
+    "node": ">=8.9.0"
+  },
   "dependencies": {
     "@babel/core": "^7.0.0",
     "@babel/helper-module-imports": "^7.0.0",

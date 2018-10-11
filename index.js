@@ -1,15 +1,5 @@
 #! /usr/bin/env node --expose-gc
 
-/* eslint-disable */
-
-var version = process.version.replace(/^v/, '').split('.');
-if (version[0] < 8 || (version[0] == 8 && version[1] < 9)) {
-    console.log('\nRNA requires Node.js 8.9.0 or higher to be installed.\n');
-    process.exit(1);
-}
-
-/* eslint-enable */
-
 require('dotenv').config();
 
 const CLI = require('./lib/cli.js');
