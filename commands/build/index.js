@@ -99,10 +99,11 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
                     }
 
                     if (moduleFile) {
+                        let moduleOutput = mainFile ? mainFile : output;
                         // a javascript source has been detected.
                         let manifest = await rollup(app, entry, {
                             input: moduleFile,
-                            output,
+                            output: moduleOutput,
                             targets,
                             production: options.lint,
                             map: options.map,
@@ -113,10 +114,13 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
                     }
 
                     if (styleFile) {
+                        let styleOutput = mainFile ?
+                            mainFile.directory.file(mainFile.basename.replace(mainFile.extname, '.css')) :
+                            output;
                         // a style source has been detected.
                         let manifest = await postcss(app, entry, {
                             input: styleFile,
-                            output,
+                            output: styleOutput,
                             targets,
                             production: options.lint,
                             map: options.map,
@@ -219,17 +223,16 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
         });
 };
 
-async function rollup(app, project, options, previousBundle) {
+async function rollup(app, project, options, bundle = {}) {
     const colors = require('colors/safe');
     const Rollup = require('../../lib/Bundlers/Rollup.js');
 
     let profile = app.profiler.task('rollup');
     let task;
     try {
-        let bundle = previousBundle;
         let input = options.input;
         let output = options.output;
-        if (output.exists() && output.isDirectory()) {
+        if (!output.extname) {
             output = output.file(input.basename.replace(input.extname, '.js'));
         }
 
@@ -237,8 +240,8 @@ async function rollup(app, project, options, previousBundle) {
             output.mapFile.unlink();
         }
 
-        if (!bundle && project) {
-            let config = Rollup.detectConfig(app, project, {
+        if (!bundle.config && project) {
+            bundle.config = Rollup.detectConfig(app, project, {
                 cacheRoot: app.store.tmpdir('rollup'),
                 input: input.path,
                 output: output.path,
@@ -247,17 +250,30 @@ async function rollup(app, project, options, previousBundle) {
                 lint: options.lint,
                 targets: options.targets,
             });
-            bundle = new Rollup(config);
         }
         task = app.log(`bundling... ${colors.grey(`(${input.localPath})`)}`, true);
-        await bundle.build();
-        await bundle.write();
+
+        let rollupBundle = new Rollup(bundle.config);
+        rollupBundle.on('warning', (warning) => {
+            let message = warning && warning.message || warning;
+            message = message.toString();
+            if (message.indexOf('The \'this\' keyword') !== -1) {
+                return false;
+            }
+            if (message.indexOf('rollupPluginBabelHelper') !== -1) {
+                return false;
+            }
+            app.log(colors.yellow(`⚠️  ${message}`));
+        });
+        await rollupBundle.build();
+        await rollupBundle.write();
         if (app.options.profile) {
-            let tasks = bundle.timings;
+            let tasks = rollupBundle.timings;
             for (let k in tasks) {
                 profile.task(k, false).set(tasks[k]);
             }
         }
+
         profile.end();
         task();
 
@@ -265,9 +281,11 @@ async function rollup(app, project, options, previousBundle) {
         app.log(colors.bold(colors.green('bundle ready!')));
         app.log(`${output.localPath} ${colors.grey(`(${size}, ${zipped} zipped)`)}`);
 
-        if (bundle.linter && (bundle.linter.hasErrors() || bundle.linter.hasWarnings())) {
-            app.log(bundle.linter.report());
+        if (rollupBundle.linter && (rollupBundle.linter.hasErrors() || rollupBundle.linter.hasWarnings())) {
+            app.log(rollupBundle.linter.report());
         }
+
+        bundle.files = rollupBundle.files;
 
         bundle.rebuild = async function() {
             return await rollup(app, project, options, bundle);
@@ -289,17 +307,16 @@ async function rollup(app, project, options, previousBundle) {
     }
 }
 
-async function postcss(app, project, options, previousBundle) {
+async function postcss(app, project, options, bundle = {}) {
     const colors = require('colors/safe');
     const PostCSS = require('../../lib/Bundlers/PostCSS.js');
 
     let profile = app.profiler.task('postcss');
     let task;
     try {
-        let bundle = previousBundle;
         let input = options.input;
         let output = options.output;
-        if (output.exists() && output.isDirectory()) {
+        if (!output.extname) {
             output = output.file(input.basename.replace(input.extname, '.css'));
         }
 
@@ -307,8 +324,8 @@ async function postcss(app, project, options, previousBundle) {
             output.mapFile.unlink();
         }
 
-        if (!bundle) {
-            let config = PostCSS.detectConfig(app, project, {
+        if (!bundle.config) {
+            bundle.config = PostCSS.detectConfig(app, project, {
                 input: input.path,
                 output: output.path,
                 production: options.production,
@@ -316,12 +333,12 @@ async function postcss(app, project, options, previousBundle) {
                 lint: options.lint,
                 targets: options.targets,
             });
-            bundle = new PostCSS(config);
         }
         task = app.log(`postcss... ${colors.grey(`(${input.localPath})`)}`, true);
 
-        await bundle.build();
-        await bundle.write();
+        let postCSSBundle = new PostCSS(bundle.config);
+        await postCSSBundle.build();
+        await postCSSBundle.write();
 
         task();
         profile.end();
@@ -330,9 +347,11 @@ async function postcss(app, project, options, previousBundle) {
         app.log(colors.bold(colors.green('css ready!')));
         app.log(`${output.localPath} ${colors.grey(`(${size}, ${zipped} zipped)`)}`);
 
-        if (bundle.linter && (bundle.linter.hasErrors() || bundle.linter.hasWarnings())) {
-            app.log(bundle.linter.report());
+        if (postCSSBundle.linter && (postCSSBundle.linter.hasErrors() || postCSSBundle.linter.hasWarnings())) {
+            app.log(postCSSBundle.linter.report());
         }
+
+        bundle.files = postCSSBundle.files;
 
         bundle.rebuild = async function() {
             return await postcss(app, project, options, bundle);
