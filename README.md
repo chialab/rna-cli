@@ -41,5 +41,6 @@ $ docker run chialab/rna-cli rna --version
 * **unit** - Run project unit tests.
 * **publish** - Publish to NPM.
 * **documentation** - Generate API references.
-* **start** - `yarn start` alias.
-* **run** - `yarn run` alias.
+* [**start**](./commands/start) - `yarn start` alias.
+* [**run**](./commands/run) - `yarn run` alias.
+* [**test**](./commands/test) - `yarn test` alias.
