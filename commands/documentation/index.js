@@ -84,10 +84,9 @@ module.exports = (program) => {
 async function generate(app, sources, output) {
     const fs = require('fs-extra');
     const path = require('path');
-    const colors = require('colors/safe');
     const documentation = require('documentation');
 
-    let task = app.log(`generating API references... (${output})`, true);
+    app.logger.play(`generating API references... (${output})`);
     // start the `documentation` task.
     try {
         let builder = await documentation.build(sources, {});
@@ -96,11 +95,11 @@ async function generate(app, sources, output) {
         // write the final result.
         fs.ensureDirSync(path.dirname(output));
         fs.writeFileSync(output, contents);
-        task();
-        app.log(`${colors.bold(colors.green('documentation created.'))} ${colors.grey(`(${output.localPath})`)}`);
+        app.logger.stop();
+        app.logger.success('documentation created.', output.localPath);
     } catch(err) {
         // ops.
-        task();
+        app.logger.stop();
         throw err;
     }
 }

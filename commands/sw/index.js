@@ -17,7 +17,6 @@ module.exports = (program) => {
                 throw 'missing input files.';
             }
 
-            const colors = require('colors/safe');
             const workbox = require('workbox-build');
             const Watcher = require('../../lib/Watcher');
             const Project = require('../../lib/Project');
@@ -33,7 +32,7 @@ module.exports = (program) => {
             } else {
                 project.file('service-worker.js');
             }
-            let task = app.log('generating service worker...', true);
+            app.logger.play('generating service worker...');
             let exclude = [
                 'service-worker.js',
                 '*.map',
@@ -74,11 +73,11 @@ module.exports = (program) => {
                     });
                 }
 
-                task();
+                app.logger.stop();
 
                 let { size, zipped } = output.size;
-                app.log(colors.bold(colors.green('service worker generated!')));
-                app.log(`${output.localPath} ${colors.grey(`(${size}, ${zipped} zipped)`)}`);
+                app.logger.success('service worker generated!');
+                app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
 
                 if (options.watch) {
                     let watcher = new Watcher(input.path, {
@@ -98,7 +97,7 @@ module.exports = (program) => {
                 }
                 return res;
             } catch(err) {
-                task();
+                app.logger.stop();
                 throw err;
             }
         });

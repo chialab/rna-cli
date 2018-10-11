@@ -1,4 +1,3 @@
-const colors = require('colors/safe');
 const configurator = require('../../../lib/configurator.js');
 const _ = require('lodash');
 
@@ -49,5 +48,5 @@ module.exports = async function readmeTask(app, options, project, templates) {
         }), devPlaceholder);
     }
 
-    app.log(`${colors.green('readme updated.')} ${colors.grey(`(${readmeFile.localPath})`)}`);
+    app.logger.success('readme updated.', readmeFile.localPath);
 };

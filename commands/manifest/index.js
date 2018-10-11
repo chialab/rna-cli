@@ -15,7 +15,6 @@ module.exports = (program) => {
         .option('[--scope]', 'Force manifest scope.')
         .action(async (app, options = {}) => {
             const path = require('path');
-            const colors = require('colors/safe');
             const Project = require('../../lib/Project');
             const JSDOM = require('jsdom').JSDOM;
 
@@ -85,17 +84,17 @@ module.exports = (program) => {
                     throw `icon file not found. (${icon.localPath})`;
                 }
                 // exec the request.
-                let task = app.log('generating icons...', true);
+                app.logger.play('generating icons...');
                 try {
                     const iconsPath = await generateIcons(manifest, index, icon, root);
-                    task();
-                    app.log(colors.bold(colors.green('icons generated!')));
+                    app.logger.stop();
+                    app.logger.succes('icons generated.');
                     iconsPath.files().forEach((iconPath) => {
                         let { size, zipped } = iconPath.size;
-                        app.log(`${iconPath.localPath} ${colors.grey(`(${size}, ${zipped} zipped)`)}`);
+                        app.logger.info(iconPath.localPath, `${size}, ${zipped} zipped`);
                     });
                 } catch (err) {
-                    task();
+                    app.logger.stop();
                     throw err;
                 }
             }
@@ -146,14 +145,14 @@ module.exports = (program) => {
                 );
                 indexPath.write(`<!DOCTYPE html>\n${html}`);
                 let { size, zipped } = indexPath.size;
-                app.log(colors.bold(colors.green('index updated!')));
-                app.log(`${indexPath.localPath} ${colors.grey(`(${size}, ${zipped} zipped)`)}`);
+                app.logger.success('index updated!');
+                app.logger.info(indexPath.localPath, `${size}, ${zipped} zipped`);
             }
             // write the new manifest file.
             manifestPath.writeJson(manifest);
             let { size, zipped } = manifestPath.size;
-            app.log(colors.bold(colors.green('manifest generated!')));
-            app.log(`${manifestPath.localPath} ${colors.grey(`(${size}, ${zipped} zipped)`)}`);
+            app.logger.success('manifest generated!');
+            app.logger.info(manifestPath.localPath, `${size}, ${zipped} zipped`);
         });
 };
 

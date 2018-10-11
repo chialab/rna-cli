@@ -12,7 +12,6 @@ module.exports = (program) => {
         .option('<module1> <module2> <module3>', 'The modules to add')
         .option('[--dev]', 'Add to dev dependencies.')
         .action(async (app, options) => {
-            const colors = require('colors/safe');
             const Project = require('../../lib/Project');
 
             const cwd = process.cwd();
@@ -24,6 +23,6 @@ module.exports = (program) => {
             }
 
             await project.packageManager.add(...options.arguments);
-            app.log(colors.green('packages successfully added.'));
+            app.logger.success('packages successfully added.');
         });
 };

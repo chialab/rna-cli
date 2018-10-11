@@ -1,5 +1,3 @@
-const colors = require('colors/safe');
-
 /**
  * Ensure package has a license.
  *
@@ -18,7 +16,7 @@ module.exports = async function licenseTask(app, options, project) {
         if (licenseFile.exists()) {
             licenseFile.unlink();
         }
-        app.log(`${colors.yellow('no license found.')} ${colors.grey(`(${project.path})`)}`);
+        app.logger.warn('no license found.', project.localPath);
         return;
     }
     // Package actually is licensed.
@@ -30,7 +28,7 @@ module.exports = async function licenseTask(app, options, project) {
 
     if (!(licenseCode in licenses)) {
         // We don't have a license document for the specified license code.
-        app.log(`${colors.red('invalid license.')} ${colors.grey(`(${project.path})`)}`);
+        app.logger.error('invalid license.', project.localPath);
         return;
     }
 
@@ -44,5 +42,5 @@ module.exports = async function licenseTask(app, options, project) {
         });
 
     licenseFile.write(text);
-    app.log(`${colors.green('license updated.')} ${colors.grey(`(${licenseFile.localPath})`)}`);
+    app.logger.success('license updated.', licenseFile.localPath);
 };

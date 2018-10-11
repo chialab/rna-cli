@@ -27,7 +27,6 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
         .option('[--timeout]', 'Mocha timeout for a single test. Defaults to 2000 (ms).')
         .option('[--server]', 'Run test server.')
         .action(async (app, options = {}) => {
-            const colors = require('colors/safe');
             const Proteins = require('@chialab/proteins');
             const karma = require('karma');
             const Mocha = require('mocha');
@@ -62,7 +61,7 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
 
             if (!process.env.hasOwnProperty('NODE_ENV')) {
                 // Set NODE_ENV environment variable.
-                app.log(colors.yellow('🔍 setting "test" environment.'));
+                app.logger.info('🔍 setting "test" environment.');
                 process.env.NODE_ENV = 'test';
             }
 
@@ -87,7 +86,7 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
             }
 
             if (!files.length) {
-                app.log(colors.yellow('no unit tests found.'));
+                app.logger.warn('no unit tests found.');
                 return;
             }
 
@@ -187,11 +186,15 @@ Anyway, the developer can use a custom configuration if the \`karma.conf.js\` fi
                                     const utils = require('istanbul/lib/object-utils');
                                     let summaries = coverageFiles.map((coverageFile) => utils.summarizeFileCoverage(reportMap[coverageFile]));
                                     let finalSummary = utils.mergeSummaryObjects.apply(null, summaries);
-                                    app.log(colors.bold(colors.underline('COVERAGE SUMMARY:')));
-                                    app.log(formatCoverageReport(finalSummary, 'statements'));
-                                    app.log(formatCoverageReport(finalSummary, 'branches'));
-                                    app.log(formatCoverageReport(finalSummary, 'functions'));
-                                    app.log(formatCoverageReport(finalSummary, 'lines'));
+                                    app.logger.info('COVERAGE SUMMARY:');
+                                    let statementsReport = formatCoverageReport(finalSummary, 'statements');
+                                    app.logger[statementsReport.type](statementsReport.message);
+                                    let branchesReport = formatCoverageReport(finalSummary, 'branches');
+                                    app.logger[branchesReport.type](branchesReport.message);
+                                    let functionsReport = formatCoverageReport(finalSummary, 'functions');
+                                    app.logger[functionsReport.type](functionsReport.message);
+                                    let linesReport = formatCoverageReport(finalSummary, 'lines');
+                                    app.logger[linesReport.type](linesReport.message);
                                 }
                             });
                         });
@@ -417,24 +420,25 @@ function getConfig(app, project, options) {
  * @return {String}
  */
 function formatCoverageReport(summary, key) {
-    const colors = require('colors/safe');
-
     let metrics = summary[key];
     let skipped;
-    let result;
+    let message;
     // Capitalize the field name
     let field = key.substring(0, 1).toUpperCase() + key.substring(1);
     if (field.length < 12) {
         // add extra spaces after the field name
         field += '                   '.substring(0, 12 - field.length);
     }
-    result = `${field} : ${metrics.pct}% (${metrics.covered}/${metrics.total})`;
+    message = `${field} : ${metrics.pct}% (${metrics.covered}/${metrics.total})`;
     skipped = metrics.skipped;
     if (skipped > 0) {
-        result += `, ${skipped} ignored`;
+        message += `, ${skipped} ignored`;
     }
-    let color = (metrics.pct >= 80 && 'green') ||
-        (metrics.pct >= 50 && 'yellow') ||
-        'red';
-    return colors[color](result);
+    let type = (metrics.pct >= 80 && 'success') ||
+        (metrics.pct >= 50 && 'warn') ||
+        'error';
+    return {
+        type,
+        message,
+    };
 }

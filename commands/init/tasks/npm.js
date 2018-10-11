@@ -216,5 +216,5 @@ module.exports = async function npmTask(app, options, project, templates) {
         }
     }
 
-    app.log(`${colors.green('package.json updated.')} ${colors.grey(`(${project.path})`)}`);
+    app.logger.success('package.json updated.', project.localPath);
 };

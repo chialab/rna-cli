@@ -38,7 +38,6 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
         .option('[--polyfill]', 'Auto add polyfills. [⚠️  experimental]')
         .option('[--optimize]', 'Run OptimizeJS after bundle. [⚠️  experimental]')
         .action(async (app, options = {}) => {
-            const colors = require('colors/safe');
             const browserslist = require('browserslist');
             const Project = require('../../lib/Project');
             const Watcher = require('../../lib/Watcher');
@@ -50,7 +49,7 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
 
             if (options.production && !process.env.hasOwnProperty('NODE_ENV')) {
                 // Set NODE_ENV environment variable if `--production` flag is set.
-                app.log(colors.yellow('🚢  setting "production" environment.'));
+                app.logger.info('🚢  setting "production" environment.');
                 process.env.NODE_ENV = 'production';
             }
 
@@ -209,7 +208,7 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
                                 await bundle.rebuild();
                             } catch (err) {
                                 if (err) {
-                                    app.log(err);
+                                    app.logger.error(err);
                                 }
                             }
                         });
@@ -224,11 +223,9 @@ It supports \`.babelrc\` too, to replace the default babel configuration.`)
 };
 
 async function rollup(app, project, options, bundle = {}) {
-    const colors = require('colors/safe');
     const Rollup = require('../../lib/Bundlers/Rollup.js');
+    const profile = app.profiler.task('rollup');
 
-    let profile = app.profiler.task('rollup');
-    let task;
     try {
         let input = options.input;
         let output = options.output;
@@ -251,7 +248,7 @@ async function rollup(app, project, options, bundle = {}) {
                 targets: options.targets,
             });
         }
-        task = app.log(`bundling... ${colors.grey(`(${input.localPath})`)}`, true);
+        app.logger.play('bundling...', input.localPath);
 
         let rollupBundle = new Rollup(bundle.config);
         rollupBundle.on('warning', (warning) => {
@@ -263,7 +260,7 @@ async function rollup(app, project, options, bundle = {}) {
             if (message.indexOf('rollupPluginBabelHelper') !== -1) {
                 return false;
             }
-            app.log(colors.yellow(`⚠️  ${message}`));
+            app.logger.warn(message);
         });
         await rollupBundle.build();
         await rollupBundle.write();
@@ -275,14 +272,14 @@ async function rollup(app, project, options, bundle = {}) {
         }
 
         profile.end();
-        task();
+        app.logger.stop();
 
         let { size, zipped } = output.size;
-        app.log(colors.bold(colors.green('bundle ready!')));
-        app.log(`${output.localPath} ${colors.grey(`(${size}, ${zipped} zipped)`)}`);
+        app.logger.success('bundle ready!');
+        app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
 
         if (rollupBundle.linter && (rollupBundle.linter.hasErrors() || rollupBundle.linter.hasWarnings())) {
-            app.log(rollupBundle.linter.report());
+            app.logger.log(rollupBundle.linter.report());
         }
 
         bundle.files = rollupBundle.files;
@@ -299,20 +296,16 @@ async function rollup(app, project, options, bundle = {}) {
 
         return bundle;
     } catch (err) {
-        if (task) {
-            task();
-        }
+        app.logger.stop();
         profile.end();
         throw err;
     }
 }
 
 async function postcss(app, project, options, bundle = {}) {
-    const colors = require('colors/safe');
     const PostCSS = require('../../lib/Bundlers/PostCSS.js');
+    const profile = app.profiler.task('postcss');
 
-    let profile = app.profiler.task('postcss');
-    let task;
     try {
         let input = options.input;
         let output = options.output;
@@ -334,21 +327,21 @@ async function postcss(app, project, options, bundle = {}) {
                 targets: options.targets,
             });
         }
-        task = app.log(`postcss... ${colors.grey(`(${input.localPath})`)}`, true);
+        app.logger.play('postcss...', input.localPath);
 
         let postCSSBundle = new PostCSS(bundle.config);
         await postCSSBundle.build();
         await postCSSBundle.write();
 
-        task();
+        app.logger.stop();
         profile.end();
 
         let { size, zipped } = output.size;
-        app.log(colors.bold(colors.green('css ready!')));
-        app.log(`${output.localPath} ${colors.grey(`(${size}, ${zipped} zipped)`)}`);
+        app.logger.success('css ready!');
+        app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
 
         if (postCSSBundle.linter && (postCSSBundle.linter.hasErrors() || postCSSBundle.linter.hasWarnings())) {
-            app.log(postCSSBundle.linter.report());
+            app.logger.log(postCSSBundle.linter.report());
         }
 
         bundle.files = postCSSBundle.files;
@@ -365,9 +358,7 @@ async function postcss(app, project, options, bundle = {}) {
 
         return bundle;
     } catch (err) {
-        if (task) {
-            task();
-        }
+        app.logger.stop();
         profile.end();
         throw err;
     }

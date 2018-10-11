@@ -1,4 +1,3 @@
-const colors = require('colors/safe');
 const PackageManager = require('../../../lib/PackageManager.js');
 const configurator = require('../../../lib/configurator.js');
 
@@ -20,5 +19,5 @@ module.exports = async function stylelintTask(app, options, project, templates) 
     configurator(stylelintConfig, stylelintTemplate.read(), '# RNA');
 
     await manager.dev('stylelint', 'stylelint-order');
-    app.log(`${colors.green('.stylelintrc updated.')} ${colors.grey(`(${stylelintConfig.localPath})`)}`);
+    app.logger.success('.stylelintrc updated.', stylelintConfig.localPath);
 };

@@ -11,7 +11,6 @@ module.exports = (program) => {
         .help('A simple alias to `yarn add` command.')
         .option('<module1> <module2> <module3>', 'The modules to remove')
         .action(async (app, options = {}) => {
-            const colors = require('colors/safe');
             const Project = require('../../lib/Project');
 
             const cwd = process.cwd();
@@ -19,6 +18,6 @@ module.exports = (program) => {
 
             // Remove requested packages.
             await project.packageManager.remove(...options.arguments);
-            app.log(colors.green('packages successfully removed.'));
+            app.logger.success('packages successfully removed.');
         });
 };

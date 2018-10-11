@@ -91,23 +91,23 @@ Anyway, the developer can use a custom configuration if the \`.stylelintrc.yml\`
 async function eslint(app, project, options, files) {
     const ESLint = require('../../lib/Linters/ESLint.js');
     const profile = app.profiler.task('eslint');
-    const task = app.log('running ESLint...', true);
+    app.logger.play('running ESLint...');
 
     try {
         const config = ESLint.detectConfig(app, project, options);
         const linter = new ESLint(config);
         const report = await linter.lint(files);
         if (report.errorCount || report.warningCount) {
-            app.log(linter.report());
+            app.logger.log(linter.report());
         }
+        app.logger.stop();
         profile.end();
-        task(); // Stop loader.
         if (report.errorCount) {
             return report;
         }
     } catch (err) {
+        app.logger.stop();
         profile.end();
-        task();
         throw err;
     }
 }
@@ -123,23 +123,23 @@ async function eslint(app, project, options, files) {
 async function stylelint(app, project, options, files) {
     const Stylelint = require('../../lib/Linters/Stylelint.js');
     const profile = app.profiler.task('stylelint');
-    const task = app.log('running stylelint...', true);
+    app.logger.play('running stylelint...');
 
     try {
         const config = Stylelint.detectConfig(app, project, options);
         const linter = new Stylelint(config);
         const report = await linter.lint(files);
         if (report.errorCount || report.warningCount) {
-            app.log(linter.report());
+            app.logger.log(linter.report());
         }
+        app.logger.stop();
         profile.end();
-        task(); // Stop loader.
         if (report.errorCount) {
             return report;
         }
     } catch(err) {
+        app.logger.stop();
         profile.end();
-        task();
         throw err;
     }
 }

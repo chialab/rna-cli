@@ -1,4 +1,3 @@
-const colors = require('colors/safe');
 const configurator = require('../../../lib/configurator.js');
 
 /**
@@ -17,5 +16,5 @@ module.exports = (app, options, project, templates) => {
     // "Append" configuration to `.editorconfig`.
     configurator(editorConfig, template.read(), '# RNA');
 
-    app.log(`${colors.green('.editorconfig updated.')} ${colors.grey(`(${editorConfig.localPath})`)}`);
+    app.logger.success('.editorconfig updated.', editorConfig.localPath);
 };

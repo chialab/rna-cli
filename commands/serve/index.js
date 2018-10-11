@@ -17,7 +17,6 @@ module.exports = (program) => {
         .option('[--https.key]', 'Path to server https key.')
         .option('[--https.cert]', 'Path to server https certificate.')
         .action(async (app, options = {}) => {
-            const colors = require('colors/safe');
             const commondir = require('commondir');
             const { mix } = require('@chialab/proteins');
             const Watcher = require('../../lib/Watcher');
@@ -92,13 +91,13 @@ module.exports = (program) => {
                     // File updated: notify BrowserSync so that it can be reloaded.
                     server.reload(toReload);
                     if (event !== 'unlink') {
-                        app.log(colors.cyan(`${toReload} injected.`));
+                        app.logger.info(`${toReload} injected.`);
                     }
                 });
             }
 
             let { url, tunnel } = server.address;
-            app.log(colors.bold(`${colors.green('server started:')} ${colors.cyan(url)}${tunnel ? ` / ${colors.cyan(tunnel)}` : ''}`));
+            app.logger.success(`server started: ${url}${tunnel ? ` / ${tunnel}` : ''}`);
 
             process.on('exit', async () => {
                 await server.close();

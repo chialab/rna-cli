@@ -1,4 +1,3 @@
-const colors = require('colors/safe');
 const PackageManager = require('../../../lib/PackageManager.js');
 const configurator = require('../../../lib/configurator.js');
 
@@ -26,5 +25,5 @@ module.exports = async function eslintTask(app, options, project, templates) {
     configurator(eslintConfig, configTemplate.read(), '# RNA');
 
     await manager.dev('eslint', 'eslint-plugin-mocha', 'babel-eslint', 'eslint-plugin-babel');
-    app.log(`${colors.green('.eslintrc.yml updated.')} ${colors.grey(`(${eslintConfig.localPath})`)}`);
+    app.logger.success('.eslintrc.yml updated.', eslintConfig.localPath);
 };
