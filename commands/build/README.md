@@ -1,27 +1,4 @@
-# RNA CLI
-
-### Command: `build`
-
-```sh
-$ rna build --help
-
-build  Build the project.
-       <file>                            The file to build.
-       <package1> <package2> <package3>  The packages to build.
-       --output                          The destination file.
-       [--targets]                       A supported browserslist query. Use --no-targets to transpile only non-standard features.
-       [--name]                          The bundle name.
-       [--format]                        The bundle format (es, umd, iife, cjs).
-       [--production]                    Minify bundle.
-       [--declaration]                   Generate typescript declarations.
-       [--watch]                         Watch sources and rebuild on files changes.
-       [--no-map]                        Do not produce source map.
-       [--no-lint]                       Do not lint files before bundle.
-       [--jsx.pragma]                    The JSX pragma to use.
-       [--jsx.module]                    The module to auto import for JSX pragma.
-       [--polyfill]                      Auto add polyfills. [experimental]
-       [--optimize]                      Run OptimizeJS after bundle. [experimental]
-```
+# Command: `build`
 
 It uses [Rollup](https://rollupjs.org/) and [postCSS](https://postcss.org/) to bundle JavaScript and style files.
 

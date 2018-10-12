@@ -1,14 +1,4 @@
-# RNA CLI
-
-### Command: `documentation`
-
-```sh
-$ rna documentation --help
-
-documentation  Generate API references.
-               <file>    The files to documentate.
-               --output  The markdown output directory.
-```
+# Command: `documentation`
 
 It uses the [documentation package](http://documentation.js.org/) to generate API references of modules in Markdown format.
 

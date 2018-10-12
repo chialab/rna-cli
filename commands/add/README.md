@@ -1,16 +1,6 @@
-# RNA CLI
+# Command: `add`
 
-> ⚠️  Although the command has been retained for backward compatibility with version 1.0, you really should use the `yarn add` original command instead of this alias.
-
-### Command: `add`
-
-```sh
-$ rna add --help
-
-add  Add project dependencies.
-     <module1> <module2> <module3>  The modules to add.
-     [--dev]                        Add to dev dependencies.
-```
+⚠️  Although the command has been retained for backward compatibility with version 1.0, you really should use the `yarn add` original command instead of this alias.
 
 This command is an alias to `yarn add` command.
 

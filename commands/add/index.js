@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('add')
         .description('Add project dependencies.')
+        .readme(`${__dirname}/README.md`)
         .option('<module1> <module2> <module3>', 'The modules to add.')
         .option('[--dev]', 'Add to dev dependencies.')
         .action(async (app, options) => {

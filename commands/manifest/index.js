@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('manifest')
         .description('Generate webapp Manifest.')
+        .readme(`${__dirname}/README.md`)
         .option('<path>', 'The webapp path.')
         .option('--output', 'Where to save the generated manifest.')
         .option('[--icon]', 'The path of the main icon to generate.')

@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('serve')
         .description('Setup a server for your project.')
+        .readme(`${__dirname}/README.md`)
         .option('<path>', 'The server directory.')
         .option('[--port]', 'The server port.')
         .option('[--watch]', 'Should watch server directory.')

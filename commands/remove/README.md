@@ -1,15 +1,6 @@
-# RNA CLI
+# Command: `remove`
 
-> ⚠️  Although the command has been retained for backward compatibility with version 1.0, you really should use the `yarn remove` original command instead of this alias.
-
-### Command: `remove`
-
-```sh
-$ rna remove --help
-
-remove  Remove project dependencies.
-        <module1> <module2> <module3>  The modules to remove
-```
+⚠️  Although the command has been retained for backward compatibility with version 1.0, you really should use the `yarn remove` original command instead of this alias.
 
 This command is an alias to `yarn remove` command.
 

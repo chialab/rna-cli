@@ -1,18 +1,4 @@
-# RNA CLI
-
-### Command: `serve`
-
-```sh
-$ rna serve --help
-
-serve  Setup a server for your project.
-       <file>          The server directory.
-       [--port]        The server port.
-       [--watch]       Should watch server directory.
-       [--tunnel]      Create a tunnel for the server
-       [--directory]   Should list directories.
-       [--https]       Start a server using SSL.
-```
+# Command: `serve`
 
 Setup a development server with JavaScript and CSS livereload, external tunnel through [localtunnel](https://github.com/localtunnel/localtunnel) and HTTPS support.
 

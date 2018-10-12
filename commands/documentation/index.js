@@ -7,6 +7,7 @@
 module.exports = (program) => {
     program
         .command('documentation')
+        .readme(`${__dirname}/README.md`)
         .description('Generate API references.')
         .option('<file>', 'The files to documentate.')
         .option('--output', 'The markdown output directory.')

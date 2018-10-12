@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('build')
         .description('Build the project.')
+        .readme(`${__dirname}/README.md`)
         .option('<file>', 'The file to build.')
         .option('<package1> <package2> <package3>', 'The packages to build.')
         .option('--output', 'The destination file.')

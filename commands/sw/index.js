@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('sw')
         .description('Generate a service worker.')
+        .readme(`${__dirname}/README.md`)
         .option('<path>', 'Root of the app to cache.')
         .option('--output', 'The service worker to generate or update.')
         .option('[--exclude]', 'A glob of files to exclude from the precache.')

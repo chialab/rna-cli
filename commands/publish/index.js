@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('publish')
         .description('Publish to NPM.')
+        .readme(`${__dirname}/README.md`)
         .option('[--canary]', 'Deploy a canary version of the packages.')
         .option('[--no-git]', 'Do not commit version changes to Git.')
         .option('[--no-npm]', 'Do not commit version changes to NPM.')

@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('lint')
         .description('Lint your source files.')
+        .readme(`${__dirname}/README.md`)
         .option('<file|package>', 'The packages or the files to lint.')
         .option('[--fix]', 'Should autofix warnings.')
         .option('[--watch]', 'Watch files and re-lint on changes.')

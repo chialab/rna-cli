@@ -1,15 +1,4 @@
-# RNA CLI
-
-### Command: `publish`
-
-```sh
-$ rna publish --help
-
-publish  Publish to NPM.
-         [--canary]  Deploy a canary version of the packages.
-         [--no-git]  Do not commit version changes to Git.
-         [--no-npm]  Do not commit version changes to NPM.
-```
+# Command: `publish`
 
 It uses [lerna](https://github.com/lerna/lerna) for monorepo's packages release to NPM.
 

@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('remove')
         .description('Remove project dependencies.')
+        .readme(`${__dirname}/README.md`)
         .option('<module1> <module2> <module3>', 'The modules to remove')
         .action(async (app, options = {}) => {
             const Project = require('../../lib/Project');

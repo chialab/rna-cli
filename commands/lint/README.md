@@ -1,15 +1,4 @@
-# RNA CLI
-
-### Command: `lint`
-
-```sh
-$ rna lint --help
-
-lint  Lint your source files.
-      <file|package>  The packages or the files to lint.
-      [--fix]         Should autofix warnings.
-      [--watch]       Watch files and re-lint on changes.
-```
+# Command: `lint`
 
 It uses [ESLint](https://eslint.org/) for JavaScript files and [Stylelint](https://stylelint.io/) for CSS.
 

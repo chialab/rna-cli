@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('unit')
         .description('Run project unit tests.')
+        .readme(`${__dirname}/README.md`)
         .option('[--targets]', 'A supported browserslist query.')
         .option('[--node]', 'Run tests in node context.')
         .option('[--browser]', 'Run tests in browser context.')

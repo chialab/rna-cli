@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('init')
         .description('Setup a new project.')
+        .readme(`${__dirname}/README.md`)
         .option('<dir>', 'The project root to create.')
         .option('[--git]', 'Git setup.')
         .option('[--npm]', 'Package.json setup.')

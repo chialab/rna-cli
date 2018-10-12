@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('start')
         .description('Trigger project `start` script.')
+        .readme(`${__dirname}/README.md`)
         .action(async () => {
             const Project = require('../../lib/Project');
 

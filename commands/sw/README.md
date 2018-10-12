@@ -1,16 +1,4 @@
-# RNA CLI
-
-### Command: `sw`
-
-```sh
-$ rna sw --help
-
-sw  Generate a service worker.
-    <path>       Root of the app to cache.
-    --output     The service worker to generate or update.
-    [--exclude]  A glob of files to exclude from the precache.
-    [--watch]    Regenerated service worker on source changes.
-```
+# Command: `sw`
 
 This command uses [workbox](https://developers.google.com/web/tools/workbox/) by Google to generate a Service Worker with precached files.
 

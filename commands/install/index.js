@@ -7,6 +7,7 @@
 module.exports = (program) => {
     program
         .command('install')
+        .readme(`${__dirname}/README.md`)
         .description('Sync project dependencies after a project update or a git pull.')
         .action(async (app) => {
             const Project = require('../../lib/Project');
