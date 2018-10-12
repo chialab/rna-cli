@@ -114,23 +114,34 @@ module.exports = (program) => {
             const tempUnit = app.store.tmpfile('unit-build.js');
             tempSource.write(unitCode);
 
-            const config = Rollup.detectConfig(app, project, {
-                'input': tempSource.path,
-                'output': tempUnit.path,
-                'map': 'inline',
-                'coverage': options.coverage,
-                targets,
-                'jsx.pragma': options['jsx.pragma'],
-                'jsx.module': options['jsx.module'],
-            });
-            const bundler = new Rollup(config);
+            app.logger.play('bundling test...', tempSource.localPath);
 
-            await bundler.build();
+            try {
+                const config = Rollup.detectConfig(app, project, {
+                    'input': tempSource.path,
+                    'output': tempUnit.path,
+                    'map': 'inline',
+                    'coverage': options.coverage,
+                    targets,
+                    'jsx.pragma': options['jsx.pragma'],
+                    'jsx.module': options['jsx.module'],
+                });
+                const bundler = new Rollup(config);
+
+                await bundler.build();
+                await bundler.write();
+            } catch (error) {
+                app.logger.stop();
+                throw error;
+            }
+
+            app.logger.stop();
 
             // Test built sources.
             for (let i = 0; i < taskEnvironments.length; i++) {
                 let taskEnvName = taskEnvironments[i];
                 let taskEnv = ENVIRONMENTS[taskEnvName];
+
                 if (taskEnv.runner === 'mocha') {
                     // Startup Mocha.
                     require('source-map-support/register');
@@ -164,15 +175,9 @@ module.exports = (program) => {
                     karmaOptions.preprocessors = {
                         [tempUnit.path]: ['sourcemap'],
                     };
-                    const server = await new Promise((resolve, reject) => {
-                        let s = new karma.Server(karmaOptions, (exitCode) => {
-                            if (exitCode && !options.server) {
-                                reject();
-                            } else {
-                                resolve(s);
-                            }
-                        });
-                    });
+
+                    const server = new karma.Server(karmaOptions);
+
                     if (!options.server) {
                         server.on('listening', (port) => {
                             let browsers = server.get('config').browsers;
