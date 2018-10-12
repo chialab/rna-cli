@@ -72,14 +72,28 @@ module.exports = (program) => {
             if (options.arguments.length) {
                 files = project.resolve(options.arguments);
             } else {
-                let testDir = project.directories.test;
-                if (!testDir) {
-                    project.directory('test');
+                let testDirs = [];
+                let workspaces = project.workspaces;
+                if (workspaces) {
+                    workspaces.forEach((entry) => {
+                        let testDir = entry.directories.test;
+                        if (!testDir) {
+                            testDir = entry.directory('test');
+                        }
+                        testDirs.push(testDir);
+                    });
+                } else {
+                    let testDir = project.directories.test;
+                    if (!testDir) {
+                        testDir = project.directory('test');
+                    }
+                    testDirs.push(testDir);
                 }
-                if (!testDir.exists()) {
-                    throw 'missing test files.';
-                }
-                files = testDir.resolve('**/*.js');
+                files = testDirs
+                    .reduce((list, directory) => {
+                        list.push(...directory.resolve('**/*.js'));
+                        return list;
+                    }, []);
             }
 
             if (!files.length) {
