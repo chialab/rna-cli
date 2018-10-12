@@ -245,6 +245,8 @@ async function rollup(app, project, options, bundle = {}) {
             output.mapFile.unlink();
         }
 
+        app.logger.play(`bundling${bundle.config ? ' (this will be fast)...' : '...'}`, input.localPath);
+
         if (!bundle.config && project) {
             bundle.config = Rollup.detectConfig(app, project, {
                 cacheRoot: app.store.tmpdir('rollup'),
@@ -256,7 +258,6 @@ async function rollup(app, project, options, bundle = {}) {
                 targets: options.targets,
             });
         }
-        app.logger.play('bundling...', input.localPath);
 
         let rollupBundle = new Rollup(bundle.config);
         rollupBundle.on('warning', (warning) => {
