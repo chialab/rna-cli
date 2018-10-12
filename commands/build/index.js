@@ -55,6 +55,10 @@ module.exports = (program) => {
                 }
             }
 
+            if (!entries.length) {
+                throw 'missing files to build';
+            }
+
             let bundles = [];
 
             // Process entries.
