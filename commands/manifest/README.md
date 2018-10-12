@@ -1,5 +1,3 @@
-# Command: `manifest`
-
 Generate a WebApp [manifest](https://developer.mozilla.org/en-US/docs/Web/Manifest).
 
 ### Options

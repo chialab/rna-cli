@@ -1,6 +1,6 @@
-# Command: `run`
-
 ⚠️  Although the command has been retained for backward compatibility with version 1.0, you really should use the `yarn run` original command instead of this alias.
+
+---
 
 This command is an alias to `yarn run` command.
 

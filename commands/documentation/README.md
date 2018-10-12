@@ -1,5 +1,3 @@
-# Command: `documentation`
-
 It uses the [documentation package](http://documentation.js.org/) to generate API references of modules in Markdown format.
 
 ### Options

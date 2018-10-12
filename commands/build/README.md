@@ -1,5 +1,3 @@
-# Command: `build`
-
 It uses [Rollup](https://rollupjs.org/) and [postCSS](https://postcss.org/) to bundle JavaScript and style files.
 
 It supports:

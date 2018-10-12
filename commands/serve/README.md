@@ -1,5 +1,3 @@
-# Command: `serve`
-
 Setup a development server with JavaScript and CSS livereload, external tunnel through [localtunnel](https://github.com/localtunnel/localtunnel) and HTTPS support.
 
 For example, you can setup a build step and livereload server for your application development.

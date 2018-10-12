@@ -1,5 +1,3 @@
-# Command: `sw`
-
 This command uses [workbox](https://developers.google.com/web/tools/workbox/) by Google to generate a Service Worker with precached files.
 
 ## Options

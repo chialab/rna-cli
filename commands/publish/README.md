@@ -1,5 +1,3 @@
-# Command: `publish`
-
 It uses [lerna](https://github.com/lerna/lerna) for monorepo's packages release to NPM.
 
 ### Options
