@@ -245,7 +245,7 @@ async function rollup(app, project, options, bundle = {}) {
             output.mapFile.unlink();
         }
 
-        app.logger.play(`bundling... ${bundle.config ? 'this will be fast' : ''}`, input.localPath);
+        app.logger.play(`bundling${bundle.config ? ' (this will be fast)...' : '...'}`, input.localPath);
 
         if (!bundle.config && project) {
             bundle.config = Rollup.detectConfig(app, project, {
