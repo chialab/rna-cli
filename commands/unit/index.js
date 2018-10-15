@@ -22,7 +22,7 @@ module.exports = (program) => {
         .option('[--concurrency]', 'Concurrency level for Karma.')
         .option('[--context]', 'Use specified file as Karma custom context file for polyfill script.')
         .option('[--timeout]', 'Mocha timeout for a single test. Defaults to 2000 (ms).')
-        .option('[--server]', 'Run test server.')
+        .option('[--watch]', 'Watch test files.')
         .action(async (app, options = {}) => {
             const Proteins = require('@chialab/proteins');
             const karma = require('karma');
@@ -30,6 +30,7 @@ module.exports = (program) => {
             const browserslist = require('browserslist');
             const Project = require('../../lib/Project');
             const Rollup = require('../../lib/Bundlers/Rollup');
+            const Watcher = require('../../lib/Watcher');
             const runNativeScriptTest = require('./lib/ns');
 
             const cwd = process.cwd();
@@ -114,8 +115,8 @@ module.exports = (program) => {
             const tempUnit = app.store.tmpfile('unit-build.js');
             tempSource.write(unitCode);
 
-            app.logger.play('bundling test...', tempSource.localPath);
-
+            let rebuild;
+            let watchFiles;
             try {
                 const config = Rollup.detectConfig(app, project, {
                     'input': tempSource.path,
@@ -126,10 +127,17 @@ module.exports = (program) => {
                     'jsx.pragma': options['jsx.pragma'],
                     'jsx.module': options['jsx.module'],
                 });
-                const bundler = new Rollup(config);
 
-                await bundler.build();
-                await bundler.write();
+                rebuild = async function() {
+                    app.logger.play('bundling test...', tempSource.localPath);
+                    const rollupBundle = new Rollup(config);
+                    await rollupBundle.build();
+                    await rollupBundle.write();
+                    watchFiles = rollupBundle.files;
+                    app.logger.stop();
+                };
+
+                await rebuild();
             } catch (error) {
                 app.logger.stop();
                 throw error;
@@ -163,29 +171,40 @@ module.exports = (program) => {
                     // Startup Karma.
                     const karmaOptions = getConfig(app, project, {
                         ci: options.ci,
-                        server: options.server,
+                        watch: options.watch,
                         coverage: options.coverage,
                         targets: options.targets,
-                        concurrency: options.concurrency,
+                        concurrency: options.concurrency || (options.watch ? Infinity : undefined),
                         timeout: options.timeout,
                         customContextFile,
                         [taskEnvName]: true,
                     });
-                    karmaOptions.files = [tempUnit.path];
+                    karmaOptions.basePath = tempUnit.dirname;
+                    karmaOptions.proxies = {
+                        '/': '/base/',
+                    };
+                    karmaOptions.files = [
+                        {
+                            pattern: tempUnit.basename,
+                            included: true,
+                            served: true,
+                            nocache: true,
+                            watched: true,
+                        },
+                        {
+                            pattern: '**/*',
+                            included: false,
+                            served: true,
+                            nocache: false,
+                            watched: false,
+                        },
+                    ];
                     karmaOptions.preprocessors = {
                         [tempUnit.path]: ['sourcemap'],
                     };
 
                     const server = new karma.Server(karmaOptions);
 
-                    if (!options.server) {
-                        server.on('listening', (port) => {
-                            let browsers = server.get('config').browsers;
-                            if (!browsers || browsers.length === 0) {
-                                karma.stopper.stop({ port });
-                            }
-                        });
-                    }
                     if (options.coverage) {
                         let reportMap;
                         server.on('run_start', () => {
@@ -226,6 +245,17 @@ module.exports = (program) => {
                     // Create fake NS application.
                     await runNativeScriptTest(app, options.nativescript, tempUnit.path);
                 }
+            }
+
+            if (options.watch) {
+                // start the watch task
+                let watcher = new Watcher(project, {
+                    ignore: (file) => watchFiles.includes(file.path),
+                });
+
+                await watcher.watch(async () => {
+                    await rebuild();
+                });
             }
         });
 };
@@ -299,7 +329,7 @@ function getConfig(app, project, options) {
         logLevel: 'INFO',
 
         // enable / disable watching file and executing tests whenever any file changes
-        autoWatch: !!options.server,
+        autoWatch: !!options.watch,
 
         // start these browsers
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
@@ -317,88 +347,86 @@ function getConfig(app, project, options) {
 
         // Continuous Integration mode
         // if true, Karma captures browsers, runs the tests and exits
-        singleRun: !options.server,
+        singleRun: !options.watch,
 
         // Concurrency level
         // how many browser should be started simultaneously
         concurrency: typeof options.concurrency === 'number' ? options.concurrency : 2,
     };
 
-    if (!options.server) {
-        if (options.browser) {
-            conf.frameworks.push('detectBrowsers');
-            // list of browsers with launcher.
-            const launchers = ['chrome', 'firefox', 'ie', 'edge', 'safari', 'opera'];
-            launchers.forEach((launcherName) => {
-                // add the launcher plugin for each browser.
-                conf.plugins.push(
-                    require(`karma-${launcherName}-launcher`)
-                );
-            });
-            conf.plugins.push(
-                require('karma-detect-browsers')
-            );
-            conf.customLaunchers = {
-                Chrome_CI: {
-                    base: 'Chrome',
-                    flags: ['--no-sandbox'],
-                },
-            };
+    if (options.browser) {
+        const launchers = ['chrome', 'firefox', 'ie', 'edge', 'opera', 'safari'];
 
-            conf.detectBrowsers = {
-                usePhantomJS: false,
-                postDetection: (availableBrowser) => {
-                    // remove available browsers without a launcher.
-                    availableBrowser = availableBrowser.filter((browserName) => launchers.indexOf(browserName.toLowerCase()) !== -1);
-                    // we are replacing the detected `Chrome` with the `Chrome_CI` configuration.
-                    const ioChrome = availableBrowser.indexOf('Chrome');
-                    if (ioChrome !== -1) {
-                        availableBrowser.splice(ioChrome, 1, 'Chrome_CI');
-                    }
-                    return availableBrowser;
-                },
-            };
+        conf.frameworks.push('detectBrowsers');
+        conf.plugins.push(
+            require('karma-chrome-launcher'),
+            require('karma-firefox-launcher'),
+            require('karma-ie-launcher'),
+            require('karma-edge-launcher'),
+            require('karma-opera-launcher'),
+            require('./plugins/karma-safari-launcher/karma-safari-launcher'),
+            require('karma-detect-browsers')
+        );
+        conf.customLaunchers = {
+            Chrome_CI: {
+                base: 'Chrome',
+                flags: ['--no-sandbox'],
+            },
+        };
+
+        conf.detectBrowsers = {
+            usePhantomJS: false,
+            postDetection: (availableBrowser) => {
+                // remove available browsers without a launcher.
+                availableBrowser = availableBrowser.filter((browserName) => launchers.indexOf(browserName.toLowerCase()) !== -1);
+                // we are replacing the detected `Chrome` with the `Chrome_CI` configuration.
+                const ioChrome = availableBrowser.indexOf('Chrome');
+                if (ioChrome !== -1) {
+                    availableBrowser.splice(ioChrome, 1, 'Chrome_CI');
+                }
+                return availableBrowser;
+            },
+        };
+    }
+
+    if (options.saucelabs) {
+        // SauceLabs configuration.
+        conf.retryLimit = 3;
+        conf.reporters.push('saucelabs');
+        conf.sauceLabs = {
+            startConnect: true,
+            connectOptions: {
+                'no-ssl-bump-domains': 'all',
+            },
+            options: {},
+            username: process.env.SAUCE_USERNAME,
+            accessKey: process.env.SAUCE_ACCESS_KEY,
+            build: process.env.TRAVIS ? `TRAVIS # ${process.env.TRAVIS_BUILD_NUMBER} (${process.env.TRAVIS_BUILD_ID})` : `RNA-${Date.now()}`,
+            tunnelIdentifier: process.env.TRAVIS ? process.env.TRAVIS_JOB_NUMBER : undefined,
+            recordScreenshots: true,
+        };
+
+        conf.sauceLabs.testName = saucelabs.getTestName(project.path, project.get('name'), 'Unit');
+
+        let saucelabsBrowsers = saucelabs.launchers(project.browserslist);
+        conf.customLaunchers = saucelabsBrowsers;
+        conf.browsers = Object.keys(saucelabsBrowsers);
+        if (conf.browsers.length === 0) {
+            throw new Error('invalid SauceLabs targets.');
         }
+        conf.plugins.push(require('karma-sauce-launcher'));
+    }
 
-        if (options.saucelabs) {
-            // SauceLabs configuration.
-            conf.retryLimit = 3;
-            conf.reporters.push('saucelabs');
-            conf.sauceLabs = {
-                startConnect: true,
-                connectOptions: {
-                    'no-ssl-bump-domains': 'all',
-                },
-                options: {},
-                username: process.env.SAUCE_USERNAME,
-                accessKey: process.env.SAUCE_ACCESS_KEY,
-                build: process.env.TRAVIS ? `TRAVIS # ${process.env.TRAVIS_BUILD_NUMBER} (${process.env.TRAVIS_BUILD_ID})` : `RNA-${Date.now()}`,
-                tunnelIdentifier: process.env.TRAVIS ? process.env.TRAVIS_JOB_NUMBER : undefined,
-                recordScreenshots: true,
-            };
-
-            conf.sauceLabs.testName = saucelabs.getTestName(project.path, project.get('name'), 'Unit');
-
-            let saucelabsBrowsers = saucelabs.launchers(project.browserslist);
-            conf.customLaunchers = saucelabsBrowsers;
-            conf.browsers = Object.keys(saucelabsBrowsers);
-            if (conf.browsers.length === 0) {
-                throw new Error('invalid SauceLabs targets.');
-            }
-            conf.plugins.push(require('karma-sauce-launcher'));
-        }
-
-        if (options.electron) {
-            // Test on Electron.
-            conf.browsers = ['Electron'];
-            conf.customLaunchers = {
-                Electron: {
-                    base: 'Electron',
-                    tmpdir: app.store.tmpdir('ElectronTest').path,
-                },
-            };
-            conf.plugins.push(require('./plugins/karma-electron-launcher/index.js'));
-        }
+    if (options.electron) {
+        // Test on Electron.
+        conf.browsers = ['Electron'];
+        conf.customLaunchers = {
+            Electron: {
+                base: 'Electron',
+                tmpdir: app.store.tmpdir('ElectronTest').path,
+            },
+        };
+        conf.plugins.push(require('./plugins/karma-electron-launcher/index.js'));
     }
 
     if (options.ci) {
