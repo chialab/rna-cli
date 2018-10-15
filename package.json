@@ -75,7 +75,6 @@
     "rollup-plugin-optimize-js": "^0.0.4",
     "rollup-plugin-terser": "^2.0.2",
     "rollup-plugin-typescript2": "^0.17.0",
-    "rollup-plugin-url": "^1.4.0",
     "sass": "^1.13.0",
     "sauce-connect-launcher": "^1.2.3",
     "serve-index": "^1.9.1",
