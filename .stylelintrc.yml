@@ -278,7 +278,7 @@ rules:
   # https://stylelint.io/user-guide/rules/value-list-comma-newline-after
   # Require a newline or disallow whitespace after the commas of value lists.
   value-list-comma-newline-after:
-    - never-multi-line
+    - always-multi-line
     - severity: warning
 
   # https://stylelint.io/user-guide/rules/value-list-comma-newline-before
@@ -290,7 +290,7 @@ rules:
   # https://stylelint.io/user-guide/rules/value-list-comma-space-after
   # Require a single space or disallow whitespace after the commas of value lists.
   value-list-comma-space-after:
-    - always
+    - always-single-line
     - severity: warning
 
   # https://stylelint.io/user-guide/rules/value-list-comma-space-before
