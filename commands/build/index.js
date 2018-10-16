@@ -99,7 +99,7 @@ module.exports = (program) => {
                             input: moduleFile,
                             output: moduleOutput,
                             targets,
-                            production: options.lint,
+                            production: options.production,
                             map: options.map,
                             lint: options.lint,
                         });
@@ -116,7 +116,7 @@ module.exports = (program) => {
                             input: styleFile,
                             output: styleOutput,
                             targets,
-                            production: options.lint,
+                            production: options.production,
                             map: options.map,
                             lint: options.lint,
                         });
@@ -147,7 +147,7 @@ module.exports = (program) => {
                         input: entry,
                         output,
                         targets,
-                        production: options.lint,
+                        production: options.production,
                         map: options.map,
                         lint: options.lint,
                     });
@@ -162,7 +162,7 @@ module.exports = (program) => {
                         input: entry,
                         output,
                         targets,
-                        production: options.lint,
+                        production: options.production,
                         map: options.map,
                         lint: options.lint,
                     });

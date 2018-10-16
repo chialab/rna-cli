@@ -50,7 +50,7 @@ module.exports = async function gitTask(app, options, project, templates) {
     let ignoreTemplate = templates.file('gitignore');
 
     // "Append" configuration to `.gitignore`.
-    configurator(gitIgnore, ignoreTemplate.read(), '# RNA-CORE');
+    configurator(gitIgnore, ignoreTemplate.read(), '# RNA');
 
     app.logger.success('git project updated', project.localPath);
 };
