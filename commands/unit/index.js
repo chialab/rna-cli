@@ -36,7 +36,7 @@ module.exports = (program) => {
             const cwd = process.cwd();
             const project = new Project(cwd);
 
-            const targets = options.targets ? browserslist(options.targets) : project.browserslist;
+            const targets = browserslist(options.targets || project.browserslist);
 
             // check sauce values
             if (options.saucelabs) {
@@ -169,11 +169,11 @@ module.exports = (program) => {
 
                 if (taskEnv.runner === 'karma') {
                     // Startup Karma.
-                    const karmaOptions = getConfig(app, project, {
+                    const karmaOptions = await getConfig(app, project, {
                         ci: options.ci,
                         watch: options.watch,
                         coverage: options.coverage,
-                        targets: options.targets,
+                        targets,
                         concurrency: options.concurrency || (options.watch ? Infinity : undefined),
                         timeout: options.timeout,
                         customContextFile,
@@ -279,9 +279,9 @@ const ENVIRONMENTS = {
  * @param {CLI} app CLI.
  * @param {Project} project The current project.
  * @param {Object} options Options.
- * @returns {string|Object}
+ * @returns {Promise<string|Object>}
  */
-function getConfig(app, project, options) {
+async function getConfig(app, project, options) {
     const saucelabs = require('../../lib/saucelabs');
 
     const localConf = project.file('karma.conf.js');
@@ -408,7 +408,7 @@ function getConfig(app, project, options) {
 
         conf.sauceLabs.testName = saucelabs.getTestName(project.path, project.get('name'), 'Unit');
 
-        let saucelabsBrowsers = saucelabs.launchers(project.browserslist);
+        let saucelabsBrowsers = await saucelabs.launchers(options.targets);
         conf.customLaunchers = saucelabsBrowsers;
         conf.browsers = Object.keys(saucelabsBrowsers);
         if (conf.browsers.length === 0) {
