@@ -54,9 +54,6 @@ module.exports = (program) => {
                 }
             }
 
-            // Handle Karma custom context file option
-            const customContextFile = options['context'];
-
             if (!process.env.hasOwnProperty('NODE_ENV')) {
                 // Set NODE_ENV environment variable.
                 app.logger.info('setting "test" environment');
@@ -169,6 +166,15 @@ module.exports = (program) => {
 
                 if (taskEnv.runner === 'karma') {
                     // Startup Karma.
+
+                    // Handle Karma custom context file option
+                    let customContextFile;
+                    if (options['context']) {
+                        let original = project.file(options['context']);
+                        customContextFile = tempUnit.directory.file(original.basename);
+                        customContextFile.write(original.read());
+                    }
+
                     const karmaOptions = await getConfig(app, project, {
                         ci: options.ci,
                         watch: options.watch,
@@ -176,7 +182,7 @@ module.exports = (program) => {
                         targets,
                         concurrency: options.concurrency || (options.watch ? Infinity : undefined),
                         timeout: options.timeout,
-                        customContextFile,
+                        customContextFile: customContextFile ? customContextFile.basename : undefined,
                         [taskEnvName]: true,
                     });
                     karmaOptions.basePath = tempUnit.dirname;
