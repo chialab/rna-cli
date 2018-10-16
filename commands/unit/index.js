@@ -301,7 +301,7 @@ function getConfig(app, project, options) {
         // mocha timeout option if given
         client: {
             mocha: {
-                timeout: typeof options.timeout === 'number' ? options.timeout : 2000,
+                timeout: !isNaN(options.timeout) ? options.timeout : 2000,
             },
         },
 
@@ -351,7 +351,7 @@ function getConfig(app, project, options) {
 
         // Concurrency level
         // how many browser should be started simultaneously
-        concurrency: typeof options.concurrency === 'number' ? options.concurrency : 2,
+        concurrency: !isNaN(options.concurrency) ? options.concurrency : 2,
     };
 
     if (options.browser) {
