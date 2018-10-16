@@ -5,21 +5,39 @@ function Safari(baseBrowserDecorator) {
 
     this.name = 'Safari';
 
-    this.driver = new SafariLauncher();
+    this.browser = new SafariLauncher();
 
     this._start = async (url) => {
-        await this.driver.goto(url);
+        try {
+            await this.browser.goto(url);
+        } catch (err) {
+            return this._done('failure');
+        }
+        this._done();
     };
 
-    this.on('kill', (done) => {
-        if (this.driver) {
-            this.driver.quit()
-                .then(done)
-                .catch(done);
-        } else {
-            done();
+    let killingPromise;
+
+    this.kill = async function() {
+        // Already killed, or being killed.
+        if (killingPromise) {
+            return killingPromise;
         }
-    });
+
+        this.state = this.STATE_BEING_KILLED;
+        killingPromise = this.browser ? this.browser.quit() : Promise.resolve();
+        await killingPromise;
+        this.state = this.STATE_FINISHED;
+
+        return killingPromise;
+    };
+
+    this.forceKill = function() {
+        let killingPromise = this.kill();
+        this.state = this.STATE_BEING_FORCE_KILLED;
+
+        return killingPromise;
+    };
 }
 
 Safari.prototype = {
