@@ -8,6 +8,14 @@ module.exports = (program) => {
     program
         .command('test')
         .description('Trigger project `test` script.')
-        .help('A simple alias to `yarn test` command.')
-        .action(require('path').resolve(__dirname, './action.js'));
+        .readme(`${__dirname}/README.md`)
+        .deprecate('2.0.0', 'Please use `yarn test`.')
+        .action(async () => {
+            const Project = require('../../lib/Project');
+
+            const cwd = process.cwd();
+            const project = new Project(cwd);
+
+            return await project.packageManager.test();
+        });
 };

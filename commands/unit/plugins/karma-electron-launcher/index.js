@@ -1,9 +1,6 @@
 const fs = require('fs-extra');
-const path = require('path');
-const which = require('which');
-const paths = require('../../../../lib/paths.js');
 
-const ELECTRON = path.dirname(fs.realpathSync(which.sync('electron')));
+const ELECTRON = require.resolve('electron');
 
 const defaultElectron = {
     width: 400,
@@ -16,9 +13,9 @@ const ElectronBrowser = function(baseBrowserDecorator, args, electronOpts) {
     let browserOptions = Object.assign({}, defaultElectron, electronOpts || {}, args.electronOpts || {});
 
     this._start = (url) => {
-        const SOURCE_PATH = path.join(__dirname, 'ElectronTest');
-        const STATIC_PATH = path.join(paths.tmp, 'ElectronTest');
-        const MAIN_JS = path.join(STATIC_PATH, 'main.js');
+        const SOURCE_PATH = electronOpts.tmpdir;
+        const STATIC_PATH = electronOpts.tmpdir;
+        const MAIN_JS = SOURCE_PATH.file('main.js').path;
 
         fs.copySync(SOURCE_PATH, STATIC_PATH);
         let content = fs.readFileSync(MAIN_JS, 'utf8')
@@ -45,5 +42,5 @@ ElectronBrowser.$inject = ['baseBrowserDecorator', 'args', 'config.electronOpts'
 
 // PUBLISH DI MODULE
 module.exports = {
-    'launcher:Electron': ['type', ElectronBrowser]
+    'launcher:Electron': ['type', ElectronBrowser],
 };

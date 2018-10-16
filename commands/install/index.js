@@ -7,7 +7,16 @@
 module.exports = (program) => {
     program
         .command('install')
+        .readme(`${__dirname}/README.md`)
         .description('Sync project dependencies after a project update or a git pull.')
-        .help('A simple alias to `yarn install` command.')
-        .action(require('path').resolve(__dirname, './action.js'));
+        .deprecate('2.0.0', 'Please use `yarn install`.')
+        .action(async (app) => {
+            const Project = require('../../lib/Project');
+            const cwd = process.cwd();
+            const project = new Project(cwd);
+
+            // Run `yarn install`.
+            await project.packageManager.install();
+            app.logger.success('dependencies successfully updated');
+        });
 };
