@@ -177,6 +177,7 @@ module.exports = (program) => {
 
                     const karmaOptions = await getConfig(app, project, {
                         ci: options.ci,
+                        basePath: tempUnit.dirname,
                         watch: options.watch,
                         coverage: options.coverage,
                         targets,
@@ -185,10 +186,22 @@ module.exports = (program) => {
                         customContextFile: customContextFile ? customContextFile.basename : undefined,
                         [taskEnvName]: true,
                     });
-                    karmaOptions.basePath = tempUnit.dirname;
-                    karmaOptions.proxies = {
-                        '/': '/base/',
-                    };
+                    karmaOptions.middleware = karmaOptions.middleware || [];
+                    karmaOptions.middleware.push('base');
+                    karmaOptions.plugins = karmaOptions.plugins || [];
+                    karmaOptions.plugins.push({
+                        'middleware:base': ['factory', function base() {
+                            return function(request, response, next) {
+                                if (request.url.startsWith('/base/')) {
+                                    return next();
+                                }
+                                response.writeHead(302, {
+                                    Location: `/base${request.url}`,
+                                });
+                                response.end();
+                            };
+                        }],
+                    });
                     karmaOptions.files = [
                         {
                             pattern: tempUnit.basename,
@@ -205,9 +218,8 @@ module.exports = (program) => {
                             watched: false,
                         },
                     ];
-                    karmaOptions.preprocessors = {
-                        [tempUnit.path]: ['sourcemap'],
-                    };
+                    karmaOptions.preprocessors = karmaOptions.preprocessors || {};
+                    karmaOptions.preprocessors[tempUnit.path] = ['sourcemap'];
 
                     const server = new karma.Server(karmaOptions);
 
@@ -298,7 +310,7 @@ async function getConfig(app, project, options) {
 
     const conf = {
         // base path that will be used to resolve all patterns (eg. files, exclude)
-        basePath: project.path,
+        basePath: options.basePath || project.path,
 
         // frameworks to use
         // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
