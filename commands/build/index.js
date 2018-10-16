@@ -193,7 +193,7 @@ module.exports = (program) => {
                         default:
                             label = 'changed';
                     }
-                    app.logger.info(`${file.localPath} ${label}.`);
+                    app.logger.info(`${file.localPath} ${label}`);
                 });
 
                 await watcher.watch(async (event, file) => {

@@ -68,6 +68,7 @@
     "postcss": "^7.0.0",
     "postcss-all-unset": "^1.1.0",
     "postcss-focus-visible": "^4.0.0",
+    "postcss-focus-within": "^3.0.0",
     "ps-node": "^0.1.6",
     "resolve": "^1.8.1",
     "rollup": "^0.66.0",
