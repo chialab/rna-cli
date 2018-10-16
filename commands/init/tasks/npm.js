@@ -167,8 +167,8 @@ module.exports = async function npmTask(app, options, project, templates) {
             watch: 'rna build --watch',
             test: 'rna lint + unit',
             lint: 'rna lint',
-            start: 'rna install + build --watch',
-            prepublish: 'rna run build',
+            start: 'yarn install + build --watch',
+            prepublish: 'yarn run build',
         };
         if (project.get('directories.public')) {
             scripts.watch += ' + serve --watch';
