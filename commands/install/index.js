@@ -9,6 +9,7 @@ module.exports = (program) => {
         .command('install')
         .readme(`${__dirname}/README.md`)
         .description('Sync project dependencies after a project update or a git pull.')
+        .deprecate('2.0.0', 'Please use `yarn install`.')
         .action(async (app) => {
             const Project = require('../../lib/Project');
             const cwd = process.cwd();

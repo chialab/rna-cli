@@ -9,6 +9,7 @@ module.exports = (program) => {
         .command('start')
         .description('Trigger project `start` script.')
         .readme(`${__dirname}/README.md`)
+        .deprecate('2.0.0', 'Please use `yarn start`.')
         .action(async () => {
             const Project = require('../../lib/Project');
 

@@ -11,6 +11,7 @@ module.exports = (program) => {
         .readme(`${__dirname}/README.md`)
         .option('<module1> <module2> <module3>', 'The modules to add.')
         .option('[--dev]', 'Add to dev dependencies.')
+        .deprecate('2.0.0', 'Please use `yarn add`.')
         .action(async (app, options) => {
             const Project = require('../../lib/Project');
 

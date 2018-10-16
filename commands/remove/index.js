@@ -10,6 +10,7 @@ module.exports = (program) => {
         .description('Remove project dependencies.')
         .readme(`${__dirname}/README.md`)
         .option('<module1> <module2> <module3>', 'The modules to remove')
+        .deprecate('2.0.0', 'Please use `yarn remove`.')
         .action(async (app, options = {}) => {
             const Project = require('../../lib/Project');
 
