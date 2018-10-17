@@ -11,6 +11,7 @@ module.exports = (program) => {
         .readme(`${__dirname}/README.md`)
         .option('<path>', 'The webapp path.')
         .option('--output', 'Where to save the generated manifest.')
+        .option('[--manifest]', 'An input manifest file.')
         .option('[--icon]', 'The path of the main icon to generate.')
         .option('[--index]', 'Path to the index.html to update.')
         .option('[--scope]', 'Force manifest scope.')
@@ -39,9 +40,15 @@ module.exports = (program) => {
             }
 
             let manifest = {};
-            if (manifestPath.exists()) {
+            let inputManifest;
+            if (options.manifest) {
+                inputManifest = project.file(options.manifest);
+            } else if (manifestPath.exists()) {
+                inputManifest = manifestPath;
+            }
+            if (inputManifest.exists()) {
                 // if a manifest already exists, use it.
-                manifest = manifestPath.readJson();
+                manifest = inputManifest.readJson();
             }
 
             // collect index data if provided by flag.
@@ -77,9 +84,9 @@ module.exports = (program) => {
             manifest.background_color = manifest.background_color || '#fff';
             manifest.lang = manifest.lang || 'en-US';
 
-            if (typeof options.icon !== 'string') {
+            if (typeof options.icon === 'string') {
                 // generate icons.
-                const icon = root.file(options.icon);
+                const icon = project.file(options.icon);
                 if (!icon.exists()) {
                     // provided icons does not exists.
                     throw `icon file not found. (${icon.localPath})`;
@@ -89,7 +96,7 @@ module.exports = (program) => {
                 try {
                     const iconsPath = await generateIcons(manifest, index, icon, root);
                     app.logger.stop();
-                    app.logger.succes('icons generated');
+                    app.logger.success('icons generated');
                     iconsPath.files().forEach((iconPath) => {
                         let { size, zipped } = iconPath.size;
                         app.logger.info(iconPath.localPath, `${size}, ${zipped} zipped`);
@@ -252,9 +259,9 @@ async function generateIcons(manifest, index, icon, root) {
         });
     }
 
-    let icons = await generateIcon(icon, iconsPath, MANIFEST_ICONS);
-    let favicons = await generateIcon(icon, iconsPath, FAVICONS);
-    let appleIcons = await generateIcon(icon, iconsPath, APPLE_ICONS);
+    let icons = await generateIcon(icon.path, iconsPath, MANIFEST_ICONS);
+    let favicons = await generateIcon(icon.path, iconsPath, FAVICONS);
+    let appleIcons = await generateIcon(icon.path, iconsPath, APPLE_ICONS);
 
     // update manifest icons
     manifest.icons = icons.map((file) => ({
