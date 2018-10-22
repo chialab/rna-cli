@@ -20,7 +20,7 @@ module.exports = (program) => {
             const cwd = process.cwd();
             const project = new Project(cwd);
 
-            let entries;
+            let entries = [];
             if (options.arguments.length) {
                 entries = project.resolve(options.arguments);
             } else {
@@ -32,12 +32,15 @@ module.exports = (program) => {
                             entries.push(...styleDirectory.resolve('**/*'));
                         }
                     });
-                } else {
-                    let styleDirectory = project.directories.src;
-                    if (styleDirectory) {
-                        entries.push(...styleDirectory.resolve('**/*'));
-                    }
+                } else if (project.directories.src) {
+                    entries.push(...project.directories.src.resolve('**/*'));
+                } else if (project.directory('src').exists()) {
+                    entries.push(...project.directory('src').resolve('**/*'));
                 }
+            }
+
+            if (entries.length === 0) {
+                throw 'missing files to lint';
             }
 
             const jsFiles = entries
