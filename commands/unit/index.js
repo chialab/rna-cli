@@ -437,9 +437,9 @@ async function getConfig(app, project, options) {
 
     if (options.electron) {
         // Test on Electron.
-        conf.browsers = ['Electron'];
+        conf.browsers = ['ElectronBrowser'];
         conf.customLaunchers = {
-            Electron: {
+            ElectronBrowser: {
                 base: 'Electron',
                 tmpdir: app.store.tmpdir('ElectronTest').path,
             },
