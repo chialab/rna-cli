@@ -30,46 +30,53 @@ module.exports = (program) => {
                 root = project;
             }
 
+            let manifest = {};
+            let index;
             let manifestPath;
+            let indexPath;
+            let inputManifest;
+            let inputIndex;
+
+            if (options.manifest) {
+                inputManifest = project.file(options.manifest);
+            }
+
+            if (typeof options.index === 'string') {
+                inputIndex = project.file(options.index);
+            }
+
             if (options.output) {
+                let outputDir = project.directory(options.output);
                 // use output flag if defined.
-                manifestPath = root.file(options.output);
+                if (inputManifest) {
+                    manifestPath = outputDir.file(inputManifest.basename);
+                } else {
+                    manifestPath = outputDir.file('manifest.json');
+                }
+                if (inputIndex) {
+                    indexPath = outputDir.file(inputIndex.basename);
+                } else {
+                    indexPath = outputDir.file('index.html');
+                }
             } else {
                 // default manifest path.
                 manifestPath = root.file('manifest.json');
+                if (options.index) {
+                    indexPath = root.file('index.html');
+                }
             }
 
-            let manifest = {};
-            let inputManifest;
-            if (options.manifest) {
-                inputManifest = project.file(options.manifest);
-            } else if (manifestPath.exists()) {
-                inputManifest = manifestPath;
-            }
             if (inputManifest.exists()) {
                 // if a manifest already exists, use it.
                 manifest = inputManifest.readJson();
             }
 
-            // collect index data if provided by flag.
-            let index;
-            let indexPath;
             // create a fake DOM document for the index.html
-            if (typeof options.index === 'string') {
-                indexPath = project.file(options.index);
-                index = new JSDOM(indexPath.read(), {
+            if (inputIndex.exists()) {
+                index = new JSDOM(inputIndex.read(), {
                     url: 'https://example.org/',
                     referrer: 'https://example.com/',
                 }).window.document;
-            } else if (options.index !== false) {
-                // try to auto detect index.html
-                indexPath = project.file('index.html');
-                if (indexPath.exists()) {
-                    index = new JSDOM(indexPath.read(), {
-                        url: 'https://example.org/',
-                        referrer: 'https://example.com/',
-                    }).window.document;
-                }
             }
 
             // set manifest defaults
