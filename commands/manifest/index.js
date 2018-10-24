@@ -149,6 +149,13 @@ module.exports = (program) => {
                         index.head.appendChild(theme);
                     }
                 }
+                // update manifest link
+                let link = index.querySelector('link[rel="manifest"]') || index.createElement('link');
+                link.setAttribute('rel', 'manifest');
+                link.setAttribute('href', manifestPath.basename);
+                if (!link.parentNode) {
+                    index.head.appendChild(link);
+                }
 
                 // beautify html
                 let html = require('js-beautify').html(
