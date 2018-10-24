@@ -300,8 +300,6 @@ const ENVIRONMENTS = {
  * @returns {Promise<string|Object>}
  */
 async function getConfig(app, project, options) {
-    const saucelabs = require('../../lib/saucelabs');
-
     const localConf = project.file('karma.conf.js');
     if (localConf.exists()) {
         // Local Karma config exists. Use that.
@@ -408,6 +406,8 @@ async function getConfig(app, project, options) {
     }
 
     if (options.saucelabs) {
+        const saucelabs = require('../../lib/saucelabs');
+
         // SauceLabs configuration.
         conf.retryLimit = 3;
         conf.reporters.push('saucelabs');
@@ -424,7 +424,7 @@ async function getConfig(app, project, options) {
             recordScreenshots: true,
         };
 
-        conf.sauceLabs.testName = saucelabs.getTestName(project.path, project.get('name'), 'Unit');
+        conf.sauceLabs.testName = getTestName(project);
 
         let saucelabsBrowsers = await saucelabs.launchers(options.targets);
         conf.customLaunchers = saucelabsBrowsers;
@@ -503,4 +503,34 @@ function formatCoverageReport(summary, key) {
         type,
         message,
     };
+}
+
+/**
+ * Create a Test name using git status.
+ * @param {Project} project The project to test.
+ * @return {String}
+ */
+function getTestName(project) {
+    const Git = require('../../lib/Git.js');
+
+    let message = `Tests for ${project.get('name')}`;
+    const gitClient = new Git(project.path);
+
+    const branchName = gitClient.getBranchName();
+    const commit = gitClient.getShortCommitCode();
+    const commitMessage = gitClient.getCommitMessage();
+
+    if (branchName) {
+        message = `${message} | ${branchName.trim()}`;
+    }
+
+    if (commit) {
+        message = `${message}, ${commit.trim()}`;
+    }
+
+    if (commitMessage) {
+        message = `${message}: '${commitMessage.trim().replace(/^['"]*/, '').replace(/['"]*$/, '')}'`;
+    }
+
+    return message;
 }
