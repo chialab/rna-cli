@@ -4,7 +4,8 @@ language: minimal
 
 stages:
   - name: build
-    # if: 'fork = false'
+    if: 'fork = false'
+
 jobs:
   include:
     # Build branches:
