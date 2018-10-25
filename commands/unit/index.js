@@ -61,13 +61,26 @@ module.exports = (program) => {
 
             // Load options.
             options = Proteins.clone(options);
-            options.ci = options.hasOwnProperty('ci') ? options.ci : process.env.CI; // Is this CI environment?
 
             // Load list of files to be tested.
             let files = [];
 
             if (options.arguments.length) {
-                files = project.resolve(options.arguments);
+                files = project.resolve(options.arguments)
+                    .reduce((list, file) => {
+                        if (!(file instanceof Project)) {
+                            list.push(file);
+                            return list;
+                        }
+                        let testDir = file.directories.test;
+                        if (!testDir) {
+                            testDir = file.directory('test');
+                        }
+                        if (testDir.exists()) {
+                            list.push(...testDir.resolve('**/*.js'));
+                        }
+                        return list;
+                    }, []);
             } else {
                 let testDirs = [];
                 let workspaces = project.workspaces;
@@ -88,7 +101,9 @@ module.exports = (program) => {
                 }
                 files = testDirs
                     .reduce((list, directory) => {
-                        list.push(...directory.resolve('**/*.js'));
+                        if (directory.exists()) {
+                            list.push(...directory.resolve('**/*.js'));
+                        }
                         return list;
                     }, []);
             }
@@ -175,7 +190,6 @@ module.exports = (program) => {
                     }
 
                     const karmaOptions = await getConfig(app, project, {
-                        ci: options.ci,
                         basePath: tempUnit.dirname,
                         watch: options.watch,
                         coverage: options.coverage,
@@ -324,7 +338,7 @@ async function getConfig(app, project, options) {
         // possible values: 'dots', 'progress'
         // available reporters: https://npmjs.org/browse/keyword/karma-reporter
         reporters: [
-            options.ci ? 'dots' : 'mocha',
+            process.env.CI ? 'dots' : 'mocha',
         ],
 
         // web server port
@@ -446,7 +460,7 @@ async function getConfig(app, project, options) {
         conf.plugins.push(require('./plugins/karma-electron-launcher/index.js'));
     }
 
-    if (options.ci) {
+    if (process.env.CI) {
         // Optimal configuration for CI environment.
         conf.client = conf.client || {};
         conf.client.captureConsole = false;
