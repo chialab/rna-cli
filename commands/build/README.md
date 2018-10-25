@@ -24,5 +24,5 @@ It supports:
 
 ### See also
 
-* [`rna build`](../build/)
+* [`rna unit`](../unit/)
 * [`rna serve`](../serve/)
