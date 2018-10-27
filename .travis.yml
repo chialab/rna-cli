@@ -1,0 +1,59 @@
+sudo: true
+dist: trusty
+language: minimal
+
+stages:
+  - name: build
+    if: 'fork = false'
+
+jobs:
+  include:
+    # Build branches:
+    - stage: build
+      if: 'type IN ("push", "cron") AND branch = "master"'
+      before_install:
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      script:
+        - 'docker build -t artifact .'
+      after_success:
+        - | # Branch
+          echo -e "\033[34mPushing \033[33;1m${TRAVIS_REPO_SLUG}:dev-${TRAVIS_BRANCH/\//-}\033[34m image\033[0m..."
+          docker tag artifact "${TRAVIS_REPO_SLUG}:dev-${TRAVIS_BRANCH/\//-}"
+          docker push "${TRAVIS_REPO_SLUG}:dev-${TRAVIS_BRANCH/\//-}"
+
+    # Build tags:
+    - stage: build
+      if: 'type = "push" AND tag =~ /^v?([0-9.]+(-.+)?)$/'
+      before_install:
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      script:
+        - 'docker build -t artifact .'
+      after_success:
+        - | # Tag
+          echo -e "\033[34mPushing \033[33;1m${TRAVIS_REPO_SLUG}:${TRAVIS_TAG:1}\033[34m image\033[0m..."
+          docker tag artifact "${TRAVIS_REPO_SLUG}:${TRAVIS_TAG:1}"
+          docker push "${TRAVIS_REPO_SLUG}:${TRAVIS_TAG:1}"
+        - | # Latest
+          if [[ "$TRAVIS_TAG" =~ ^v?([0-9.]+)$ ]]; then
+            echo -e "\033[34mPushing \033[33;1m${TRAVIS_REPO_SLUG}:latest\033[34m image\033[0m..."
+            docker tag artifact "${TRAVIS_REPO_SLUG}:latest"
+            docker push "${TRAVIS_REPO_SLUG}:latest"
+          fi
+        - | # RC
+          if [[ "$TRAVIS_TAG" =~ ^v?([0-9.]+-rc(\..+)?)$ ]]; then
+            echo -e "\033[34mPushing \033[33;1m${TRAVIS_REPO_SLUG}:rc\033[34m image\033[0m..."
+            docker tag artifact "${TRAVIS_REPO_SLUG}:rc"
+            docker push "${TRAVIS_REPO_SLUG}:rc"
+          fi
+        - | # Beta
+          if [[ "$TRAVIS_TAG" =~ ^v?([0-9.]+-beta(\..+)?)$ ]]; then
+            echo -e "\033[34mPushing \033[33;1m${TRAVIS_REPO_SLUG}:beta\033[34m image\033[0m..."
+            docker tag artifact "${TRAVIS_REPO_SLUG}:beta"
+            docker push "${TRAVIS_REPO_SLUG}:beta"
+          fi
+        - | # Alpha
+          if [[ "$TRAVIS_TAG" =~ ^v?([0-9.]+-alpha(\..+)?)$ ]]; then
+            echo -e "\033[34mPushing \033[33;1m${TRAVIS_REPO_SLUG}:alpha\033[34m image\033[0m..."
+            docker tag artifact "${TRAVIS_REPO_SLUG}:alpha"
+            docker push "${TRAVIS_REPO_SLUG}:alpha"
+          fi
