@@ -75,7 +75,6 @@
     "rollup-plugin-json": "^3.0.0",
     "rollup-plugin-node-resolve": "^3.4.0",
     "rollup-plugin-optimize-js": "^0.0.4",
-    "rollup-plugin-terser": "^2.0.2",
     "rollup-plugin-typescript2": "^0.17.0",
     "sass": "^1.13.0",
     "sauce-connect-launcher": "^1.2.3",
@@ -86,6 +85,7 @@
     "spdx-license-list": "^3.0.1",
     "stylelint": "^9.3.0",
     "stylelint-order": "^0.8.1",
+    "terser": "^3.10.11",
     "typescript": "^3.0.3",
     "workbox-build": "^3.4.1"
   }
