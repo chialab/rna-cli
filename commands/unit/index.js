@@ -274,7 +274,7 @@ module.exports = (program) => {
                         throw 'Invalid nativescript platform. Valid platforms are `ios` and `android`.';
                     }
                     // Create fake NS application.
-                    await runNativeScriptTest(app, options.nativescript, tempUnit.path);
+                    await runNativeScriptTest(app, tempUnit, options.nativescript);
                 }
             }
 
