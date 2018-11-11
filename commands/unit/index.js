@@ -176,7 +176,7 @@ module.exports = (program) => {
                                     reporting: {
                                         print: 'summary',
                                         reports: [ 'lcov' ],
-                                        dir: project.directory(`reports/coverage/report-lcov/${process.title}-${process.version}`).path,
+                                        dir: project.directory(`reports/coverage/${process.title}-${process.version}`).path,
                                     },
                                 }));
                                 collector.add(global.__coverage__);
@@ -480,7 +480,7 @@ async function getConfig(app, project, options) {
                 },
                 {
                     type: 'lcov',
-                    subdir: (browserName) => `report-lcov/${browserName}`,
+                    subdir: (browserName) => browserName,
                 },
             ],
         };
