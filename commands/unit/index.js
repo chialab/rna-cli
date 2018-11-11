@@ -31,6 +31,7 @@ module.exports = (program) => {
             const Rollup = require('../../lib/Bundlers/Rollup');
             const Watcher = require('../../lib/Watcher');
             const runNativeScriptTest = require('./lib/ns');
+            const reportMap = require('istanbul-lib-coverage').createCoverageMap({});
 
             const cwd = process.cwd();
             const project = new Project(cwd);
@@ -168,11 +169,27 @@ module.exports = (program) => {
                     mocha.addFile(tempUnit.path);
                     await new Promise((resolve, reject) => {
                         mocha.run((failures) => {
+                            if (options.coverage) {
+                                const { Collector, Reporter, config } = require('istanbul');
+                                const collector = new Collector();
+                                const reporter = new Reporter(config.loadObject({
+                                    reporting: {
+                                        print: 'summary',
+                                        reports: [ 'lcov' ],
+                                        dir: project.directory(`reports/coverage/report-lcov/${process.title}-${process.version}`).path,
+                                    },
+                                }));
+                                collector.add(global.__coverage__);
+                                reportMap.merge(global.__coverage__);
+                                delete global.__coverage__;
+                                reporter.addAll(['lcov']);
+                                reporter.write(collector, true, () => {});
+                            }
                             if (failures) {
                                 reject(failures);
-                            } else {
-                                resolve();
+                                return;
                             }
+                            resolve();
                         });
                     });
                     continue;
@@ -237,36 +254,17 @@ module.exports = (program) => {
                     const server = new karma.Server(karmaOptions);
 
                     if (options.coverage) {
-                        let reportMap;
-                        server.on('run_start', () => {
-                            reportMap = require('istanbul-lib-coverage').createCoverageMap({});
-                        });
                         server.on('coverage_complete', (browser, coverageReport) => {
                             reportMap.merge(coverageReport);
                         });
-                        server.on('run_complete', () => {
-                            setTimeout(() => {
-                                reportMap = reportMap.toJSON();
-                                let coverageFiles = Object.keys(reportMap);
-                                if (coverageFiles.length) {
-                                    const utils = require('istanbul/lib/object-utils');
-                                    let summaries = coverageFiles.map((coverageFile) => utils.summarizeFileCoverage(reportMap[coverageFile]));
-                                    let finalSummary = utils.mergeSummaryObjects.apply(null, summaries);
-                                    app.logger.info('COVERAGE SUMMARY:');
-                                    let statementsReport = formatCoverageReport(finalSummary, 'statements');
-                                    app.logger[statementsReport.type](statementsReport.message);
-                                    let branchesReport = formatCoverageReport(finalSummary, 'branches');
-                                    app.logger[branchesReport.type](branchesReport.message);
-                                    let functionsReport = formatCoverageReport(finalSummary, 'functions');
-                                    app.logger[functionsReport.type](functionsReport.message);
-                                    let linesReport = formatCoverageReport(finalSummary, 'lines');
-                                    app.logger[linesReport.type](linesReport.message);
-                                }
-                            });
-                        });
                     }
-                    server.start();
-                    continue;
+
+                    await new Promise((resolve) => {
+                        server.start();
+                        server.on('run_complete', () => {
+                            resolve();
+                        });
+                    });
                 }
 
                 if (taskEnv.runner === 'ns') {
@@ -287,6 +285,10 @@ module.exports = (program) => {
                 await watcher.watch(async () => {
                     await rebuild();
                 });
+            }
+
+            if (options.coverage) {
+                printCoverageReport(app, reportMap.toJSON());
             }
         });
 };
@@ -486,6 +488,26 @@ async function getConfig(app, project, options) {
     }
 
     return conf;
+}
+
+function printCoverageReport(app, report) {
+    const utils = require('istanbul/lib/object-utils');
+    const coverageFiles = Object.keys(report);
+    if (!coverageFiles.length) {
+        return;
+    }
+    app.logger.newline();
+    let summaries = coverageFiles.map((coverageFile) => utils.summarizeFileCoverage(report[coverageFile]));
+    let finalSummary = utils.mergeSummaryObjects.apply(null, summaries);
+    app.logger.info('COVERAGE SUMMARY:');
+    let statementsReport = formatCoverageReport(finalSummary, 'statements');
+    app.logger[statementsReport.type](statementsReport.message);
+    let branchesReport = formatCoverageReport(finalSummary, 'branches');
+    app.logger[branchesReport.type](branchesReport.message);
+    let functionsReport = formatCoverageReport(finalSummary, 'functions');
+    app.logger[functionsReport.type](functionsReport.message);
+    let linesReport = formatCoverageReport(finalSummary, 'lines');
+    app.logger[linesReport.type](linesReport.message);
 }
 
 /**
