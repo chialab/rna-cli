@@ -23,20 +23,13 @@ module.exports = (program) => {
         .option('[--timeout]', 'Set the tests timeout.')
         .option('[--watch]', 'Watch test files.')
         .action(async (app, options = {}) => {
-            const Proteins = require('@chialab/proteins');
-            const karma = require('karma');
-            const Mocha = require('mocha');
             const browserslist = require('browserslist');
             const Project = require('../../lib/Project');
             const Rollup = require('../../lib/Bundlers/Rollup');
             const Watcher = require('../../lib/Watcher');
-            const runNativeScriptTest = require('./lib/ns');
-            const reportMap = require('istanbul-lib-coverage').createCoverageMap({});
 
             const cwd = process.cwd();
             const project = new Project(cwd);
-
-            const targets = browserslist(options.targets || project.browserslist);
 
             // check sauce values
             if (options.saucelabs) {
@@ -61,7 +54,9 @@ module.exports = (program) => {
             }
 
             // Load options.
-            options = Proteins.clone(options);
+            options = Object.assign({}, options, {
+                targets: browserslist(options.targets || project.browserslist),
+            });
 
             // Load list of files to be tested.
             let files = [];
@@ -117,7 +112,7 @@ module.exports = (program) => {
             let taskEnvironments = Object.keys(options).filter((optName) => options[optName] && optName in ENVIRONMENTS);
             if (!taskEnvironments.length) {
                 // If test environment is not provide, use `browser` as default.
-                taskEnvironments.push('browser');
+                taskEnvironments.push('node', 'browser');
             }
 
             const unitCode = `${files.map((entry) => `import '${entry.path}';`).join('\n')}`;
@@ -135,7 +130,7 @@ module.exports = (program) => {
                     'output': tempUnit.path,
                     'map': 'inline',
                     'coverage': options.coverage,
-                    targets,
+                    'targets': options.targets,
                     'jsx.pragma': options['jsx.pragma'],
                     'jsx.module': options['jsx.module'],
                 });
@@ -157,138 +152,19 @@ module.exports = (program) => {
 
             app.logger.stop();
 
-            // Test built sources.
-            for (let i = 0; i < taskEnvironments.length; i++) {
-                let taskEnvName = taskEnvironments[i];
-                let taskEnv = ENVIRONMENTS[taskEnvName];
-
-                if (taskEnv.runner === 'mocha') {
-                    // Startup Mocha.
-                    require('source-map-support/register');
-                    const mocha = new Mocha();
-                    mocha.addFile(tempUnit.path);
-                    await new Promise((resolve, reject) => {
-                        mocha.run((failures) => {
-                            if (options.coverage) {
-                                const { Collector, Reporter, config } = require('istanbul');
-                                const collector = new Collector();
-                                const reporter = new Reporter(config.loadObject({
-                                    reporting: {
-                                        print: 'summary',
-                                        reports: [ 'lcov' ],
-                                        dir: project.directory(`reports/coverage/${process.title}-${process.version}`).path,
-                                    },
-                                }));
-                                collector.add(global.__coverage__);
-                                reportMap.merge(global.__coverage__);
-                                delete global.__coverage__;
-                                reporter.addAll(['lcov']);
-                                reporter.write(collector, true, () => {});
-                            }
-                            if (failures) {
-                                reject(failures);
-                                return;
-                            }
-                            resolve();
-                        });
-                    });
-                    continue;
-                }
-
-                if (taskEnv.runner === 'karma') {
-                    // Startup Karma.
-
-                    // Handle Karma custom context file option
-                    let customContextFile;
-                    if (options['context']) {
-                        let original = project.file(options['context']);
-                        customContextFile = tempUnit.directory.file(original.basename);
-                        customContextFile.write(original.read());
-                    }
-
-                    const karmaOptions = await getConfig(app, project, {
-                        basePath: tempUnit.dirname,
-                        watch: options.watch,
-                        coverage: options.coverage,
-                        targets,
-                        concurrency: options.concurrency || (options.watch ? Infinity : undefined),
-                        timeout: options.timeout,
-                        customContextFile: customContextFile ? customContextFile.basename : undefined,
-                        [taskEnvName]: true,
-                    });
-                    karmaOptions.middleware = karmaOptions.middleware || [];
-                    karmaOptions.middleware.push('base');
-                    karmaOptions.plugins = karmaOptions.plugins || [];
-                    karmaOptions.plugins.push({
-                        'middleware:base': ['factory', function base() {
-                            return function(request, response, next) {
-                                if (request.url.startsWith('/base/')) {
-                                    return next();
-                                }
-                                response.writeHead(302, {
-                                    Location: `/base${request.url}`,
-                                });
-                                response.end();
-                            };
-                        }],
-                    });
-                    karmaOptions.files = [
-                        {
-                            pattern: tempUnit.basename,
-                            included: true,
-                            served: true,
-                            nocache: true,
-                            watched: true,
-                        },
-                        {
-                            pattern: '**/*',
-                            included: false,
-                            served: true,
-                            nocache: false,
-                            watched: false,
-                        },
-                    ];
-                    karmaOptions.preprocessors = karmaOptions.preprocessors || {};
-                    karmaOptions.preprocessors[tempUnit.path] = ['sourcemap'];
-
-                    const server = new karma.Server(karmaOptions);
-
-                    if (options.coverage) {
-                        server.on('coverage_complete', (browser, coverageReport) => {
-                            reportMap.merge(coverageReport);
-                        });
-                    }
-
-                    await new Promise((resolve) => {
-                        server.start();
-                        server.on('run_complete', () => {
-                            resolve();
-                        });
-                    });
-                }
-
-                if (taskEnv.runner === 'ns') {
-                    if (!['ios', 'android'].includes(options.nativescript.toLowerCase())) {
-                        throw 'Invalid nativescript platform. Valid platforms are `ios` and `android`.';
-                    }
-                    // Create fake NS application.
-                    await runNativeScriptTest(app, tempUnit, options.nativescript);
-                }
-            }
+            await runTests(app, project, tempUnit, options, taskEnvironments);
 
             if (options.watch) {
                 // start the watch task
-                let watcher = new Watcher(project, {
-                    ignore: (file) => watchFiles.includes(file.path),
+                const watcher = new Watcher(project, {
+                    ignore: (file) => !watchFiles.includes(file) || (file === tempUnit.path),
                 });
 
                 await watcher.watch(async () => {
+                    app.logger.newline();
                     await rebuild();
+                    await runTests(app, project, tempUnit, options, taskEnvironments);
                 });
-            }
-
-            if (options.coverage) {
-                printCoverageReport(app, reportMap.toJSON());
             }
         });
 };
@@ -306,6 +182,155 @@ const ENVIRONMENTS = {
     nativescript: { runner: 'ns' },
 };
 
+async function runTests(app, project, testFile, options, taskEnvironments = []) {
+    const coverageMap = require('istanbul-lib-coverage').createCoverageMap({});
+
+    // Test built sources.
+    for (let i = 0; i < taskEnvironments.length; i++) {
+        let taskEnvName = taskEnvironments[i];
+        let taskEnv = ENVIRONMENTS[taskEnvName];
+
+        if (taskEnv.runner === 'mocha') {
+            // Startup Mocha.
+            let coverage = await runNodeTests(app, project, testFile, options);
+            if (coverage) {
+                coverageMap.merge(coverage);
+            }
+            continue;
+        }
+
+        if (taskEnv.runner === 'karma') {
+            // Startup Karma.
+            let coverage = await runBrowserTests(app, project, testFile, options);
+            if (coverage) {
+                coverageMap.merge(coverage);
+            }
+            continue;
+        }
+
+        if (taskEnv.runner === 'ns') {
+            if (!['ios', 'android'].includes(options.nativescript.toLowerCase())) {
+                throw 'Invalid nativescript platform. Valid platforms are `ios` and `android`.';
+            }
+            const runNativeScriptTest = require('./lib/ns');
+            // Create fake NS application.
+            await runNativeScriptTest(app, testFile, options.nativescript);
+        }
+    }
+
+    app.logger.newline();
+
+    if (options.coverage) {
+        printCoverageReport(app, coverageMap.toJSON());
+    }
+}
+
+async function runNodeTests(app, project, testFile, options = {}) {
+    const Mocha = require('mocha');
+    require('source-map-support/register');
+    const mocha = new Mocha();
+
+    mocha.addFile(testFile.path);
+    return await new Promise((resolve, reject) => {
+        mocha.run((failures) => {
+            let coverage;
+            if (options.coverage) {
+                const { Collector, Reporter, config } = require('istanbul');
+                const collector = new Collector();
+                const reporter = new Reporter(config.loadObject({
+                    reporting: {
+                        print: 'summary',
+                        reports: [ 'lcov' ],
+                        dir: project.directory(`reports/coverage/${process.title}-${process.version}`).path,
+                    },
+                }));
+                coverage = global.__coverage__;
+                collector.add(coverage);
+                delete global.__coverage__;
+                reporter.addAll(['lcov']);
+                reporter.write(collector, true, () => {});
+            }
+            if (failures) {
+                reject(failures);
+                return;
+            }
+            resolve(coverage);
+        });
+    });
+}
+
+async function runBrowserTests(app, project, testFile, options = {}) {
+    const karma = require('karma');
+    const coverageMap = require('istanbul-lib-coverage').createCoverageMap({});
+
+    // Handle Karma custom context file option
+    let customContextFile;
+    if (options['context']) {
+        let original = project.file(options['context']);
+        customContextFile = testFile.directory.file(original.basename);
+        customContextFile.write(original.read());
+    }
+
+    const karmaOptions = await getKarmaConfig(app, project, {
+        basePath: testFile.dirname,
+        watch: options.watch,
+        coverage: options.coverage,
+        targets: options.targets,
+        concurrency: options.concurrency || (options.watch ? Infinity : undefined),
+        timeout: options.timeout,
+        customContextFile: customContextFile ? customContextFile.basename : undefined,
+        saucelabs: !!options.saucelabs,
+        electron: !!options.electron,
+        browser: !!options.browser,
+    });
+    karmaOptions.middleware = karmaOptions.middleware || [];
+    karmaOptions.middleware.push('base');
+    karmaOptions.plugins = karmaOptions.plugins || [];
+    karmaOptions.plugins.push({
+        'middleware:base': ['factory', function base() {
+            return function(request, response, next) {
+                if (request.url.startsWith('/base/')) {
+                    return next();
+                }
+                response.writeHead(302, {
+                    Location: `/base${request.url}`,
+                });
+                response.end();
+            };
+        }],
+    });
+    karmaOptions.files = [
+        {
+            pattern: testFile.basename,
+            included: true,
+            served: true,
+            nocache: true,
+            watched: false,
+        },
+        {
+            pattern: '**/*',
+            included: false,
+            served: true,
+            nocache: false,
+            watched: false,
+        },
+    ];
+    karmaOptions.preprocessors = karmaOptions.preprocessors || {};
+    karmaOptions.preprocessors[testFile.path] = ['sourcemap'];
+
+    return await new Promise((resolve) => {
+        const server = new karma.Server(karmaOptions, () => {
+            resolve(coverageMap.toJSON());
+        });
+
+        server.on('coverage_complete', (browser, coverageReport) => {
+            coverageMap.merge(coverageReport);
+        });
+
+        server.start();
+    });
+}
+
 /**
  * Get Karma configuration.
  *
@@ -314,7 +339,7 @@ const ENVIRONMENTS = {
  * @param {Object} options Options.
  * @returns {Promise<string|Object>}
  */
-async function getConfig(app, project, options) {
+async function getKarmaConfig(app, project, options) {
     const localConf = project.file('karma.conf.js');
     if (localConf.exists()) {
         // Local Karma config exists. Use that.
@@ -360,7 +385,7 @@ async function getConfig(app, project, options) {
         logLevel: 'INFO',
 
         // enable / disable watching file and executing tests whenever any file changes
-        autoWatch: !!options.watch,
+        autoWatch: false,
 
         // start these browsers
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
@@ -378,7 +403,7 @@ async function getConfig(app, project, options) {
 
         // Continuous Integration mode
         // if true, Karma captures browsers, runs the tests and exits
-        singleRun: !options.watch,
+        singleRun: true,
 
         // Concurrency level
         // how many browser should be started simultaneously
@@ -490,13 +515,18 @@ async function getConfig(app, project, options) {
     return conf;
 }
 
+/**
+ * Printe the coverage report in console.
+ * @param {CLI} app The cli instance.
+ * @param {Object} report The report to print.
+ * @return {void}
+ */
 function printCoverageReport(app, report) {
     const utils = require('istanbul/lib/object-utils');
     const coverageFiles = Object.keys(report);
     if (!coverageFiles.length) {
         return;
     }
-    app.logger.newline();
     let summaries = coverageFiles.map((coverageFile) => utils.summarizeFileCoverage(report[coverageFile]));
     let finalSummary = utils.mergeSummaryObjects.apply(null, summaries);
     app.logger.info('COVERAGE SUMMARY:');
