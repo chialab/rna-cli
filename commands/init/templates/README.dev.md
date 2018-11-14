@@ -9,11 +9,11 @@
 ### Build the project.
 
 ```sh
-$ rna install
-$ rna run build
+$ yarn install
+$ yarn build
 ```
 
 ### Develpment mode.
 ```sh
-$ rna run watch
+$ yarn watch
 ```
