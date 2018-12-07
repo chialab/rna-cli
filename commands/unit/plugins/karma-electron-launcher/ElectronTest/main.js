@@ -14,14 +14,8 @@ if (Array.isArray(opts.commandLineSwitches)) {
     });
 }
 
-if (process.platform === 'darwin' && opts.skipTaskbar === true) {
-    app.dock.hide();
-}
-
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
+    app.quit();
 });
 
 app.on('ready', () => {
