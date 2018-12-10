@@ -17,18 +17,19 @@ module.exports = (program) => {
             const exec = require('../../lib/exec.js');
             const BIN = require.resolve('lerna/cli.js');
 
-            if (!options.arguments.length) {
+            let beta = options.canary || options.beta;
+            if (!options.arguments.length && !beta) {
                 throw 'missing version';
             }
 
             let command = 'publish';
-            let args = [options.arguments[0]];
+            let args = [...options.arguments];
             if (options.git === false) {
                 args.push('--no-git-tag-version', '--no-push');
             } else {
                 args.push('--push');
             }
-            if (options.canary || options.beta) {
+            if (beta) {
                 args.push('--canary');
             }
             if (options.npm === false) {
