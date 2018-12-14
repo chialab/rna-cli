@@ -169,6 +169,13 @@ module.exports = (program) => {
         });
 };
 
+/**
+ * @typedef {Object} TestResult
+ * @property {Number} exitCode The exit code of the test.
+ * @property {Number} failed Failed tests count.
+ * @property {Object} coverage The coverage map result.
+ */
+
 
 /**
  * A list of available environments.
@@ -182,28 +189,44 @@ const ENVIRONMENTS = {
     nativescript: { runner: 'ns' },
 };
 
-async function runTests(app, project, testFile, options, taskEnvironments = []) {
+/**
+ * Exec tests across multiple environments.
+ * @param {CLI} app The current CLI instance.
+ * @param {Project} project The active project.
+ * @param {NavigatorFile} testFile The source test file.
+ * @param {Object} options A set of options for tests.
+ * @param {Array<string>} environments A list of test environments.
+ * @return {Promise}
+ */
+async function runTests(app, project, testFile, options, environments = []) {
     const coverageMap = require('istanbul-lib-coverage').createCoverageMap({});
 
+    let finalExitCode = 0;
     // Test built sources.
-    for (let i = 0; i < taskEnvironments.length; i++) {
-        let taskEnvName = taskEnvironments[i];
+    for (let i = 0; i < environments.length; i++) {
+        let taskEnvName = environments[i];
         let taskEnv = ENVIRONMENTS[taskEnvName];
 
         if (taskEnv.runner === 'mocha') {
             // Startup Mocha.
-            let coverage = await runNodeTests(app, project, testFile, options);
+            let { exitCode, coverage } = await runNodeTests(app, project, testFile, options);
             if (coverage) {
                 coverageMap.merge(coverage);
+            }
+            if (exitCode !== 0) {
+                finalExitCode = exitCode;
             }
             continue;
         }
 
         if (taskEnv.runner === 'karma') {
             // Startup Karma.
-            let coverage = await runBrowserTests(app, project, testFile, options);
+            let { exitCode, coverage } = await runBrowserTests(app, project, testFile, options);
             if (coverage) {
                 coverageMap.merge(coverage);
+            }
+            if (exitCode !== 0) {
+                finalExitCode = exitCode;
             }
             continue;
         }
@@ -212,9 +235,14 @@ async function runTests(app, project, testFile, options, taskEnvironments = []) 
             if (!['ios', 'android'].includes(options.nativescript.toLowerCase())) {
                 throw 'Invalid nativescript platform. Valid platforms are `ios` and `android`.';
             }
-            const runNativeScriptTest = require('./lib/ns');
             // Create fake NS application.
-            await runNativeScriptTest(app, testFile, options.nativescript);
+            let { exitCode, coverage } = await runNativeScriptTest(app, testFile, options.nativescript);
+            if (coverage) {
+                coverageMap.merge(coverage);
+            }
+            if (exitCode !== 0) {
+                finalExitCode = exitCode;
+            }
         }
     }
 
@@ -223,15 +251,29 @@ async function runTests(app, project, testFile, options, taskEnvironments = []) 
     if (options.coverage) {
         printCoverageReport(app, coverageMap.toJSON());
     }
+
+    if (finalExitCode) {
+        throw 'some tests have failed';
+    }
+
+    return coverageMap;
 }
 
+/**
+ * Exec tests in a Node environment using Node Mocha API.
+ * @param {CLI} app The current CLI instance.
+ * @param {Project} project The active project.
+ * @param {NavigatorFile} testFile The source test file.
+ * @param {Object} options A set of options for tests.
+ * @return {Promise<TestResult>}
+ */
 async function runNodeTests(app, project, testFile, options = {}) {
     const Mocha = require('mocha');
     require('source-map-support/register');
     const mocha = new Mocha();
 
     mocha.addFile(testFile.path);
-    return await new Promise((resolve, reject) => {
+    return await new Promise((resolve) => {
         mocha.run((failures) => {
             let coverage;
             if (options.coverage) {
@@ -250,15 +292,23 @@ async function runNodeTests(app, project, testFile, options = {}) {
                 reporter.addAll(['lcov']);
                 reporter.write(collector, true, () => {});
             }
-            if (failures) {
-                reject(failures);
-                return;
-            }
-            resolve(coverage);
+            resolve({
+                exitCode: failures ? 1 : 0,
+                coverage,
+                failed: failures.length,
+            });
         });
     });
 }
 
+/**
+ * Exec tests in a Browser environment using Karma test runner.
+ * @param {CLI} app The current CLI instance.
+ * @param {Project} project The active project.
+ * @param {NavigatorFile} testFile The source test file.
+ * @param {Object} options A set of options for tests.
+ * @return {Promise<TestResult>}
+ */
 async function runBrowserTests(app, project, testFile, options = {}) {
     const karma = require('karma');
     const coverageMap = require('istanbul-lib-coverage').createCoverageMap({});
@@ -319,16 +369,55 @@ async function runBrowserTests(app, project, testFile, options = {}) {
     karmaOptions.preprocessors[testFile.path] = ['sourcemap'];
 
     return await new Promise((resolve) => {
-        const server = new karma.Server(karmaOptions, () => {
-            resolve(coverageMap.toJSON());
+        let failed = 0;
+        const server = new karma.Server(karmaOptions, (exitCode) => {
+            resolve({
+                exitCode,
+                failed,
+                coverage: coverageMap.toJSON(),
+            });
         });
 
         server.on('coverage_complete', (browser, coverageReport) => {
             coverageMap.merge(coverageReport);
         });
 
+        server.on('run_complete', (browser, result) => {
+            failed = result.failed;
+        });
+
         server.start();
     });
+}
+
+/**
+ * Exec tests in a NativeScript environment using tns cli.
+ * @param {CLI} app The current CLI instance.
+ * @param {NavigatorFile} testFile The source test file.
+ * @param {String} platform Android or iOS.
+ * @return {Promise<TestResult>}
+ */
+async function runNativeScriptTest(app, file, platform) {
+    const exec = require('../../lib/exec.js');
+
+    let dir = app.store.tmpdir('NSTest');
+    let appDir = dir.directory('Test');
+    await exec('tns', ['create', 'Test', '--path', dir.path, '--js']);
+    await exec('tns', ['test', 'init', '--path', appDir.path, '--framework', 'mocha']);
+    let testDir = appDir.directory('app').directory('tests');
+    testDir.empty();
+    testDir.file('test.js').write(file.read());
+    let exitCode = 0;
+    try {
+        await exec('tns', ['test', platform, '--emulator', '--justlaunch', '--path', appDir.path]);
+    } catch {
+        exitCode = 1;
+    }
+    return {
+        exitCode,
+        failed: null,
+        coverage: null,
+    };
 }
 
 /**
