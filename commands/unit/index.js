@@ -113,6 +113,8 @@ module.exports = (program) => {
             if (!taskEnvironments.length) {
                 // If test environment is not provide, use `browser` as default.
                 taskEnvironments.push('node', 'browser');
+                options.node = true;
+                options.browser = true;
             }
 
             const unitCode = `${files.map((entry) => `import '${entry.path}';`).join('\n')}`;
