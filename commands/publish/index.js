@@ -24,6 +24,7 @@ module.exports = (program) => {
 
             let command = 'publish';
             let args = [...options.arguments];
+            args.push('--force-publish');
             if (options.git === false) {
                 args.push('--no-git-tag-version', '--no-push');
             } else {
