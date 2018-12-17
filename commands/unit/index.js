@@ -412,7 +412,7 @@ async function runNativeScriptTest(app, file, platform) {
     let exitCode = 0;
     try {
         await exec('tns', ['test', platform, '--emulator', '--justlaunch', '--path', appDir.path]);
-    } catch {
+    } catch (error) {
         exitCode = 1;
     }
     return {
