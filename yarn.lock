@@ -4299,7 +4299,7 @@ encodeurl@~1.0.1, encodeurl@~1.0.2:
   resolved "https://registry.npmjs.org/encodeurl/-/encodeurl-1.0.2.tgz#ad3ff4c86ec2d029322f5a02c3a9a606c95b3f59"
   integrity sha1-rT/0yG7C0CkyL1oCw6mmBslbP1k=
 
-encoding@^0.1.11:
+encoding@^0.1.11, encoding@^0.1.12:
   version "0.1.12"
   resolved "https://registry.npmjs.org/encoding/-/encoding-0.1.12.tgz#538b66f3ee62cd1ab51ec323829d1f9480c74beb"
   integrity sha1-U4tm8+5izRq1HsMjgp0flIDHS+s=
@@ -5260,6 +5260,15 @@ getpass@^0.1.1:
   dependencies:
     assert-plus "^1.0.0"
 
+gettext-parser@^2.0.0:
+  version "2.1.0"
+  resolved "https://registry.npmjs.org/gettext-parser/-/gettext-parser-2.1.0.tgz#44dad33a15a74776f4383bb33efa8e0eda2346e4"
+  integrity sha512-YGmu8DSm7PBnwItT+aOiqejOogqctHFzn+wBKUzjDFQP00psAtn/W2paWQxqE5eA5Ijrqaf7xuTKqyCHpuxnrg==
+  dependencies:
+    encoding "^0.1.12"
+    readable-stream "^2.0.0"
+    safe-buffer "^5.1.2"
+
 git-raw-commits@2.0.0:
   version "2.0.0"
   resolved "https://registry.npmjs.org/git-raw-commits/-/git-raw-commits-2.0.0.tgz#d92addf74440c14bcc5c83ecce3fb7f8a79118b5"
@@ -5801,6 +5810,18 @@ humanize-ms@^1.2.1:
   integrity sha1-xG4xWaKT9riW2ikxbYtv6Lt5u+0=
   dependencies:
     ms "^2.0.0"
+
+i18next-conv@^8.0.1:
+  version "8.0.1"
+  resolved "https://registry.npmjs.org/i18next-conv/-/i18next-conv-8.0.1.tgz#00e8b2260b5ebc0a0d587f12119485ff7696da8e"
+  integrity sha512-gZnFt3MMont23iIXb//i+TyZataV0hsJYisiArBOIScJxr6Ke6l9ccpqVJ8Vq0rC0MNNMZxI4sYUXhGm/J2Fzw==
+  dependencies:
+    bluebird "^3.5.2"
+    chalk "^2.4.1"
+    commander "^2.19.0"
+    gettext-parser "^2.0.0"
+    mkdirp "^0.5.1"
+    node-gettext "^2.0.0"
 
 iconv-lite@0.4.23:
   version "0.4.23"
@@ -7004,6 +7025,11 @@ lodash.debounce@^4.0.8:
   resolved "https://registry.npmjs.org/lodash.debounce/-/lodash.debounce-4.0.8.tgz#82d79bff30a67c4005ffd5e2515300ad9ca4d7af"
   integrity sha1-gteb/zCmfEAF/9XiUVMArZyk168=
 
+lodash.get@^4.4.2:
+  version "4.4.2"
+  resolved "https://registry.npmjs.org/lodash.get/-/lodash.get-4.4.2.tgz#2d177f652fa31e939b4438d5341499dfa3825e99"
+  integrity sha1-LRd/ZS+jHpObRDjVNBSZ36OCXpk=
+
 lodash.memoize@^4.1.2:
   version "4.1.2"
   resolved "https://registry.npmjs.org/lodash.memoize/-/lodash.memoize-4.1.2.tgz#bcc6c49a42a2840ed997f323eada5ecd182e0bfe"
@@ -7668,6 +7694,13 @@ node-fetch-npm@^2.0.2:
     encoding "^0.1.11"
     json-parse-better-errors "^1.0.0"
     safe-buffer "^5.1.1"
+
+node-gettext@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.npmjs.org/node-gettext/-/node-gettext-2.0.0.tgz#f1dc1237cdc546f51593da340304b8beba5b8525"
+  integrity sha1-8dwSN83FRvUVk9o0AwS4vrpbhSU=
+  dependencies:
+    lodash.get "^4.4.2"
 
 node-gyp@^3.8.0:
   version "3.8.0"
