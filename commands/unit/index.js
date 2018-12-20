@@ -154,7 +154,13 @@ module.exports = (program) => {
 
             app.logger.stop();
 
-            await runTests(app, project, tempUnit, options, taskEnvironments);
+            try {
+                await runTests(app, project, tempUnit, options, taskEnvironments);
+            } catch (error) {
+                if (!options.watch) {
+                    throw error;
+                }
+            }
 
             if (options.watch) {
                 // start the watch task
@@ -494,7 +500,7 @@ async function getKarmaConfig(app, project, options) {
 
         // Continuous Integration mode
         // if true, Karma captures browsers, runs the tests and exits
-        singleRun: true,
+        singleRun: !options.watch,
 
         // Concurrency level
         // how many browser should be started simultaneously
