@@ -472,7 +472,7 @@ async function getKarmaConfig(app, project, options) {
         browserDisconnectTimeout: 6 * 1000,
         browserDisconnectTolerance: 5,
         browserNoActivityTimeout: 2 * 60 * 1000,
-        captureTimeout: 2 * 60 * 1000,
+        captureTimeout: 5 * 60 * 1000,
 
         // enable / disable colors in the output (reporters and logs)
         colors: true,
@@ -553,7 +553,6 @@ async function getKarmaConfig(app, project, options) {
             connectOptions: {
                 'no-ssl-bump-domains': 'all',
             },
-            options: {},
             username: process.env.SAUCE_USERNAME,
             accessKey: process.env.SAUCE_ACCESS_KEY,
             build: process.env.TRAVIS ? `TRAVIS # ${process.env.TRAVIS_BUILD_NUMBER} (${process.env.TRAVIS_BUILD_ID})` : `RNA-${Date.now()}`,
@@ -569,7 +568,7 @@ async function getKarmaConfig(app, project, options) {
         if (conf.browsers.length === 0) {
             throw new Error('invalid SauceLabs targets.');
         }
-        conf.plugins.push(require('karma-sauce-launcher'));
+        conf.plugins.push(require('./plugins/karma-sauce-launcher/index.js'));
     }
 
     if (options.electron) {
