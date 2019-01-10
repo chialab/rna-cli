@@ -13,8 +13,6 @@ module.exports = (program) => {
         .option('[--node]', 'Run tests in node context.')
         .option('[--browser]', 'Run tests in browser context.')
         .option('[--saucelabs]', 'Use SauceLabs as browsers provider.')
-        .option('[--saucelabs.username]', 'SauceLabs username.')
-        .option('[--saucelabs.key]', 'SauceLabs access key.')
         .option('[--electron]', 'Run tests in Electron context.')
         .option('[--nativescript <ios|android>]', 'Run tests in Nativescript context.')
         .option('[--coverage]', 'Generate a code coverage report.')
@@ -38,6 +36,12 @@ module.exports = (program) => {
                 }
                 if (options['saucelabs.key']) {
                     process.env.SAUCE_ACCESS_KEY = options['saucelabs.key'];
+                }
+                if (!process.env.SAUCE_USERNAME && app.store.has('saucelabs.username')) {
+                    process.env.SAUCE_USERNAME = app.store.get('saucelabs.username');
+                }
+                if (!process.env.SAUCE_ACCESS_KEY && app.store.has('saucelabs.accessKey')) {
+                    process.env.SAUCE_ACCESS_KEY = app.store.get('saucelabs.accessKey');
                 }
                 if (!process.env.SAUCE_USERNAME) {
                     throw 'Missing SAUCE_USERNAME variable.';
@@ -470,7 +474,7 @@ async function getKarmaConfig(app, project, options) {
 
         // browser's timeout for handling Safari issues
         browserDisconnectTimeout: 6 * 1000,
-        browserDisconnectTolerance: 5,
+        browserDisconnectTolerance: 0,
         browserNoActivityTimeout: 2 * 60 * 1000,
         captureTimeout: 5 * 60 * 1000,
 
@@ -546,7 +550,7 @@ async function getKarmaConfig(app, project, options) {
         const saucelabs = require('../../lib/saucelabs');
 
         // SauceLabs configuration.
-        conf.retryLimit = 3;
+        conf.retryLimit = 0;
         conf.reporters.push('saucelabs');
         conf.sauceLabs = {
             startConnect: true,
