@@ -594,7 +594,6 @@ async function getKarmaConfig(app, project, options) {
         // Optimal configuration for CI environment.
         conf.client = conf.client || {};
         conf.client.captureConsole = false;
-        conf.logLevel = 'ERROR';
     }
 
     if (options.coverage) {
