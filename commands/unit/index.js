@@ -498,7 +498,7 @@ async function getKarmaConfig(app, project, options) {
         plugins: [
             require('karma-sourcemap-loader'),
             require('karma-mocha'),
-            require('karma-mocha-reporter'),
+            require('./plugins/karma-mocha-reporter/index.js'),
             require('./plugins/karma-chai/index.js'),
         ],
 
@@ -549,6 +549,10 @@ async function getKarmaConfig(app, project, options) {
     if (options.saucelabs) {
         const saucelabs = require('../../lib/saucelabs');
 
+        let job = (process.env.TRAVIS && `TRAVIS # ${process.env.TRAVIS_BUILD_NUMBER} (${process.env.TRAVIS_BUILD_ID})`) ||
+            (process.env.GITLAB_CI && `GITLAB # ${process.env.CI_JOB_NAME} (${process.env.CI_JOB_ID})`) ||
+            `RNA # ${Date.now()}`;
+
         // SauceLabs configuration.
         conf.retryLimit = 0;
         conf.reporters.push('saucelabs');
@@ -560,7 +564,7 @@ async function getKarmaConfig(app, project, options) {
             idleTimeout: 3 * 60 * 1000,
             username: process.env.SAUCE_USERNAME,
             accessKey: process.env.SAUCE_ACCESS_KEY,
-            build: process.env.TRAVIS ? `TRAVIS # ${process.env.TRAVIS_BUILD_NUMBER} (${process.env.TRAVIS_BUILD_ID})` : `RNA-${Date.now()}`,
+            build: job,
             tunnelIdentifier: process.env.TRAVIS ? process.env.TRAVIS_JOB_NUMBER : undefined,
             recordScreenshots: true,
         };
