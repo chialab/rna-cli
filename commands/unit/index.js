@@ -37,10 +37,10 @@ module.exports = (program) => {
                 if (options['saucelabs.key']) {
                     process.env.SAUCE_ACCESS_KEY = options['saucelabs.key'];
                 }
-                if (!process.env.SAUCE_USERNAME && app.store.has('saucelabs.username')) {
+                if (!process.env.SAUCE_USERNAME && app.store.get('saucelabs.username')) {
                     process.env.SAUCE_USERNAME = app.store.get('saucelabs.username');
                 }
-                if (!process.env.SAUCE_ACCESS_KEY && app.store.has('saucelabs.accessKey')) {
+                if (!process.env.SAUCE_ACCESS_KEY && app.store.get('saucelabs.accessKey')) {
                     process.env.SAUCE_ACCESS_KEY = app.store.get('saucelabs.accessKey');
                 }
                 if (!process.env.SAUCE_USERNAME) {
