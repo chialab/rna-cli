@@ -1,4 +1,4 @@
-Set RNA cli configiration.
+Set RNA cli configuration.
 
 Configurations are stored differently based on your os:
 
