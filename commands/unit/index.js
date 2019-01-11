@@ -557,6 +557,7 @@ async function getKarmaConfig(app, project, options) {
             connectOptions: {
                 'no-ssl-bump-domains': 'all',
             },
+            idleTimeout: 3 * 60 * 1000,
             username: process.env.SAUCE_USERNAME,
             accessKey: process.env.SAUCE_ACCESS_KEY,
             build: process.env.TRAVIS ? `TRAVIS # ${process.env.TRAVIS_BUILD_NUMBER} (${process.env.TRAVIS_BUILD_ID})` : `RNA-${Date.now()}`,

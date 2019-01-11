@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 function processConfig(config = {}, args = {}) {
     const username = config.username || process.env.SAUCE_USERNAME;
     const accessKey = config.accessKey || process.env.SAUCE_ACCESS_KEY;
@@ -11,13 +9,13 @@ function processConfig(config = {}, args = {}) {
     const sauceApiProxy = args.proxy || config.proxy;
     // Browser name that will be printed out by Karma.
     const browserName = args.browserName +
-        (args.version ? ' ' + args.version : '') +
-        (args.platform ? ' (' + args.platform + ')' : '');
+        (args.version ? ` ${args.version}` : '') +
+        (args.platform ? ` (${args.platform})` : '');
     // In case "startConnect" is enabled, and no tunnel identifier has been specified, we just
     // generate one randomly. This makes it possible for developers to use "startConnect" with
     // zero setup.
     if (!tunnelIdentifier && startConnect) {
-        tunnelIdentifier = 'karma-sauce-' + Math.round(new Date().getTime() / 1000);
+        tunnelIdentifier = `karma-sauce-${Math.round(new Date().getTime() / 1000)}`;
     }
     // Support passing a custom selenium location.
     // TODO: This should be just an URL that can be passed. Holding off to avoid breaking changes.
@@ -25,24 +23,29 @@ function processConfig(config = {}, args = {}) {
         seleniumHostUrl = `${config.connectLocationForSERelay}:${config.connectPortForSERelay || 80}`;
     }
     const capabilitiesFromConfig = {
-        build: config.build,
-        commandTimeout: config.commandTimeout || 300,
-        customData: config.customData || {},
-        idleTimeout: config.idleTimeout || 90,
-        maxDuration: config.maxDuration || 1800,
-        name: config.testName || 'Saucelabs Launcher Tests',
-        parentTunnel: config.parentTunnel,
-        public: config.public || 'public',
-        recordScreenshots: config.recordScreenshots,
-        recordVideo: config.recordVideo,
-        tags: config.tags || [],
-        tunnelIdentifier: tunnelIdentifier,
+        'build': config.build,
+        'commandTimeout': config.commandTimeout || 300,
+        'customData': config.customData || {},
+        'idleTimeout': config.idleTimeout || 90,
+        'maxDuration': config.maxDuration || 1800,
+        'name': config.testName || 'Saucelabs Launcher Tests',
+        'parentTunnel': config.parentTunnel,
+        'public': config.public || 'public',
+        'recordScreenshots': config.recordScreenshots,
+        'recordVideo': config.recordVideo,
+        'tags': config.tags || [],
+        tunnelIdentifier,
         'custom-data': config.customData,
     };
-    const sauceConnectOptions = Object.assign({ 
+
+    const sauceConnectOptions = Object.assign({
         // By default, we just pass in the general Saucelabs credentials for establishing the
         // SauceConnect tunnel. This makes it possible to use "startConnect" with no additional setup.
-        username: username, accessKey: accessKey, tunnelIdentifier: tunnelIdentifier }, config.connectOptions);
+        username,
+        accessKey,
+        tunnelIdentifier,
+    }, config.connectOptions);
+
     const seleniumCapabilities = Object.assign({}, capabilitiesFromConfig, config.options, args);
     return {
         startConnect,
@@ -55,5 +58,5 @@ function processConfig(config = {}, args = {}) {
         accessKey,
     };
 }
+
 exports.processConfig = processConfig;
-//# sourceMappingURL=process-config.js.map
