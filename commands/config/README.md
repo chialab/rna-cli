@@ -1,8 +1,9 @@
 Set RNA cli configiration.
 
 Configurations are stored differently based on your os:
-Mac OS and Linux: `~/.config/@chialab/rna-cli/store.json`
-Windows: `%APPDATA%/@chialab/rna-cli/store.json`
+
+* Mac OS and Linux: `~/.config/@chialab/rna-cli/store.json`
+* Windows: `%APPDATA%/@chialab/rna-cli/store.json`
 
 ### Usage
 ```sh
