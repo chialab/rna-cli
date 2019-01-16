@@ -526,7 +526,7 @@ function MochaReporter(baseReporterDecorator, formatError, config) {
         });
 
         if (outputMode !== 'minimal') {
-            self.write('\n');
+            self.write(`\n${colorize.underline('SPECS:')}\n`);
             specPrintStack
                 .filter((line) => typeof line === 'string')
                 .forEach((line) => {
@@ -548,7 +548,7 @@ function MochaReporter(baseReporterDecorator, formatError, config) {
         self.write('\n\n');
 
         if (browsers.length > 0) {
-            self.write(`${colorize.underline.bold('SUMMARY:')}\n`);
+            self.write(`${colorize.underline('SUMMARY:')}\n`);
             self.write(colors.success.print(`${getLogSymbol(colors.success)} ${results.success} ${getTestNounFor(results.success)} completed`));
             self.write('\n');
 
@@ -567,7 +567,7 @@ function MochaReporter(baseReporterDecorator, formatError, config) {
                 self.write('\n');
 
                 if (outputMode !== 'noFailures') {
-                    self.write(`\n${colorize.underline.bold('FAILED TESTS:')}\n`);
+                    self.write(`\n${colorize.underline('FAILED TESTS:')}\n`);
                     printFailures(self.allResults);
                 }
             }

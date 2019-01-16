@@ -563,11 +563,9 @@ async function getKarmaConfig(app, project, options) {
             username: process.env.SAUCE_USERNAME,
             accessKey: process.env.SAUCE_ACCESS_KEY,
             build: job,
-            tunnelIdentifier: process.env.TRAVIS ? process.env.TRAVIS_JOB_NUMBER : undefined,
             recordScreenshots: true,
+            testName: getTestName(project),
         };
-
-        conf.sauceLabs.testName = getTestName(project);
 
         let saucelabsBrowsers = await saucelabs.launchers(options.targets);
         conf.customLaunchers = saucelabsBrowsers;
