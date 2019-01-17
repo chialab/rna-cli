@@ -30,9 +30,9 @@ jobs:
         - 'docker build -t artifact .'
       after_success:
         - | # Tag
-          echo -e "\033[34mPushing \033[33;1m${TRAVIS_REPO_SLUG}:${TRAVIS_TAG:1}\033[34m image\033[0m..."
-          docker tag artifact "${TRAVIS_REPO_SLUG}:${TRAVIS_TAG:1}"
-          docker push "${TRAVIS_REPO_SLUG}:${TRAVIS_TAG:1}"
+          echo -e "\033[34mPushing \033[33;1m${TRAVIS_REPO_SLUG}:${TRAVIS_TAG#v}\033[34m image\033[0m..."
+          docker tag artifact "${TRAVIS_REPO_SLUG}:${TRAVIS_TAG#v}"
+          docker push "${TRAVIS_REPO_SLUG}:${TRAVIS_TAG#v}"
         - | # Latest
           if [[ "$TRAVIS_TAG" =~ ^v?([0-9.]+)$ ]]; then
             echo -e "\033[34mPushing \033[33;1m${TRAVIS_REPO_SLUG}:latest\033[34m image\033[0m..."
