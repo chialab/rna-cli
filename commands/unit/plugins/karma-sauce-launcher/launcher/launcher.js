@@ -22,8 +22,7 @@ function SaucelabsLauncher(args, /* config.sauceLabs */ config, /* SauceConnect 
                 // for it being ready. In case a tunnel is already active, this will just continue
                 // without establishing a new one.
                 await sauceConnect.establishTunnel(sauceConnectOptions);
-            }
-            catch (error) {
+            } catch (error) {
                 log.error(error);
                 this._done('failure');
                 return;
@@ -46,8 +45,7 @@ function SaucelabsLauncher(args, /* config.sauceLabs */ config, /* SauceConnect 
             // because otherwise the Saucelabs reporter is not able to report results.
             browserMap.set(this.id, { sessionId, username, accessKey, proxy: sauceApiProxy });
             await driver.get(pageUrl);
-        }
-        catch (e) {
+        } catch (e) {
             log.error(e);
             // Notify karma about the failure.
             this._done('failure');

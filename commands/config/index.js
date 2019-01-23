@@ -19,7 +19,7 @@ module.exports = (program) => {
             let value = options.arguments[1];
             try {
                 value = JSON.parse(value);
-            } catch {
+            } catch(error) {
                 //
             }
 
