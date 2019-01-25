@@ -68,6 +68,7 @@
     "mocha": "^5.2.0",
     "postcss": "^7.0.7",
     "postcss-all-unset": "^1.1.0",
+    "postcss-copy": "^7.1.0",
     "postcss-focus-visible": "^4.0.0",
     "postcss-focus-within": "^3.0.0",
     "postcss-scss": "^2.0.0",
