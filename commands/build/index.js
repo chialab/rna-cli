@@ -11,12 +11,13 @@ module.exports = (program) => {
         .readme(`${__dirname}/README.md`)
         .option('<file>', 'The file to build.')
         .option('<package1> <package2> <package3>', 'The packages to build.')
-        .option('--output', 'The destination file.')
+        .option('--output <file>', 'The destination file.')
         .option('[--targets]', 'A supported browserslist query. Use --no-targets to transpile only non-standard features.')
         .option('[--name]', 'The bundle name.')
         .option('[--format]', 'The bundle format (es, umd, iife, cjs).')
         .option('[--production]', 'Minify bundle.')
         .option('[--declaration]', 'Generate typescript declarations.')
+        .option('[--assets] <directory>', 'The build assets directory.')
         .option('[--watch]', 'Watch sources and rebuild on files changes.')
         .option('[--no-map]', 'Do not produce source map.')
         .option('[--no-lint]', 'Do not lint files before bundle.')
@@ -102,6 +103,7 @@ module.exports = (program) => {
                             production: options.production,
                             map: options.map,
                             lint: options.lint,
+                            assets: options.assets,
                         });
                         // collect the generated Bundle.
                         bundles.push(manifest);
@@ -119,6 +121,7 @@ module.exports = (program) => {
                             production: options.production,
                             map: options.map,
                             lint: options.lint,
+                            assets: options.assets,
                         });
                         // collect the generated Bundle.
                         bundles.push(manifest);
@@ -150,6 +153,7 @@ module.exports = (program) => {
                         production: options.production,
                         map: options.map,
                         lint: options.lint,
+                        assets: options.assets,
                     });
                     // collect the generated Bundle
                     bundles.push(manifest);
@@ -165,6 +169,7 @@ module.exports = (program) => {
                         production: options.production,
                         map: options.map,
                         lint: options.lint,
+                        assets: options.assets,
                     });
                     // collect the generated Bundle
                     bundles.push(manifest);
@@ -260,6 +265,7 @@ async function rollup(app, project, options, bundle = {}) {
                 map: options.map,
                 lint: options.lint,
                 targets: options.targets,
+                assets: options.assets,
             });
         }
 
@@ -338,6 +344,7 @@ async function postcss(app, project, options, bundle = {}) {
                 map: options.map,
                 lint: options.lint,
                 targets: options.targets,
+                assets: options.assets,
             });
         }
         app.logger.play('postcss...', input.localPath);
