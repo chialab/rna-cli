@@ -75,10 +75,10 @@ module.exports = (program) => {
                     ignore: '**/*.map',
                 });
 
-                await watcher.watch((event, file) => {
+                await watcher.watch((file) => {
                     // File updated: notify BrowserSync so that it can be reloaded.
                     server.reload(base.relative(file));
-                    if (event !== 'unlink') {
+                    if (file.exists()) {
                         app.logger.info(`${file.localPath} injected`);
                     }
                 });
