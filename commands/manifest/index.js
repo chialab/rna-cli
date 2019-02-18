@@ -149,6 +149,13 @@ module.exports = (program) => {
                         index.head.appendChild(theme);
                     }
                 }
+                // update manifest link
+                let link = index.querySelector('link[rel="manifest"]') || index.createElement('link');
+                link.setAttribute('rel', 'manifest');
+                link.setAttribute('href', manifestPath.basename);
+                if (!link.parentNode) {
+                    index.head.appendChild(link);
+                }
 
                 // beautify html
                 let html = require('js-beautify').html(
@@ -244,6 +251,58 @@ const APPLE_ICONS = {
     },
 };
 
+const APPLE_LAUNCH = {
+    IPHONE_X: {
+        name: 'apple-launch-iphonex.png',
+        width: 1125,
+        height: 2436,
+        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        query: '(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)',
+    },
+    IPHONE_8: {
+        name: 'apple-launch-iphone8.png',
+        width: 750,
+        height: 1334,
+        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        query: '(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)',
+    },
+    IPHONE_8_PLUS: {
+        name: 'apple-launch-iphone8-plus.png',
+        width: 1242,
+        height: 2208,
+        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        query: '(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)',
+    },
+    IPHONE_5: {
+        name: 'apple-launch-iphone5.png',
+        width: 640,
+        height: 1136,
+        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        query: '(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)',
+    },
+    IPAD_AIR: {
+        name: 'apple-launch-ipadair.png',
+        width: 1536,
+        height: 2048,
+        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        query: '(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)',
+    },
+    IPAD_PRO_10: {
+        name: 'apple-launch-ipadpro10.png',
+        width: 1668,
+        height: 2224,
+        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        query: '(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2)',
+    },
+    IPAD_PRO_12: {
+        name: 'apple-launch-ipadpro12.png',
+        width: 2048,
+        height: 2732,
+        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        query: '(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)',
+    },
+};
+
 /**
  * Generate icon files.
  * Update manifest and index.html.
@@ -269,6 +328,7 @@ async function generateIcons(manifest, index, icon, root) {
     let icons = await generateIcon(icon.path, iconsPath, MANIFEST_ICONS);
     let favicons = await generateIcon(icon.path, iconsPath, FAVICONS);
     let appleIcons = await generateIcon(icon.path, iconsPath, APPLE_ICONS);
+    let appleLaunch = await generateLaunch(icon.path, iconsPath, APPLE_LAUNCH);
 
     // update manifest icons
     manifest.icons = icons.map((file) => ({
@@ -293,6 +353,16 @@ async function generateIcons(manifest, index, icon, root) {
         });
     }
 
+    // update apple launch screens
+    if (index) {
+        Object.keys(APPLE_LAUNCH)
+            .forEach((key, num) => {
+                let rule = APPLE_LAUNCH[key];
+                let image = appleLaunch[num];
+                index.head.innerHTML += `<link rel="apple-touch-startup-image" media="${rule.query}" href="${root.relative(image.src)}">`;
+            });
+    }
+
     return iconsPath;
 }
 
@@ -310,6 +380,14 @@ async function generateIcons(manifest, index, icon, root) {
  * @property {number} size The size of the icon
  * @property {number} gutter The margin between the icon edge and the input image
  * @property {number} round The rounded corner value
+ * @property {Color}  background The background color of the icon
+ */
+
+/**
+ * @typedef {Object} LaunchDescriptor
+ * @property {string} name The filename
+ * @property {number} width The width of the icon
+ * @property {number} height The size of the icon
  * @property {Color}  background The background color of the icon
  */
 
@@ -336,7 +414,8 @@ function generateIcon(input, output, presets = {}) {
             let buffer = await sharp(input)
                 // resize the image
                 .resize(options.size - (options.gutter || 0))
-                .png().toBuffer();
+                .png()
+                .toBuffer();
 
             // create the first level with the background color
             buffer = await sharp({
@@ -352,7 +431,8 @@ function generateIcon(input, output, presets = {}) {
                     gravity: sharp.gravity.centre,
                     density: 300,
                 })
-                .png().toBuffer();
+                .png()
+                .toBuffer();
 
             if (options.round) {
                 // mask the icon with an svg with rounded corners
@@ -360,7 +440,8 @@ function generateIcon(input, output, presets = {}) {
                 let roundedCorners = Buffer.alloc(roundedContent.length, roundedContent);
                 buffer = await sharp(buffer)
                     .overlayWith(roundedCorners, { cutout: true })
-                    .png().toBuffer();
+                    .png()
+                    .toBuffer();
             }
 
             // save the file
@@ -369,6 +450,62 @@ function generateIcon(input, output, presets = {}) {
             return {
                 src: dest,
                 size: options.size,
+            };
+        })
+    );
+}
+
+/**
+ * Generate launch screens.
+ *
+ * @param {string} input The icon source image.
+ * @param {NavigatorDirectory} output The output folder for generated icons.
+ * @param {Object<string, LaunchDescriptor>} presets Custom presets configurations.
+ * @return {Promise}
+ */
+function generateLaunch(input, output, presets = {}) {
+    const sharp = require('sharp');
+
+    // ensure the output dir exists
+    output.ensure();
+    return Promise.all(
+        Object.keys(presets).map(async (k) => {
+
+            // merge preset options
+            let options = Object.assign({}, presets[k]);
+            let dest = output.file(options.name);
+            let size = Math.round(Math.min(options.height / 6, options.width / 6)) - (options.gutter || 0);
+            // load the icon source
+            let buffer = await sharp(input)
+                // resize the image
+                .resize(size)
+                .png()
+                .toBuffer();
+
+            // create the first level with the background color
+            buffer = await sharp({
+                create: {
+                    width: options.width || options.size,
+                    height: options.height || options.size,
+                    channels: 4,
+                    background: options.background || { r: 0, g: 0, b: 0, alpha: 0 },
+                },
+            })
+                // add the icon
+                .overlayWith(buffer, {
+                    gravity: sharp.gravity.centre,
+                    density: 300,
+                })
+                .png()
+                .toBuffer();
+
+            // save the file
+            await sharp(buffer).toFile(dest.path);
+
+            return {
+                src: dest,
+                size: options.size,
+                width: options.width,
             };
         })
     );

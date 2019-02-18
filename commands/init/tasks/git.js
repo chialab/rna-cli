@@ -36,14 +36,12 @@ module.exports = async function gitTask(app, options, project, templates) {
 
     if (!remote) {
         await gitClient.removeRemote();
-        app.logger.success('git project created without remote', project.localPath);
-        return;
+    } else {
+        // Configure remote.
+        await gitClient.addRemote(remote);
+        project.setRepository(remote);
+        project.save();
     }
-
-    // Configure remote.
-    await gitClient.addRemote(remote);
-    project.setRepository(remote);
-    project.save();
 
     // Write contents to `.gitignore`.
     let gitIgnore = project.file('.gitignore');

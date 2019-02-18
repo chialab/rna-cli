@@ -1,21 +1,22 @@
 const fs = require('fs-extra');
+const path = require('path');
 
-const ELECTRON = require.resolve('electron');
-
-const defaultElectron = {
-    width: 400,
-    height: 300,
-};
-
-const ElectronBrowser = function(baseBrowserDecorator, args, electronOpts) {
+const ElectronBrowser = function(baseBrowserDecorator, args) {
     baseBrowserDecorator(this);
 
-    let browserOptions = Object.assign({}, defaultElectron, electronOpts || {}, args.electronOpts || {});
+    let electronOpts = args.electronOpts || {};
+
+    let browserOptions = Object.assign({}, {
+        width: 400,
+        height: 300,
+    }, electronOpts || {}, args.electronOpts || {});
 
     this._start = (url) => {
-        const SOURCE_PATH = electronOpts.tmpdir;
-        const STATIC_PATH = electronOpts.tmpdir;
-        const MAIN_JS = SOURCE_PATH.file('main.js').path;
+        fs.ensureDirSync(args.tmpdir);
+
+        let SOURCE_PATH = path.join(__dirname, 'ElectronTest');
+        let STATIC_PATH = args.tmpdir;
+        let MAIN_JS = path.join(args.tmpdir, 'main.js');
 
         fs.copySync(SOURCE_PATH, STATIC_PATH);
         let content = fs.readFileSync(MAIN_JS, 'utf8')
@@ -30,15 +31,15 @@ ElectronBrowser.prototype = {
     name: 'electron',
 
     DEFAULT_CMD: {
-        darwin: require(ELECTRON),
-        linux: require(ELECTRON),
-        win32: require(ELECTRON),
+        darwin: 'electron',
+        linux: 'electron',
+        win32: 'electron',
     },
 
     ENV_CMD: 'ELECTRON_BIN',
 };
 
-ElectronBrowser.$inject = ['baseBrowserDecorator', 'args', 'config.electronOpts'];
+ElectronBrowser.$inject = ['baseBrowserDecorator', 'args'];
 
 // PUBLISH DI MODULE
 module.exports = {

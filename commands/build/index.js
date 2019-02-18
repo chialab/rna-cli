@@ -181,22 +181,12 @@ module.exports = (program) => {
                     ignore: (file) => !filterChangedBundles(bundles, file).length,
                 });
 
-                watcher.on('change', (event, file) => {
-                    let label;
-                    switch (event) {
-                        case 'add':
-                            label = 'created';
-                            break;
-                        case 'unlink':
-                            label = 'removed';
-                            break;
-                        default:
-                            label = 'changed';
-                    }
+                watcher.on('change', (file) => {
+                    let label = file.exists() ? 'changed' : 'removed';
                     app.logger.info(`${file.localPath} ${label}`);
                 });
 
-                await watcher.watch(async (event, file) => {
+                await watcher.watch(async (file) => {
                     let promise = Promise.resolve();
                     let bundlesWithChanges = filterChangedBundles(bundles, file.path);
 

@@ -24,7 +24,7 @@ module.exports = async function readmeTask(app, options, project, templates) {
     const content = isNew ? '' : readmeFile.read();
 
     if (isNew || content.includes(headerPlaceholder)) {
-        const template = _.template(headerTemplate.read());
+        const template = _.template(headerTemplate.read().trim());
         configurator(readmeFile, template({
             project,
         }), headerPlaceholder);
@@ -32,7 +32,7 @@ module.exports = async function readmeTask(app, options, project, templates) {
 
     if (isNew || content.includes(workspacesPlaceholder)) {
         if (project.get('workspaces')) {
-            const template = _.template(workspacesTemplate.read());
+            const template = _.template(workspacesTemplate.read().trim());
             configurator(readmeFile, template({
                 project,
             }), workspacesPlaceholder);
@@ -42,7 +42,7 @@ module.exports = async function readmeTask(app, options, project, templates) {
     }
 
     if (isNew || content.includes(devPlaceholder)) {
-        const template = _.template(devTemplate.read());
+        const template = _.template(devTemplate.read().trim());
         configurator(readmeFile, template({
             project,
         }), devPlaceholder);

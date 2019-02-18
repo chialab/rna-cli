@@ -27,9 +27,11 @@ module.exports = (program) => {
                 const workspaces = project.workspaces;
                 if (workspaces) {
                     workspaces.forEach((ws) => {
-                        let styleDirectory = ws.directories.src;
-                        if (styleDirectory) {
-                            entries.push(...styleDirectory.resolve('**/*'));
+                        let srcDirectory = ws.directories.src;
+                        if (srcDirectory && srcDirectory.exists()) {
+                            entries.push(...srcDirectory.resolve('**/*'));
+                        } else if (ws.directory('src').exists()) {
+                            entries.push(...ws.directory('src').resolve('**/*'));
                         }
                     });
                 } else if (project.directories.src) {

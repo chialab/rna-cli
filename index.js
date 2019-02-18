@@ -7,6 +7,7 @@ const packageJson = require('./package.json');
 
 const program = new CLI('rna', packageJson.name, packageJson.version);
 
+require('./commands/config/index.js')(program);
 require('./commands/start/index.js')(program);
 require('./commands/test/index.js')(program);
 require('./commands/add/index.js')(program);
@@ -36,5 +37,5 @@ require('./commands/run/index.js')(program);
 })();
 
 process.on('SIGINT', async () => {
-    process.exit();
+    process.exit(1);
 });

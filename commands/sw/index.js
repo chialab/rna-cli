@@ -85,7 +85,7 @@ module.exports = (program) => {
                         ignore: '**/*.map',
                     });
 
-                    await watcher.watch(async (event, file) => {
+                    await watcher.watch(async (file) => {
                         if (file.path === output.path) {
                             const content = output.read();
                             if (!content.match(/\.(precache|precacheAndRoute)\(\[\]\)/)) {
