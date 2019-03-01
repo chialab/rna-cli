@@ -15,6 +15,7 @@ env:
 plugins:
   - mocha
   - babel
+  - promise
 
 parser: babel-eslint
 
@@ -104,4 +105,10 @@ rules:
     - 1
     - varsIgnorePattern: (IDOM|process)
   no-console:
+    - 1
+  promise/no-return-wrap:
+    - 1
+  promise/always-return:
+    - 2
+  promise/no-return-in-finally:
     - 1

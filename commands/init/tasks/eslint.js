@@ -24,6 +24,6 @@ module.exports = async function eslintTask(app, options, project, templates) {
     // "Append" configuration to `.eslintignore`.
     configurator(eslintIgnore, ignoreTemplate.read(), '# RNA');
 
-    await manager.dev('eslint', 'eslint-plugin-mocha', 'babel-eslint', 'eslint-plugin-babel');
+    await manager.dev('eslint', 'eslint-plugin-mocha', 'babel-eslint', 'eslint-plugin-babel', 'eslint-plugin-promise');
     app.logger.success('.eslintrc.yml updated', eslintConfig.localPath);
 };

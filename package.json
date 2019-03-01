@@ -38,6 +38,7 @@
     "eslint": "^5.5.0",
     "eslint-plugin-babel": "^5.1.0",
     "eslint-plugin-mocha": "^5.2.0",
+    "eslint-plugin-promise": "^4.0.1",
     "express": "^4.16.3",
     "express-ws": "^4.0.0",
     "fs-extra": "^7.0.0",
