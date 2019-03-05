@@ -23,7 +23,7 @@ module.exports = (program) => {
         .option('[--jsx.pragma]', 'The JSX pragma to use.')
         .option('[--jsx.module]', 'The module to auto import for JSX pragma.')
         .option('[--polyfill]', 'Auto add polyfills. [experimental]')
-        .option('[--optimize]', 'Run OptimizeJS after bundle. [experimental]')
+        .option('[--analyze <file>]', 'Save an analytic report for bundle size.')
         .action(async (app, options = {}) => {
             const path = require('path');
             const browserslist = require('browserslist');
@@ -102,6 +102,7 @@ module.exports = (program) => {
                             production: options.production,
                             map: options.map,
                             lint: options.lint,
+                            analyze: options.analyze,
                         });
                         // collect the generated Bundle.
                         bundles.push(manifest);
@@ -150,6 +151,7 @@ module.exports = (program) => {
                         production: options.production,
                         map: options.map,
                         lint: options.lint,
+                        analyze: options.analyze,
                     });
                     // collect the generated Bundle
                     bundles.push(manifest);
@@ -250,6 +252,7 @@ async function rollup(app, project, options, bundle = {}) {
                 map: options.map,
                 lint: options.lint,
                 targets: options.targets,
+                analyze: options.analyze,
             });
         }
 
