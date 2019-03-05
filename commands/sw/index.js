@@ -49,20 +49,25 @@ module.exports = (program) => {
             try {
                 let res;
                 if (output.exists()) {
-                    let tmpFile = app.store.tmpfile('sw.js');
-                    tmpFile.write(output.read().replace(/\.(precache|precacheAndRoute)\s*\(\s*\[([^\]]*)\]\)/gi, '.$1([])'));
-                    try {
-                        res = await workbox.injectManifest({
-                            swSrc: tmpFile.path,
-                            swDest: output.path,
-                            globDirectory: input.path,
-                            globPatterns: ['**/*'],
-                            globIgnores: exclude,
-                            maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
-                        });
-                    } catch (err) {
-                        tmpFile.unlink();
-                        throw err;
+                    let content = output.read();
+                    if (content.match(/\.(precache|precacheAndRoute)\s*\(\s*\[([^\]]*)\]\)/i)) {
+                        let tmpFile = app.store.tmpfile('sw.js');
+                        tmpFile.write(content.replace(/\.(precache|precacheAndRoute)\s*\(\s*\[([^\]]*)\]\)/gi, '.$1([])'));
+                        try {
+                            res = await workbox.injectManifest({
+                                swSrc: tmpFile.path,
+                                swDest: output.path,
+                                globDirectory: input.path,
+                                globPatterns: ['**/*'],
+                                globIgnores: exclude,
+                                maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
+                            });
+                        } catch (err) {
+                            tmpFile.unlink();
+                            throw err;
+                        }
+                    } else {
+                        res = content;
                     }
                 } else {
                     res = await workbox.generateSW({
