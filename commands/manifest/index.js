@@ -240,13 +240,13 @@ const APPLE_ICONS = {
     APPLE_TOUCH_ICON: {
         name: 'apple-touch-icon.png',
         size: 180,
-        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
         gutter: 30,
     },
     APPLE_TOUCH_ICON_IPAD: {
         name: 'apple-touch-icon-ipad.png',
         size: 167,
-        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
         gutter: 30,
     },
 };
@@ -256,49 +256,49 @@ const APPLE_LAUNCH = {
         name: 'apple-launch-iphonex.png',
         width: 1125,
         height: 2436,
-        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
         query: '(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)',
     },
     IPHONE_8: {
         name: 'apple-launch-iphone8.png',
         width: 750,
         height: 1334,
-        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
         query: '(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)',
     },
     IPHONE_8_PLUS: {
         name: 'apple-launch-iphone8-plus.png',
         width: 1242,
         height: 2208,
-        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
         query: '(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)',
     },
     IPHONE_5: {
         name: 'apple-launch-iphone5.png',
         width: 640,
         height: 1136,
-        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
         query: '(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)',
     },
     IPAD_AIR: {
         name: 'apple-launch-ipadair.png',
         width: 1536,
         height: 2048,
-        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
         query: '(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)',
     },
     IPAD_PRO_10: {
         name: 'apple-launch-ipadpro10.png',
         width: 1668,
         height: 2224,
-        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
         query: '(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2)',
     },
     IPAD_PRO_12: {
         name: 'apple-launch-ipadpro12.png',
         width: 2048,
         height: 2732,
-        background: { r: 255, g: 255, b: 255, alpha: 255 },
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
         query: '(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)',
     },
 };
@@ -371,7 +371,7 @@ async function generateIcons(manifest, index, icon, root) {
  * @property {number} r Red value [0-255]
  * @property {number} g Green value [0-255]
  * @property {number} b Blue value [0-255]
- * @property {number} alpha Alpha value [0-255]
+ * @property {number} alpha Alpha value [0-1]
  */
 
 /**
@@ -400,52 +400,26 @@ async function generateIcons(manifest, index, icon, root) {
  * @return {Promise}
  */
 function generateIcon(input, output, presets = {}) {
-    const sharp = require('sharp');
+    const Jimp = require('jimp');
 
     // ensure the output dir exists
     output.ensure();
     return Promise.all(
         Object.keys(presets).map(async (k) => {
-
             // merge preset options
             let options = Object.assign({}, presets[k]);
             let dest = output.file(options.name);
+            // create the icon
+            let iconBuffer = new Jimp(options.size, options.size, colorToString(options.background || { r: 255, g: 255, b: 255, alpha: 1 }));
             // load the icon source
-            let buffer = await sharp(input)
+            let sourceBuffer = (await Jimp.read(input))
                 // resize the image
-                .resize(options.size - (options.gutter || 0))
-                .png()
-                .toBuffer();
+                .resize(options.size - (options.gutter || 0), options.size - (options.gutter || 0));
 
-            // create the first level with the background color
-            buffer = await sharp({
-                create: {
-                    width: options.size,
-                    height: options.size,
-                    channels: 4,
-                    background: options.background || { r: 0, g: 0, b: 0, alpha: 0 },
-                },
-            })
-                // add the icon
-                .overlayWith(buffer, {
-                    gravity: sharp.gravity.centre,
-                    density: 300,
-                })
-                .png()
-                .toBuffer();
-
-            if (options.round) {
-                // mask the icon with an svg with rounded corners
-                let roundedContent = `<svg><rect x="0" y="0" width="${options.size}" height="${options.size}" rx="${options.round}" ry="${options.round}"/></svg>`;
-                let roundedCorners = Buffer.alloc(roundedContent.length, roundedContent);
-                buffer = await sharp(buffer)
-                    .overlayWith(roundedCorners, { cutout: true })
-                    .png()
-                    .toBuffer();
-            }
+            iconBuffer.composite(sourceBuffer, (options.gutter || 0) / 2, (options.gutter || 0) / 2);
 
             // save the file
-            await sharp(buffer).toFile(dest.path);
+            await iconBuffer.write(dest.path);
 
             return {
                 src: dest,
@@ -464,7 +438,7 @@ function generateIcon(input, output, presets = {}) {
  * @return {Promise}
  */
 function generateLaunch(input, output, presets = {}) {
-    const sharp = require('sharp');
+    const Jimp = require('jimp');
 
     // ensure the output dir exists
     output.ensure();
@@ -475,32 +449,17 @@ function generateLaunch(input, output, presets = {}) {
             let options = Object.assign({}, presets[k]);
             let dest = output.file(options.name);
             let size = Math.round(Math.min(options.height / 6, options.width / 6)) - (options.gutter || 0);
+            // create the splashscreen
+            let splashBuffer = new Jimp(options.width, options.height, colorToString(options.background || { r: 255, g: 255, b: 255, alpha: 1 }));
             // load the icon source
-            let buffer = await sharp(input)
+            let sourceBuffer = (await Jimp.read(input))
                 // resize the image
-                .resize(size)
-                .png()
-                .toBuffer();
+                .resize(size, size);
 
-            // create the first level with the background color
-            buffer = await sharp({
-                create: {
-                    width: options.width || options.size,
-                    height: options.height || options.size,
-                    channels: 4,
-                    background: options.background || { r: 0, g: 0, b: 0, alpha: 0 },
-                },
-            })
-                // add the icon
-                .overlayWith(buffer, {
-                    gravity: sharp.gravity.centre,
-                    density: 300,
-                })
-                .png()
-                .toBuffer();
+            splashBuffer.composite(sourceBuffer, (options.width - size) / 2, (options.height - size) / 2);
 
             // save the file
-            await sharp(buffer).toFile(dest.path);
+            await splashBuffer.write(dest.path);
 
             return {
                 src: dest,
@@ -509,4 +468,8 @@ function generateLaunch(input, output, presets = {}) {
             };
         })
     );
+}
+
+function colorToString({ r, g, b, alpha }) {
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
