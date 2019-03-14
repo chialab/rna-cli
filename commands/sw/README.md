@@ -1,3 +1,5 @@
+⚠️  Although the command has been retained for backward compatibility with version 1.0 and 2.0, you really should use the new `rna build` command.
+
 This command uses [workbox](https://developers.google.com/web/tools/workbox/) by Google to generate a Service Worker with precached files.
 
 ## Options

@@ -13,6 +13,7 @@ module.exports = (program) => {
         .option('--output', 'The service worker to generate or update.')
         .option('[--exclude]', 'A glob of files to exclude from the precache.')
         .option('[--watch]', 'Regenerated service worker on source changes.')
+        .deprecate('3.0.0', 'Please checkout the new `rna build` features.')
         .action(async function sw(app, options) {
             if (!options.arguments.length) {
                 throw 'missing input files.';

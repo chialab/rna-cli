@@ -12,7 +12,7 @@ yarn-error.log
 
 # BUILD
 dist
-public/**/*.js
-public/**/*.js.map
-public/**/*.css
-public/**/*.css.map
+public/
+public/
+public/
+public/
