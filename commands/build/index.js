@@ -256,7 +256,7 @@ module.exports = (program) => {
                         let bundle = bundlesWithChanges[i];
                         promise = promise.then(async () => {
                             try {
-                                await bundle.rebuild();
+                                await bundle.build(file.path);
                             } catch (err) {
                                 if (err) {
                                     app.logger.error(err);
