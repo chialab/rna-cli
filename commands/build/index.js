@@ -93,9 +93,12 @@ module.exports = (program) => {
                     }
 
                     if (moduleFile) {
-                        let moduleOutput = mainFile ? mainFile : output;
                         // a javascript source has been detected.
-                        let manifest = await rollup(app, entry, {
+                        const ScriptBundler = require('../../lib/Bundlers/ScriptBundler.js');
+
+                        let moduleOutput = mainFile ? mainFile : output;
+                        let bundler = new ScriptBundler(app, entry);
+                        await bundler.setup({
                             input: moduleFile,
                             output: moduleOutput,
                             targets,
@@ -104,16 +107,20 @@ module.exports = (program) => {
                             lint: options.lint,
                             analyze: options.analyze,
                         });
+                        await bundler.build();
                         // collect the generated Bundle.
-                        bundles.push(manifest);
+                        bundles.push(bundler);
                     }
 
                     if (styleFile) {
+                        const StyleBundler = require('../../lib/Bundlers/StyleBundler.js');
+
                         let styleOutput = mainFile ?
                             mainFile.directory.file(mainFile.basename.replace(mainFile.extname, '.css')) :
                             output;
                         // a style source has been detected.
-                        let manifest = await postcss(app, entry, {
+                        let bundler = new StyleBundler(app, entry);
+                        await bundler.setup({
                             input: styleFile,
                             output: styleOutput,
                             targets,
@@ -121,8 +128,9 @@ module.exports = (program) => {
                             map: options.map,
                             lint: options.lint,
                         });
+                        await bundler.build();
                         // collect the generated Bundle.
-                        bundles.push(manifest);
+                        bundles.push(bundler);
                     }
                     continue;
                 }
@@ -144,7 +152,10 @@ module.exports = (program) => {
 
                 if (isJSFile(entry.path)) {
                     // Javascript file
-                    let manifest = await rollup(app, project, {
+                    const ScriptBundler = require('../../lib/Bundlers/ScriptBundler.js');
+
+                    let bundler = new ScriptBundler(app, project);
+                    await bundler.setup({
                         input: entry,
                         output,
                         targets,
@@ -153,14 +164,18 @@ module.exports = (program) => {
                         lint: options.lint,
                         analyze: options.analyze,
                     });
+                    await bundler.build();
                     // collect the generated Bundle
-                    bundles.push(manifest);
+                    bundles.push(bundler);
                     continue;
                 }
 
                 if (isStyleFile(entry.path)) {
                     // Style file
-                    let manifest = await postcss(app, project, {
+                    const StyleBundler = require('../../lib/Bundlers/StyleBundler.js');
+
+                    let bundler = new StyleBundler(app, project);
+                    await bundler.setup({
                         input: entry,
                         output,
                         targets,
@@ -168,13 +183,16 @@ module.exports = (program) => {
                         map: options.map,
                         lint: options.lint,
                     });
+                    await bundler.build();
                     // collect the generated Bundle
-                    bundles.push(manifest);
+                    bundles.push(bundler);
                     continue;
                 }
 
                 if (entry.extname === '.html') {
-                    let manifest = await html(app, project, {
+                    const HTMLBundler = require('../../lib/Bundlers/HTMLBundler.js');
+                    let bundler = new HTMLBundler(app, project);
+                    await bundler.setup({
                         input: entry,
                         output,
                         targets,
@@ -182,18 +200,23 @@ module.exports = (program) => {
                         map: options.map,
                         lint: options.lint,
                     });
+                    await bundler.build();
                     // collect the generated Bundle
-                    bundles.push(manifest);
+                    bundles.push(bundler);
                     continue;
                 }
 
                 if (entry.extname === '.webmanifest') {
-                    let manifest = await webmanifest(app, project, {
+                    const WebManifest = require('../../lib/Bundlers/WebManifest.js');
+
+                    let bundler = new WebManifest(app, project);
+                    await bundler.setup({
                         input: entry,
                         output,
                     });
+                    await bundler.build();
                     // collect the generated Bundle
-                    bundles.push(manifest);
+                    bundles.push(bundler);
                     continue;
                 }
             }
@@ -249,254 +272,6 @@ module.exports = (program) => {
             return bundles;
         });
 };
-
-async function rollup(app, project, options, bundle = {}) {
-    const Rollup = require('../../lib/Bundlers/Rollup.js');
-    const profile = app.profiler.task('rollup');
-
-    try {
-        let input = options.input;
-        let output = options.output;
-        if (!output.extname) {
-            output = output.file(input.basename.replace(input.extname, '.js'));
-        }
-
-        if (output.mapFile.exists()) {
-            output.mapFile.unlink();
-        }
-
-        app.logger.play(`bundling${bundle.config ? ' (this will be fast)...' : '...'}`, input.localPath);
-
-        if (!bundle.config && project) {
-            bundle.config = Rollup.detectConfig(app, project, {
-                cacheRoot: app.store.tmpdir('rollup'),
-                input: input.path,
-                output: output.path,
-                production: options.production,
-                map: options.map,
-                lint: options.lint,
-                targets: options.targets,
-                analyze: options.analyze,
-            });
-        }
-
-        let rollupBundle = new Rollup(bundle.config);
-        rollupBundle.on('warning', (warning) => {
-            let message = warning && warning.message || warning;
-            message = message.toString();
-            if (message.indexOf('The \'this\' keyword') !== -1) {
-                return false;
-            }
-            if (message.indexOf('rollupPluginBabelHelper') !== -1) {
-                return false;
-            }
-            app.logger.warn(message);
-        });
-        await rollupBundle.build();
-        await rollupBundle.write();
-        if (app.options.profile) {
-            let tasks = rollupBundle.timings;
-            for (let k in tasks) {
-                profile.task(k, false).set(tasks[k]);
-            }
-        }
-
-        profile.end();
-        app.logger.stop();
-
-        let { size, zipped } = output.size;
-        app.logger.success('bundle ready');
-        app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
-
-        if (rollupBundle.linter && (rollupBundle.linter.hasErrors() || rollupBundle.linter.hasWarnings())) {
-            app.logger.log(rollupBundle.linter.report());
-        }
-
-        bundle.files = rollupBundle.files;
-
-        bundle.rebuild = async function() {
-            return await rollup(app, project, options, bundle);
-        };
-
-        try {
-            global.gc();
-        } catch (err) {
-            //
-        }
-
-        return bundle;
-    } catch (err) {
-        app.logger.stop();
-        profile.end();
-        throw err;
-    }
-}
-
-async function postcss(app, project, options, bundle = {}) {
-    const PostCSS = require('../../lib/Bundlers/PostCSS.js');
-    const profile = app.profiler.task('postcss');
-
-    try {
-        let input = options.input;
-        let output = options.output;
-        if (!output.extname) {
-            output = output.file(input.basename.replace(input.extname, '.css'));
-        }
-
-        if (output.mapFile.exists()) {
-            output.mapFile.unlink();
-        }
-
-        if (!bundle.config) {
-            bundle.config = PostCSS.detectConfig(app, project, {
-                input: input.path,
-                output: output.path,
-                production: options.production,
-                map: options.map,
-                lint: options.lint,
-                targets: options.targets,
-            });
-        }
-        app.logger.play('postcss...', input.localPath);
-
-        let postCSSBundle = new PostCSS(bundle.config);
-        await postCSSBundle.build();
-        await postCSSBundle.write();
-
-        app.logger.stop();
-        profile.end();
-
-        let { size, zipped } = output.size;
-        app.logger.success('css ready');
-        app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
-
-        if (postCSSBundle.linter && (postCSSBundle.linter.hasErrors() || postCSSBundle.linter.hasWarnings())) {
-            app.logger.log(postCSSBundle.linter.report());
-        }
-
-        bundle.files = postCSSBundle.files;
-
-        bundle.rebuild = async function() {
-            return await postcss(app, project, options, bundle);
-        };
-
-        try {
-            global.gc();
-        } catch (err) {
-            //
-        }
-
-        return bundle;
-    } catch (err) {
-        app.logger.stop();
-        profile.end();
-        throw err;
-    }
-}
-
-async function html(app, project, options, bundle = {}) {
-    const HTML = require('../../lib/Bundlers/HTML.js');
-    const profile = app.profiler.task('html');
-
-    try {
-        let input = options.input;
-        let output = options.output;
-        if (!output.extname) {
-            output = output.file(input.basename);
-        }
-
-        if (!bundle.config) {
-            bundle.config = HTML.detectConfig(app, project, {
-                input,
-                output,
-                production: options.production,
-                map: options.map,
-                lint: options.lint,
-                targets: options.targets,
-            });
-        }
-        app.logger.play('html...', input.localPath);
-
-        let htmlBundle = new HTML(bundle.config);
-        await htmlBundle.build();
-        await htmlBundle.write();
-
-        app.logger.stop();
-        profile.end();
-
-        let { size, zipped } = output.size;
-        app.logger.success('html ready');
-        app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
-
-        bundle.files = htmlBundle.files;
-
-        bundle.rebuild = async function() {
-            return await html(app, project, options, bundle);
-        };
-
-        try {
-            global.gc();
-        } catch (err) {
-            //
-        }
-
-        return bundle;
-    } catch (err) {
-        app.logger.stop();
-        profile.end();
-        throw err;
-    }
-}
-
-async function webmanifest(app, project, options, bundle = {}) {
-    const WebManifest = require('../../lib/Bundlers/WebManifest.js');
-    const profile = app.profiler.task('html');
-
-    try {
-        let input = options.input;
-        let output = options.output;
-        if (!output.extname) {
-            output = output.file(input.basename);
-        }
-
-        if (!bundle.config) {
-            bundle.config = {
-                input: input.path,
-                output: output.path,
-            };
-        }
-        app.logger.play('manifest...', input.localPath);
-
-        let manifestBundle = new WebManifest(bundle.config);
-        await manifestBundle.build();
-        await manifestBundle.write();
-
-        app.logger.stop();
-        profile.end();
-
-        let { size, zipped } = output.size;
-        app.logger.success('manifest ready');
-        app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
-
-        bundle.files = manifestBundle.files;
-
-        bundle.rebuild = async function() {
-            return await webmanifest(app, project, options, bundle);
-        };
-
-        try {
-            global.gc();
-        } catch (err) {
-            //
-        }
-
-        return bundle;
-    } catch (err) {
-        app.logger.stop();
-        profile.end();
-        throw err;
-    }
-}
 
 function filterChangedBundles(bundles, file) {
     return bundles
