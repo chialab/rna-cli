@@ -172,6 +172,30 @@ module.exports = (program) => {
                     bundles.push(manifest);
                     continue;
                 }
+
+                if (entry.extname === '.html') {
+                    let manifest = await html(app, project, {
+                        input: entry,
+                        output,
+                        targets,
+                        production: options.production,
+                        map: options.map,
+                        lint: options.lint,
+                    });
+                    // collect the generated Bundle
+                    bundles.push(manifest);
+                    continue;
+                }
+
+                if (entry.extname === '.webmanifest') {
+                    let manifest = await webmanifest(app, project, {
+                        input: entry,
+                        output,
+                    });
+                    // collect the generated Bundle
+                    bundles.push(manifest);
+                    continue;
+                }
             }
 
             // once bundles are generated, check for watch option.
@@ -354,6 +378,110 @@ async function postcss(app, project, options, bundle = {}) {
 
         bundle.rebuild = async function() {
             return await postcss(app, project, options, bundle);
+        };
+
+        try {
+            global.gc();
+        } catch (err) {
+            //
+        }
+
+        return bundle;
+    } catch (err) {
+        app.logger.stop();
+        profile.end();
+        throw err;
+    }
+}
+
+async function html(app, project, options, bundle = {}) {
+    const HTML = require('../../lib/Bundlers/HTML.js');
+    const profile = app.profiler.task('html');
+
+    try {
+        let input = options.input;
+        let output = options.output;
+        if (!output.extname) {
+            output = output.file(input.basename);
+        }
+
+        if (!bundle.config) {
+            bundle.config = HTML.detectConfig(app, project, {
+                input,
+                output,
+                production: options.production,
+                map: options.map,
+                lint: options.lint,
+                targets: options.targets,
+            });
+        }
+        app.logger.play('html...', input.localPath);
+
+        let htmlBundle = new HTML(bundle.config);
+        await htmlBundle.build();
+        await htmlBundle.write();
+
+        app.logger.stop();
+        profile.end();
+
+        let { size, zipped } = output.size;
+        app.logger.success('html ready');
+        app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
+
+        bundle.files = htmlBundle.files;
+
+        bundle.rebuild = async function() {
+            return await html(app, project, options, bundle);
+        };
+
+        try {
+            global.gc();
+        } catch (err) {
+            //
+        }
+
+        return bundle;
+    } catch (err) {
+        app.logger.stop();
+        profile.end();
+        throw err;
+    }
+}
+
+async function webmanifest(app, project, options, bundle = {}) {
+    const WebManifest = require('../../lib/Bundlers/WebManifest.js');
+    const profile = app.profiler.task('html');
+
+    try {
+        let input = options.input;
+        let output = options.output;
+        if (!output.extname) {
+            output = output.file(input.basename);
+        }
+
+        if (!bundle.config) {
+            bundle.config = {
+                input: input.path,
+                output: output.path,
+            };
+        }
+        app.logger.play('manifest...', input.localPath);
+
+        let manifestBundle = new WebManifest(bundle.config);
+        await manifestBundle.build();
+        await manifestBundle.write();
+
+        app.logger.stop();
+        profile.end();
+
+        let { size, zipped } = output.size;
+        app.logger.success('manifest ready');
+        app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
+
+        bundle.files = manifestBundle.files;
+
+        bundle.rebuild = async function() {
+            return await webmanifest(app, project, options, bundle);
         };
 
         try {
