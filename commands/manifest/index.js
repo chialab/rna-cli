@@ -410,7 +410,7 @@ function generateIcon(input, output, presets = {}) {
             let options = Object.assign({}, presets[k]);
             let dest = output.file(options.name);
             // create the icon
-            let iconBuffer = new Jimp(options.size, options.size, colorToString(options.background || { r: 255, g: 255, b: 255, alpha: 1 }));
+            let iconBuffer = new Jimp(options.size, options.size, colorToString(options.background || { r: 255, g: 255, b: 255, alpha: 0 }));
             // load the icon source
             let sourceBuffer = (await Jimp.read(input))
                 // resize the image
