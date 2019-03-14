@@ -80,12 +80,14 @@ module.exports = (program) => {
             }
 
             await manifestBundler.setup(manifestOptions);
-            await manifestBundler.build();
+            let res = await manifestBundler.build();
 
             if (htmlBundler) {
                 htmlOptions.webmanifest = manifestOptions.output;
                 await htmlBundler.setup(htmlOptions);
                 await htmlBundler.build();
             }
+
+            return res;
         });
 };
