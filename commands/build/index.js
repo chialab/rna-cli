@@ -11,7 +11,7 @@ module.exports = (program) => {
         .readme(`${__dirname}/README.md`)
         .option('<file>', 'The file to build.')
         .option('<package1> <package2> <package3>', 'The packages to build.')
-        .option('--output', 'The destination file.')
+        .option('--output <file>', 'The destination file.')
         .option('[--targets]', 'A supported browserslist query. Use --no-targets to transpile only non-standard features.')
         .option('[--name]', 'The bundle name.')
         .option('[--format]', 'The bundle format (es, umd, iife, cjs).')

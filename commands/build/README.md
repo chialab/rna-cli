@@ -9,7 +9,7 @@ It supports:
 
 ### Options
 
-* `--output` Specify the output file or directory for the build.
+* `--output <file>` Specify the output file or directory for the build.
 * `--targets` Set specific targets for the build using a [Browserslist](https://github.com/browserslist/browserslist). This query is used by Babel and PostCSS to transpile JavaScript and CSS files in order to be compatible with the specified browsers. Use `--no-targets` to prevent code transpiling.
 * `--name` For JavaScript builds, you can specify the name of the global variable to use for the bundle.
 * `--format` Specify the format of the JavaScript bundle. Available formats are `es`, `umd` (default), `iife` and `cjs`.
