@@ -1,0 +1,4 @@
+.*
+*.tgz
+yarn-error.log
+Dockerfile
