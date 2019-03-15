@@ -35,6 +35,8 @@ module.exports = (program) => {
             let manifestOptions = {};
             let htmlBundler;
             let htmlOptions = {
+                links: false,
+                sources: false,
                 styles: false,
                 scripts: false,
                 icon: false,
