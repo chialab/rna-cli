@@ -1,11 +1,18 @@
-It uses [Rollup](https://rollupjs.org/) and [PostCSS](https://postcss.org/) to bundle JavaScript and style files.
+Build and bundle project files for distribution.
 
-It supports:
-* TypeScript
-* Future JavaScript versions and JSX syntax with Babel
-* JSON files
-* Assets files (images, fonts, ...)
-* Internationalization files (.po).
+Features:
+* Perform a build of **HTML** files: assets will be copied to the output path and style and script files will be bundled. Generation of favicons and home screen icons is supported, as well as `.webmanifest` generation.
+* **JavaScript** and **TypeScript** files and modules will be transpiled via [Babel](https://babeljs.io/) and bundled with [Rollup](https://rollupjs.org/).
+* **CSS** and **Sass** files will be compiled and bundled via [PostCSS](https://postcss.org/) and [Dart Sass](https://sass-lang.com/dart-sass).
+* **JSON** files imported in modules are treated as namespaces.
+* **Images** and **Fonts** imported in modules and css will be copied to the outpath path and references will be updated.
+* **Internationalization** files (`.po`) will be compiled using `gettext` into JSON files. You can use it with [i18next](https://www.i18next.com/).
+
+### Usage
+
+```sh
+rna build <input> [...options]
+```
 
 ### Options
 
@@ -21,11 +28,22 @@ It supports:
 * `--jsx.pragma` The pragma to use for JSX transformations.
 * `--jsx.module` The module which contains the pragma reference.
 * `--polyfill` Try to polyfill the bundle using Babel polyfills.
-* `--optimize` Try to optimize the bundle with `OptimizeJS`.
+
+### HTML
+
+@todo
+
+### JavaScript, TypeScript and modules
+
+@todo
+
+### CSS and Sass
+
+@todo
 
 ### Internationalization
 
-RNA can bundle all `.po` files with same language and namespace into a single JSON asset file, compatibile with the [i18next](https://www.i18next.com/) library.
+RNA can bundle all `.po` files with same language and namespace into a single JSON asset file, compatibile with the i18next library.
 Internationalization files must follow the pattern `path/to/locale/files/{{ lang }}/{{ namespace }}.po` in order to be correctly bundled.
 
 ### See also

@@ -14,4 +14,4 @@ $ rna sw public/ --exclude 'articles/**/*.png'
 
 ### See also
 
-* [`rna manifest`](../manifest/)
+* [`rna build`](../build/)

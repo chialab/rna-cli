@@ -16,4 +16,4 @@ $ rna manifest public/ --icon resources/icon.png --scope '/'
 
 ### See also
 
-* [`rna sw`](../sw/)
+* [`rna build`](../build/)
