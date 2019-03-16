@@ -23,7 +23,7 @@ module.exports = (program) => {
         .action(async (app, options = {}) => {
             const browserslist = require('browserslist');
             const Project = require('../../lib/Project');
-            const Rollup = require('../../lib/Bundlers/Rollup');
+            const ScriptBundler = require('../../lib/Bundlers/ScriptBundler');
             const Watcher = require('../../lib/Watcher');
 
             const cwd = process.cwd();
@@ -131,9 +131,10 @@ module.exports = (program) => {
             let rebuild;
             let watchFiles;
             try {
-                const config = Rollup.detectConfig(app, project, {
-                    'input': tempSource.path,
-                    'output': tempUnit.path,
+                let bunlder = new ScriptBundler(app, project);
+                await bunlder.setup({
+                    'input': tempSource,
+                    'output': tempUnit,
                     'map': 'inline',
                     'coverage': options.coverage,
                     'targets': options.targets,
@@ -142,11 +143,9 @@ module.exports = (program) => {
                 });
 
                 rebuild = async function() {
-                    app.logger.play('bundling test...', tempSource.localPath);
-                    const rollupBundle = new Rollup(config);
-                    await rollupBundle.build();
-                    await rollupBundle.write();
-                    watchFiles = rollupBundle.files;
+                    app.logger.play('building test...', tempSource.localPath);
+                    await bunlder.build();
+                    watchFiles = bunlder.files;
                     app.logger.stop();
                 };
 
