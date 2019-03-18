@@ -29,7 +29,6 @@ module.exports = (program) => {
             const browserslist = require('browserslist');
             const Project = require('../../lib/Project');
             const Watcher = require('../../lib/Watcher');
-            const { isJSFile, isStyleFile } = require('../../lib/extensions');
             const PriorityQueues = require('../../lib/PriorityQueues');
 
             const cwd = process.cwd();
@@ -68,16 +67,17 @@ module.exports = (program) => {
                 if (entry instanceof Project) {
                     const directories = entry.directories;
                     const moduleFile = entry.get('module') && entry.file(entry.get('module'));
+                    const libFile = entry.get('lib') && entry.file(entry.get('lib'));
                     const mainFile = entry.get('main') && entry.file(entry.get('main'));
                     const styleFile = entry.get('style') && entry.file(entry.get('style'));
 
-                    const targets = options.targets ? browserslist(options.targets) : project.browserslist;
+                    const targets = options.targets ? browserslist(options.targets) : entry.browserslist;
 
                     let output;
                     if (options.output) {
                         if (outputRelative) {
-                            output = moduleFile.directory.file(options.output);
-                        }  else if (path.extname(options.output)) {
+                            output = (libFile || moduleFile).directory.file(options.output);
+                        } else if (path.extname(options.output)) {
                             output = project.file(options.output);
                         } else if (mainFile) {
                             output = mainFile;
@@ -92,132 +92,57 @@ module.exports = (program) => {
                         throw 'missing `output` option';
                     }
 
-                    if (moduleFile) {
-                        // a javascript source has been detected.
-                        const ScriptBundler = require('../../lib/Bundlers/ScriptBundler.js');
-
-                        let moduleOutput = mainFile ? mainFile : output;
-                        let bundler = new ScriptBundler(app, entry);
-                        await bundler.setup({
-                            input: moduleFile,
-                            output: moduleOutput,
-                            targets,
-                            production: options.production,
-                            map: options.map,
-                            lint: options.lint,
-                            analyze: options.analyze,
-                        });
-                        await bundler.build();
-                        // collect the generated Bundle.
-                        bundles.push(bundler);
-                    }
-
-                    if (styleFile) {
-                        const StyleBundler = require('../../lib/Bundlers/StyleBundler.js');
-
-                        let styleOutput = mainFile ?
-                            mainFile.directory.file(mainFile.basename.replace(mainFile.extname, '.css')) :
-                            output;
-                        // a style source has been detected.
-                        let bundler = new StyleBundler(app, entry);
-                        await bundler.setup({
-                            input: styleFile,
-                            output: styleOutput,
-                            targets,
-                            production: options.production,
-                            map: options.map,
-                            lint: options.lint,
-                        });
-                        await bundler.build();
-                        // collect the generated Bundle.
-                        bundles.push(bundler);
-                    }
-                    continue;
-                }
-
-                let output;
-                if (options.output) {
-                    if (outputRelative) {
-                        output = entry.directory.file(options.output);
-                    } else if (path.extname(options.output)) {
-                        output = project.file(options.output);
+                    if (libFile) {
+                        let bundler = await buildEntry(app, entry, libFile, output, Object.assign({}, options, { targets }));
+                        if (bundler) {
+                            // collect the generated Bundle.
+                            bundles.push(bundler);
+                        }
                     } else {
-                        output = project.directory(options.output);
+                        // retrocompatibility with RNA 2.0
+
+                        if (moduleFile) {
+                            let moduleOutput = mainFile ? mainFile : output;
+                            let bundler = await buildEntry(app, entry, moduleFile, moduleOutput, Object.assign({}, options, { targets }));
+                            if (bundler) {
+                                // collect the generated Bundle.
+                                bundles.push(bundler);
+                            }
+                        }
+
+                        if (styleFile) {
+                            let styleOutput = mainFile ?
+                                mainFile.directory.file(mainFile.basename.replace(mainFile.extname, '.css')) :
+                                output;
+
+                            let bundler = await buildEntry(app, entry, styleOutput, styleOutput, Object.assign({}, options, { targets }));
+                            if (bundler) {
+                                // collect the generated Bundle.
+                                bundles.push(bundler);
+                            }
+                        }
                     }
                 } else {
-                    throw 'missing `output` option';
-                }
+                    let output;
+                    if (options.output) {
+                        if (outputRelative) {
+                            output = entry.directory.file(options.output);
+                        } else if (path.extname(options.output)) {
+                            output = project.file(options.output);
+                        } else {
+                            output = project.directory(options.output);
+                        }
+                    } else {
+                        throw 'missing `output` option';
+                    }
 
-                const targets = options.targets ? browserslist(options.targets) : project.browserslist;
+                    const targets = options.targets ? browserslist(options.targets) : project.browserslist;
 
-                if (isJSFile(entry.path)) {
-                    // Javascript file
-                    const ScriptBundler = require('../../lib/Bundlers/ScriptBundler.js');
-
-                    let bundler = new ScriptBundler(app, project);
-                    await bundler.setup({
-                        input: entry,
-                        output,
-                        targets,
-                        production: options.production,
-                        map: options.map,
-                        lint: options.lint,
-                        analyze: options.analyze,
-                    });
-                    await bundler.build();
-                    // collect the generated Bundle
-                    bundles.push(bundler);
-                    continue;
-                }
-
-                if (isStyleFile(entry.path)) {
-                    // Style file
-                    const StyleBundler = require('../../lib/Bundlers/StyleBundler.js');
-
-                    let bundler = new StyleBundler(app, project);
-                    await bundler.setup({
-                        input: entry,
-                        output,
-                        targets,
-                        production: options.production,
-                        map: options.map,
-                        lint: options.lint,
-                    });
-                    await bundler.build();
-                    // collect the generated Bundle
-                    bundles.push(bundler);
-                    continue;
-                }
-
-                if (entry.extname === '.html') {
-                    const HTMLBundler = require('../../lib/Bundlers/HTMLBundler.js');
-                    let bundler = new HTMLBundler(app, project);
-                    await bundler.setup({
-                        input: entry,
-                        output,
-                        targets,
-                        production: options.production,
-                        map: options.map,
-                        lint: options.lint,
-                    });
-                    await bundler.build();
-                    // collect the generated Bundle
-                    bundles.push(bundler);
-                    continue;
-                }
-
-                if (entry.extname === '.webmanifest') {
-                    const WebManifest = require('../../lib/Bundlers/WebManifest.js');
-
-                    let bundler = new WebManifest(app, project);
-                    await bundler.setup({
-                        input: entry,
-                        output,
-                    });
-                    await bundler.build();
-                    // collect the generated Bundle
-                    bundles.push(bundler);
-                    continue;
+                    let bundler = await buildEntry(app, project, entry, output, Object.assign({}, options, { targets }));
+                    if (bundler) {
+                        // collect the generated Bundle.
+                        bundles.push(bundler);
+                    }
                 }
             }
 
@@ -272,6 +197,72 @@ module.exports = (program) => {
             return bundles;
         });
 };
+
+async function buildEntry(app, project, entry, output, options) {
+    const { isJSFile, isStyleFile, isHTMLFile, isWebManifestFile } = require('../../lib/extensions');
+
+    if (isJSFile(entry.path)) {
+        // Javascript file
+        const ScriptBundler = require('../../lib/Bundlers/ScriptBundler.js');
+
+        let bundler = new ScriptBundler(app, project);
+        await bundler.setup({
+            input: entry,
+            output,
+            targets: options.targets,
+            production: options.production,
+            map: options.map,
+            lint: options.lint,
+            analyze: options.analyze,
+            polyfill: options.polyfill,
+        });
+        await bundler.build();
+        // collect the generated Bundle
+        return bundler;
+    } else if (isStyleFile(entry.path)) {
+        // Style file
+        const StyleBundler = require('../../lib/Bundlers/StyleBundler.js');
+
+        let bundler = new StyleBundler(app, project);
+        await bundler.setup({
+            input: entry,
+            output,
+            targets: options.targets,
+            production: options.production,
+            map: options.map,
+            lint: options.lint,
+        });
+        await bundler.build();
+        // collect the generated Bundle
+        return bundler;
+    } else if (isHTMLFile(entry.path)) {
+        const HTMLBundler = require('../../lib/Bundlers/HTMLBundler.js');
+        let bundler = new HTMLBundler(app, project);
+        await bundler.setup({
+            input: entry,
+            output,
+            targets: options.targets,
+            production: options.production,
+            map: options.map,
+            lint: options.lint,
+            polyfill: options.polyfill,
+        });
+        await bundler.build();
+        // collect the generated Bundle
+        return bundler;
+    } else if (isWebManifestFile(entry.path)) {
+        const WebManifest = require('../../lib/Bundlers/WebManifest.js');
+
+        let bundler = new WebManifest(app, project);
+        await bundler.setup({
+            input: entry,
+            output,
+        });
+        await bundler.build();
+        // collect the generated Bundle
+        return bundler;
+    }
+}
 
 function filterChangedBundles(bundles, file) {
     return bundles
