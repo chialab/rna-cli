@@ -22,7 +22,6 @@ module.exports = (program) => {
         .option('[--no-lint]', 'Do not lint files before bundle.')
         .option('[--jsx.pragma]', 'The JSX pragma to use.')
         .option('[--jsx.module]', 'The module to auto import for JSX pragma.')
-        .option('[--polyfill]', 'Auto add polyfills. [experimental]')
         .option('[--analyze <file>]', 'Save an analytic report for bundle size.')
         .action(async (app, options = {}) => {
             const path = require('path');
