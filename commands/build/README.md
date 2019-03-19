@@ -20,8 +20,6 @@ It supports:
 * `--no-lint` Disable linting of the source files.
 * `--jsx.pragma` The pragma to use for JSX transformations.
 * `--jsx.module` The module which contains the pragma reference.
-* `--polyfill` Try to polyfill the bundle using Babel polyfills.
-* `--optimize` Try to optimize the bundle with `OptimizeJS`.
 
 ### Internationalization
 
