@@ -75,7 +75,7 @@ module.exports = (program) => {
                     let output;
                     if (options.output) {
                         if (outputRelative) {
-                            output = (libFile || moduleFile).directory.file(options.output);
+                            output = (libFile || moduleFile).parent.file(options.output);
                         } else if (path.extname(options.output)) {
                             output = project.file(options.output);
                         } else if (mainFile) {
@@ -111,7 +111,7 @@ module.exports = (program) => {
 
                         if (styleFile) {
                             let styleOutput = mainFile ?
-                                mainFile.directory.file(mainFile.basename.replace(mainFile.extname, '.css')) :
+                                mainFile.parent.file(mainFile.basename.replace(mainFile.extname, '.css')) :
                                 output;
 
                             let bundler = await buildEntry(app, entry, styleOutput, styleOutput, Object.assign({}, options, { targets }));
@@ -125,7 +125,7 @@ module.exports = (program) => {
                     let output;
                     if (options.output) {
                         if (outputRelative) {
-                            output = entry.directory.file(options.output);
+                            output = entry.parent.file(options.output);
                         } else if (path.extname(options.output)) {
                             output = project.file(options.output);
                         } else {

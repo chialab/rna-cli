@@ -328,7 +328,7 @@ async function runBrowserTests(app, project, testFile, options = {}) {
     let customContextFile;
     if (options['context']) {
         let original = project.file(options['context']);
-        customContextFile = testFile.directory.file(original.basename);
+        customContextFile = testFile.parent.file(original.basename);
         customContextFile.write(original.read());
     }
 
