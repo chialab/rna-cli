@@ -114,7 +114,7 @@ module.exports = (program) => {
                                 mainFile.parent.file(mainFile.basename.replace(mainFile.extname, '.css')) :
                                 output;
 
-                            let bundler = await buildEntry(app, entry, styleOutput, styleOutput, Object.assign({}, options, { targets }));
+                            let bundler = await buildEntry(app, entry, styleFile, styleOutput, Object.assign({}, options, { targets }));
                             if (bundler) {
                                 // collect the generated Bundle.
                                 bundles.push(bundler);
