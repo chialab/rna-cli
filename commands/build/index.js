@@ -181,6 +181,7 @@ module.exports = (program) => {
                         promise = promise.then(async () => {
                             try {
                                 await bundle.build(file.path);
+                                await bundle.write();
                             } catch (err) {
                                 if (err) {
                                     app.logger.error(err);
@@ -216,6 +217,7 @@ async function buildEntry(app, project, entry, output, options) {
             polyfill: options.polyfill,
         });
         await bundler.build();
+        await bundler.write();
         // collect the generated Bundle
         return bundler;
     } else if (isStyleFile(entry.path)) {
@@ -232,6 +234,7 @@ async function buildEntry(app, project, entry, output, options) {
             lint: options.lint,
         });
         await bundler.build();
+        await bundler.write();
         // collect the generated Bundle
         return bundler;
     } else if (isHTMLFile(entry.path)) {
@@ -247,17 +250,19 @@ async function buildEntry(app, project, entry, output, options) {
             polyfill: options.polyfill,
         });
         await bundler.build();
+        await bundler.write();
         // collect the generated Bundle
         return bundler;
     } else if (isWebManifestFile(entry.path)) {
-        const WebManifest = require('../../lib/Bundlers/WebManifest.js');
+        const WebManifestBundler = require('../../lib/Bundlers/WebManifestBundler.js');
 
-        let bundler = new WebManifest(app, project);
+        let bundler = new WebManifestBundler(app, project);
         await bundler.setup({
             input: entry,
             output,
         });
         await bundler.build();
+        await bundler.write();
         // collect the generated Bundle
         return bundler;
     }
