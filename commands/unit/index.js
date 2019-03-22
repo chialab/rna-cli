@@ -124,38 +124,28 @@ module.exports = (program) => {
             const unitCode = `${files.map((entry) => `import '${entry.path}';`).join('\n')}`;
 
             // build tests
-            const tempSource = app.store.tmpfile('unit-source.js');
             const tempUnit = app.store.tmpfile('unit-build.js');
-            tempSource.write(unitCode);
 
-            let rebuild;
             let watchFiles;
-            try {
-                let bunlder = new ScriptBundler(app, project);
-                await bunlder.setup({
-                    'input': tempSource,
-                    'output': tempUnit,
-                    'map': 'inline',
-                    'coverage': options.coverage,
-                    'targets': options.targets,
-                    'jsx.pragma': options['jsx.pragma'],
-                    'jsx.module': options['jsx.module'],
-                });
+            let bundler = new ScriptBundler(app, project);
+            await bundler.setup({
+                'code': unitCode,
+                'root': project,
+                'output': tempUnit,
+                'map': 'inline',
+                'coverage': options.coverage,
+                'targets': options.targets,
+                'jsx.pragma': options['jsx.pragma'],
+                'jsx.module': options['jsx.module'],
+            });
 
-                rebuild = async function() {
-                    app.logger.play('building test...', tempSource.localPath);
-                    await bunlder.build();
-                    watchFiles = bunlder.files;
-                    app.logger.stop();
-                };
+            let rebuild = async function() {
+                await bundler.build();
+                await bundler.write();
+                watchFiles = bundler.files;
+            };
 
-                await rebuild();
-            } catch (error) {
-                app.logger.stop();
-                throw error;
-            }
-
-            app.logger.stop();
+            await rebuild();
 
             try {
                 await runTests(app, project, tempUnit, options, taskEnvironments);
