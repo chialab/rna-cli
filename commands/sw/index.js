@@ -37,6 +37,7 @@ module.exports = (program) => {
             });
 
             let res = await bundler.build();
+            await bundler.write();
 
             if (options.watch) {
                 let watcher = new Watcher(root, {
@@ -51,6 +52,7 @@ module.exports = (program) => {
                         }
                     }
                     await bundler.build();
+                    await bundler.write();
                 });
             }
 

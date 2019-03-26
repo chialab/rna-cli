@@ -83,11 +83,13 @@ module.exports = (program) => {
 
             await manifestBundler.setup(manifestOptions);
             let res = await manifestBundler.build();
+            await manifestBundler.write();
 
             if (htmlBundler) {
                 htmlOptions.webmanifest = manifestOptions.output;
                 await htmlBundler.setup(htmlOptions);
                 await htmlBundler.build();
+                await htmlBundler.write();
             }
 
             return res;
