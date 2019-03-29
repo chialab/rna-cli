@@ -68,6 +68,7 @@ module.exports = (program) => {
                     const libFile = entry.get('lib') && entry.file(entry.get('lib'));
                     const mainFile = entry.get('main') && entry.file(entry.get('main'));
                     const styleFile = entry.get('style') && entry.file(entry.get('style'));
+                    const typingsFile = entry.get('types') && entry.file(entry.get('types'));
 
                     const targets = options.targets ? browserslist(options.targets) : entry.browserslist;
 
@@ -86,7 +87,7 @@ module.exports = (program) => {
 
                     if (libFile) {
                         if (output) {
-                            let bundler = await buildEntry(app, entry, libFile, output, Object.assign({}, options, { targets }));
+                            let bundler = await buildEntry(app, entry, libFile, output, Object.assign({}, options, { targets, typings: /.d.ts$/.test(output.path) }));
                             if (bundler) {
                                 // collect the generated Bundle.
                                 bundles.push(bundler);
@@ -100,7 +101,14 @@ module.exports = (program) => {
                                 }
                             }
                             if (moduleFile) {
-                                let bundler = await buildEntry(app, entry, libFile, moduleFile, Object.assign({}, options, { targets, format: 'esm' }));
+                                let bundler = await buildEntry(app, entry, libFile, moduleFile, Object.assign({}, options, { targets: 'esmodules', format: 'esm', lint: !mainFile && options.lint }));
+                                if (bundler) {
+                                    // collect the generated Bundle.
+                                    bundles.push(bundler);
+                                }
+                            }
+                            if (typingsFile) {
+                                let bundler = await buildEntry(app, entry, libFile, typingsFile, Object.assign({}, options, { typings: true, format: 'esm', map: false }));
                                 if (bundler) {
                                     // collect the generated Bundle.
                                     bundles.push(bundler);
@@ -152,7 +160,7 @@ module.exports = (program) => {
 
                     const targets = options.targets ? browserslist(options.targets) : project.browserslist;
 
-                    let bundler = await buildEntry(app, project, entry, output, Object.assign({}, options, { targets }));
+                    let bundler = await buildEntry(app, project, entry, output, Object.assign({}, options, { targets, typings: /.d.ts$/.test(output.path) }));
                     if (bundler) {
                         // collect the generated Bundle.
                         bundles.push(bundler);
@@ -224,12 +232,14 @@ async function buildEntry(app, project, entry, output, options) {
         await bundler.setup({
             input: entry,
             output,
+            name: options.name,
             targets: options.targets,
             production: options.production,
             map: options.map,
             lint: options.lint,
             analyze: options.analyze,
             polyfill: options.polyfill,
+            typings: options.typings,
         });
         await bundler.build();
         await bundler.write();

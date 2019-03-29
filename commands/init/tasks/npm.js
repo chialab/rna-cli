@@ -85,14 +85,14 @@ module.exports = async function npmTask(app, options, project, templates) {
         {
             type: 'input',
             name: 'module',
-            message: formatQuestion('source entry point'),
+            message: formatQuestion('esm entry point'),
             default: project.get('module'),
             when: (answers) => !answers.workspaces,
         },
         {
             type: 'input',
             name: 'main',
-            message: formatQuestion('entry point'),
+            message: formatQuestion('commonjs entry point'),
             default: project.get('main'),
             when: (answers) => !answers.workspaces,
         },
