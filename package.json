@@ -79,7 +79,7 @@
     "rollup-plugin-analyzer": "^3.0.0",
     "rollup-plugin-json": "^3.0.0",
     "rollup-plugin-node-resolve": "^4.0.0",
-    "rollup-plugin-typescript2": "^0.17.0",
+    "rollup-plugin-typescript2": "^0.20.1",
     "sass": "^1.13.0",
     "sauce-connect-launcher": "^1.2.4",
     "saucelabs": "^1.5.0",

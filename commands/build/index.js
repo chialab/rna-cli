@@ -64,7 +64,6 @@ module.exports = (program) => {
                 let entry = entries[i];
 
                 if (entry instanceof Project) {
-                    const directories = entry.directories;
                     const moduleFile = entry.get('module') && entry.file(entry.get('module'));
                     const libFile = entry.get('lib') && entry.file(entry.get('lib'));
                     const mainFile = entry.get('main') && entry.file(entry.get('main'));
@@ -83,21 +82,37 @@ module.exports = (program) => {
                         } else {
                             output = project.directory(options.output);
                         }
-                    } else if (directories.public || directories.lib) {
-                        output = directories.public || directories.lib;
-                    } else if (mainFile) {
-                        output = project.directory(mainFile.dirname);
-                    } else {
-                        throw 'missing `output` option';
                     }
 
                     if (libFile) {
-                        let bundler = await buildEntry(app, entry, libFile, output, Object.assign({}, options, { targets }));
-                        if (bundler) {
-                            // collect the generated Bundle.
-                            bundles.push(bundler);
+                        if (output) {
+                            let bundler = await buildEntry(app, entry, libFile, output, Object.assign({}, options, { targets }));
+                            if (bundler) {
+                                // collect the generated Bundle.
+                                bundles.push(bundler);
+                            }
+                        } else {
+                            if (mainFile) {
+                                let bundler = await buildEntry(app, entry, libFile, mainFile, Object.assign({}, options, { targets, format: 'umd' }));
+                                if (bundler) {
+                                    // collect the generated Bundle.
+                                    bundles.push(bundler);
+                                }
+                            }
+                            if (moduleFile) {
+                                let bundler = await buildEntry(app, entry, libFile, moduleFile, Object.assign({}, options, { targets, format: 'esm' }));
+                                if (bundler) {
+                                    // collect the generated Bundle.
+                                    bundles.push(bundler);
+                                }
+                            }
                         }
                     } else {
+                        if (!output && mainFile) {
+                            output = project.directory(mainFile.dirname);
+                        } else {
+                            throw 'missing `output` option';
+                        }
                         // retrocompatibility with RNA 2.0
 
                         if (moduleFile) {
