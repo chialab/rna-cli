@@ -64,8 +64,8 @@ module.exports = (program) => {
                 let entry = entries[i];
 
                 if (entry instanceof Project) {
-                    const moduleFile = entry.get('module') && entry.file(entry.get('module'));
                     const libFile = entry.get('lib') && entry.file(entry.get('lib'));
+                    const moduleFile = entry.get('module') && entry.file(entry.get('module'));
                     const mainFile = entry.get('main') && entry.file(entry.get('main'));
                     const styleFile = entry.get('style') && entry.file(entry.get('style'));
                     const typingsFile = entry.get('types') && entry.file(entry.get('types'));
