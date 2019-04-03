@@ -32,7 +32,9 @@ module.exports = (program) => {
             }
 
             let manifestBundler = new WebManifestBundler(app, project);
-            let manifestOptions = {};
+            let manifestOptions = {
+                override: true,
+            };
             let htmlBundler;
             let htmlOptions = {
                 links: false,
