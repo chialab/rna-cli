@@ -21,7 +21,7 @@ require('./commands/sw/index.js')(program);
 require('./commands/serve/index.js')(program);
 require('./commands/unit/index.js')(program);
 require('./commands/publish/index.js')(program);
-require('./commands/documentation/index.js')(program);
+require('./commands/documentate/index.js')(program);
 require('./commands/run/index.js')(program);
 
 (async () => {
