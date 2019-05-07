@@ -3662,9 +3662,9 @@ dotenv@^6.0.0:
   integrity sha512-HygQCKUBSFl8wKQZBSemMywRWcEDNidvNbjGVyZu3nbZ8qq9ubiPoGLMdRDpfSrpkkm9BXYFkpKxxFX38o/76w==
 
 dts-apigen@^1.0.0-beta.4:
-  version "1.0.0-beta.6"
-  resolved "https://registry.npmjs.org/dts-apigen/-/dts-apigen-1.0.0-beta.6.tgz#bd9b0a7f047549a62cb78d672e00bb724ddf049c"
-  integrity sha512-+HmsnbdyEtsA8omRsmSTF7D83gpI7x5MwgtX7gF3gQzo/KO0+aznFLhmd9DPieZaw55ut/95Y9CF8jTZ7Fc46w==
+  version "1.0.0-beta.7"
+  resolved "https://registry.npmjs.org/dts-apigen/-/dts-apigen-1.0.0-beta.7.tgz#f6c9d788344c6e9e683a158f2f105655de775d01"
+  integrity sha512-IeQ/hzd6E4t5w7CVcw2Y7kahk6uZxvLc+rzcIWqSLmXJdJx/Qf/Ei8EgR+klXMACyVEv4AA+Xtx7REsuepAE2Q==
   dependencies:
     "@babel/core" "^7.4.4"
     "@babel/plugin-syntax-jsx" "^7.2.0"
