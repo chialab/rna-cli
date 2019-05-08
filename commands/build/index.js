@@ -69,6 +69,7 @@ module.exports = (program) => {
                     const libFile = entry.get('lib') && entry.file(entry.get('lib'));
                     const moduleFile = entry.get('module') && entry.file(entry.get('module'));
                     const mainFile = entry.get('main') && entry.file(entry.get('main'));
+                    const browserFile = entry.get('browser') && entry.file(entry.get('browser'));
                     const styleFile = entry.get('style') && entry.file(entry.get('style'));
                     let typingsFile;
                     if (typeof options.typings === 'string') {
@@ -103,7 +104,7 @@ module.exports = (program) => {
                             }
                         } else {
                             if (mainFile) {
-                                let bundler = await buildEntry(app, entry, libFile, mainFile, Object.assign({}, options, { targets, format: 'umd', typings: typingsFile || !!options.typings }));
+                                let bundler = await buildEntry(app, entry, libFile, mainFile, Object.assign({}, options, { targets, format: 'cjs', typings: typingsFile || !!options.typings }));
                                 if (bundler) {
                                     // collect the generated Bundle.
                                     bundles.push(bundler);
@@ -111,6 +112,13 @@ module.exports = (program) => {
                             }
                             if (moduleFile) {
                                 let bundler = await buildEntry(app, entry, libFile, moduleFile, Object.assign({}, options, { targets: 'esmodules', format: 'esm', lint: !mainFile && options.lint, typings: !mainFile && (typingsFile || !!options.typings) }));
+                                if (bundler) {
+                                    // collect the generated Bundle.
+                                    bundles.push(bundler);
+                                }
+                            }
+                            if (browserFile) {
+                                let bundler = await buildEntry(app, entry, libFile, browserFile, Object.assign({}, options, { targets, format: 'umd', typings: typingsFile || !!options.typings }));
                                 if (bundler) {
                                     // collect the generated Bundle.
                                     bundles.push(bundler);
