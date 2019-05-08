@@ -162,10 +162,10 @@ module.exports = (program) => {
                     const targets = options.targets ? browserslist(options.targets) : project.browserslist;
                     let typingsFile;
                     if (typeof options.typings === 'string') {
-                        typingsFile = entry.file(options.typings);
+                        typingsFile = project.file(options.typings);
                     } else if (options.typings) {
                         if (entry.get('types')) {
-                            typingsFile = entry.file(entry.get('types'));
+                            typingsFile = project.file(entry.get('types'));
                         }
                     }
 
@@ -241,6 +241,7 @@ async function buildEntry(app, project, entry, output, options) {
         await bundler.setup({
             input: entry,
             output,
+            format: options.format,
             name: options.name,
             targets: options.targets,
             production: options.production,
