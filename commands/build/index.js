@@ -21,6 +21,7 @@ module.exports = (program) => {
         .option('[--no-map]', 'Do not produce source map.')
         .option('[--no-lint]', 'Do not lint files before bundle.')
         .option('[--jsx.pragma]', 'The JSX pragma to use.')
+        .option('[--jsx.pragmaFrag]', 'The JSX pragma fragment to use.')
         .option('[--jsx.module]', 'The module to auto import for JSX pragma.')
         .option('[--typings [file]', 'Generate typescript declarations.')
         .option('[--analyze <file>]', 'Save an analytic report for bundle size.')
@@ -250,6 +251,11 @@ async function buildEntry(app, project, entry, output, options) {
             analyze: options.analyze,
             polyfill: options.polyfill,
             typings: options.typings,
+            jsx: {
+                module: options['jsx.module'],
+                pragma: options['jsx.pragma'],
+                pragmaFrag: options['jsx.pragmaFrag'],
+            },
         });
         await bundler.build();
         await bundler.write();

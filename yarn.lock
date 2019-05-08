@@ -665,9 +665,9 @@
     to-fast-properties "^2.0.0"
 
 "@chialab/babel-preset@^2.0.0":
-  version "2.0.2"
-  resolved "https://registry.npmjs.org/@chialab/babel-preset/-/babel-preset-2.0.2.tgz#324380f450dfbedf9ec68850c0910644f781855e"
-  integrity sha512-Inhm7UZaRXruWeCRmWOUKPYNPV2FcW85gk1/OTP9TqjSKsfwt0VWILJjcCT8RJ66gyr3aqzkkzyo4vMzuvUOBQ==
+  version "2.1.0"
+  resolved "https://registry.npmjs.org/@chialab/babel-preset/-/babel-preset-2.1.0.tgz#539e5745b4cfa5bd45a99cb312565bb083380143"
+  integrity sha512-N4bX9nfv8YmT7PzzRZNuNFVJJukkupzW4xVtipY/45bijUbPcz6YfLWkCO2QMRTOqwISkcLlVJSf0JziXdSx4Q==
   dependencies:
     "@babel/plugin-syntax-dynamic-import" "^7.0.0"
     "@babel/plugin-transform-react-jsx" "^7.0.0"
@@ -2603,9 +2603,9 @@ caniuse-lite@^1.0.0, caniuse-lite@^1.0.30000957:
   integrity sha512-n4HUiullc7Lw0LyzpeLa2ffP8KxFBGdxqD/8G3bSL6oB758hZ2UE2CVK+tQN958tJIi0/tfpjAc67aAtoHgnrQ==
 
 caniuse-lite@^1.0.30000963:
-  version "1.0.30000966"
-  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30000966.tgz#f3c6fefacfbfbfb981df6dfa68f2aae7bff41b64"
-  integrity sha512-qqLQ/uYrpZmFhPY96VuBkMEo8NhVFBZ9y/Bh+KnvGzGJ5I8hvpIaWlF2pw5gqe4PLAL+ZjsPgMOvoXSpX21Keg==
+  version "1.0.30000967"
+  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30000967.tgz#a5039577806fccee80a04aaafb2c0890b1ee2f73"
+  integrity sha512-rUBIbap+VJfxTzrM4akJ00lkvVb5/n5v3EGXfWzSH5zT8aJmGzjA8HWhJ4U6kCpzxozUSnB+yvAYDRPY6mRpgQ==
 
 cardinal@^2.1.1:
   version "2.1.1"
@@ -3662,9 +3662,9 @@ dotenv@^6.0.0:
   integrity sha512-HygQCKUBSFl8wKQZBSemMywRWcEDNidvNbjGVyZu3nbZ8qq9ubiPoGLMdRDpfSrpkkm9BXYFkpKxxFX38o/76w==
 
 dts-apigen@^1.0.0-beta.4:
-  version "1.0.0-beta.7"
-  resolved "https://registry.npmjs.org/dts-apigen/-/dts-apigen-1.0.0-beta.7.tgz#f6c9d788344c6e9e683a158f2f105655de775d01"
-  integrity sha512-IeQ/hzd6E4t5w7CVcw2Y7kahk6uZxvLc+rzcIWqSLmXJdJx/Qf/Ei8EgR+klXMACyVEv4AA+Xtx7REsuepAE2Q==
+  version "1.0.0-beta.9"
+  resolved "https://registry.npmjs.org/dts-apigen/-/dts-apigen-1.0.0-beta.9.tgz#c81abfd1ef4940972d86696e37f31e41c164f587"
+  integrity sha512-zrdi2ZSDO9hhnz54G8x19h8MTQrURvmWB4sBFjzI7C2RiLAPE59EXOPx30GO94+gIjyRzPjCGX40yzMHlB4RMQ==
   dependencies:
     "@babel/core" "^7.4.4"
     "@babel/plugin-syntax-jsx" "^7.2.0"
@@ -3718,9 +3718,9 @@ ee-first@1.1.1:
   integrity sha1-WQxhFWsK4vTwJVcyoViyZrxWsh0=
 
 electron-to-chromium@^1.3.127:
-  version "1.3.131"
-  resolved "https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.3.131.tgz#205a0b7a276b3f56bc056f19178909243054252a"
-  integrity sha512-NSO4jLeyGLWrT4mzzfYX8vt1MYCoMI5LxSYAjt0H9+LF/14JyiKJSyyjA6AJTxflZlEM5v3QU33F0ohbPMCAPg==
+  version "1.3.133"
+  resolved "https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.3.133.tgz#c47639c19b91feee3e22fad69f5556142007008c"
+  integrity sha512-lyoC8aoqbbDqsprb6aPdt9n3DpOZZzdz/T4IZKsR0/dkZIxnJVUjjcpOSwA66jPRIOyDAamCTAUqweU05kKNSg==
 
 emoji-regex@^7.0.1:
   version "7.0.3"
@@ -4710,10 +4710,22 @@ glob@^5.0.15:
     once "^1.3.0"
     path-is-absolute "^1.0.0"
 
-glob@^7.0.3, glob@^7.1.1, glob@^7.1.2, glob@^7.1.3:
+glob@^7.0.3, glob@^7.1.1, glob@^7.1.3:
   version "7.1.3"
   resolved "https://registry.npmjs.org/glob/-/glob-7.1.3.tgz#3960832d3f1574108342dafd3a67b332c0969df1"
   integrity sha512-vcfuiIxogLV4DlGBHIUOwI0IbrJ8HWPc4MU7HzviGeNho/UJDfi6B5p3sHeWIQ0KGIU0Jpxi5ZHxemQfLkkAwQ==
+  dependencies:
+    fs.realpath "^1.0.0"
+    inflight "^1.0.4"
+    inherits "2"
+    minimatch "^3.0.4"
+    once "^1.3.0"
+    path-is-absolute "^1.0.0"
+
+glob@^7.1.2:
+  version "7.1.4"
+  resolved "https://registry.npmjs.org/glob/-/glob-7.1.4.tgz#aa608a2f6c577ad357e1ae5a5c26d9a8d1969255"
+  integrity sha512-hkLPepehmnKk41pUGm3sYxoFs/umurYfYJCerbXEyFIWcAzvpipAgVkBqqT9RBKMGjnq6kMuyYwha6csxbiM1A==
   dependencies:
     fs.realpath "^1.0.0"
     inflight "^1.0.4"
@@ -6872,9 +6884,9 @@ node-pre-gyp@^0.12.0:
     tar "^4"
 
 node-releases@^1.1.17:
-  version "1.1.17"
-  resolved "https://registry.npmjs.org/node-releases/-/node-releases-1.1.17.tgz#71ea4631f0a97d5cd4f65f7d04ecf9072eac711a"
-  integrity sha512-/SCjetyta1m7YXLgtACZGDYJdCSIBAWorDWkGCGZlydP2Ll7J48l7j/JxNYZ+xsgSPbWfdulVS/aY+GdjUsQ7Q==
+  version "1.1.18"
+  resolved "https://registry.npmjs.org/node-releases/-/node-releases-1.1.18.tgz#cc98fd75598a324a77188ebddf6650e9cbd8b1d5"
+  integrity sha512-/mnVgm6u/8OwlIsoyRXtTI0RfQcxZoAZbdwyXap0EeWwcOpDDymyCHM2/aR9XKmHXrvizHoPAOs0pcbiJ6RUaA==
   dependencies:
     semver "^5.3.0"
 
