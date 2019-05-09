@@ -9651,6 +9651,11 @@ symbol-tree@^3.2.2:
   resolved "https://registry.npmjs.org/symbol-tree/-/symbol-tree-3.2.2.tgz#ae27db38f660a7ae2e1c3b7d1bc290819b8519e6"
   integrity sha1-rifbOPZgp64uHDt9G8KQgZuFGeY=
 
+systemjs@^3.1.6:
+  version "3.1.6"
+  resolved "https://registry.npmjs.org/systemjs/-/systemjs-3.1.6.tgz#0a13f45d2c3f7509824be46033a61115eda1903d"
+  integrity sha512-cXin4Z7FWf/eANmvuR5uE8qfPqMlkjyNZbayO/Mf3+AvSOegYY/3myiWgioKLOWUeB16if3VYqdk7HXXmgOL8Q==
+
 table@^5.0.0, table@^5.2.3:
   version "5.2.3"
   resolved "https://registry.npmjs.org/table/-/table-5.2.3.tgz#cde0cc6eb06751c009efab27e8c820ca5b67b7f2"

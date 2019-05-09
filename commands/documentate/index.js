@@ -20,7 +20,7 @@ module.exports = (program) => {
             const Project = require('../../lib/Project.js');
 
             if (!options.output) {
-                throw 'Missing \'output\' property.';
+                throw new Error('missing \'output\' property');
             }
 
             const cwd = process.cwd();
@@ -39,7 +39,7 @@ module.exports = (program) => {
                 }
 
                 if (!entries.length) {
-                    throw 'no files for documentation found';
+                    throw new Error('no files for documentation found');
                 }
             }
 
@@ -54,7 +54,7 @@ module.exports = (program) => {
                     const mainFile = entry.get('main') && entry.file(entry.get('main'));
                     const input = libFile || moduleFile || mainFile;
                     if (!input) {
-                        throw 'no files for documentation found';
+                        throw new Error('no files for documentation found');
                     }
                     let output = entry.entry(options.output);
                     if (!output.extname) {

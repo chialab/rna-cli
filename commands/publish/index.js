@@ -19,7 +19,7 @@ module.exports = (program) => {
 
             let beta = options.canary || options.beta;
             if (!options.arguments.length && !beta) {
-                throw 'missing version';
+                throw new Error('missing version');
             }
 
             let command = 'publish';

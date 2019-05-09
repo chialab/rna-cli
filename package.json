@@ -90,6 +90,7 @@
     "spdx-license-list": "^3.0.1",
     "stylelint": "^9.3.0",
     "stylelint-order": "^0.8.1",
+    "systemjs": "^3.1.6",
     "terser": "^3.10.11",
     "typescript": "^3.0.3",
     "workbox-build": "^3.4.1"

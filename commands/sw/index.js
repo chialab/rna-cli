@@ -16,7 +16,7 @@ module.exports = (program) => {
         .deprecate('3.0.0', 'Please checkout the new `rna build` features.')
         .action(async (app, options) => {
             if (!options.arguments.length) {
-                throw 'missing input files.';
+                throw new Error('missing input files');
             }
 
             const ServiceWorkerBundler = require('../../lib/Bundlers/ServiceWorkerBundler');

@@ -57,28 +57,21 @@ module.exports = async function npmTask(app, options, project, templates) {
         {
             type: 'input',
             name: 'src',
-            message: formatQuestion('src path'),
+            message: formatQuestion('sources path'),
             default: project.get('directories.src'),
             when: (answers) => !answers.workspaces,
         },
         {
             type: 'input',
             name: 'lib',
-            message: formatQuestion('distribution path'),
-            default: project.get('directories.lib'),
+            message: formatQuestion('main source file entry'),
+            default: project.get('lib'),
             when: (answers) => !answers.workspaces,
         },
         {
             type: 'input',
-            name: 'public',
-            message: formatQuestion('public path'),
-            default: project.get('directories.public'),
-            when: (answers) => !answers.workspaces && !answers.lib,
-        },
-        {
-            type: 'input',
             name: 'test',
-            message: formatQuestion('test path'),
+            message: formatQuestion('tests path'),
             default: project.get('directories.test'),
             when: (answers) => !answers.workspaces,
         },
@@ -102,6 +95,13 @@ module.exports = async function npmTask(app, options, project, templates) {
             message: formatQuestion('style entry point'),
             default: project.get('style'),
             when: (answers) => !answers.workspaces,
+        },
+        {
+            type: 'input',
+            name: 'public',
+            message: formatQuestion('public path'),
+            default: project.get('directories.public'),
+            when: (answers) => !answers.workspaces && !answers.module && !answers.main && !answers.style,
         },
         {
             type: 'input',
@@ -132,9 +132,9 @@ module.exports = async function npmTask(app, options, project, templates) {
         project.unset('directories.src');
     }
     if (answers.lib) {
-        project.set('directories.lib', answers.lib);
+        project.set('lib', answers.lib);
     } else {
-        project.unset('directories.lib');
+        project.unset('lib');
     }
     if (answers.public) {
         project.set('directories.public', answers.public);

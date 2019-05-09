@@ -56,7 +56,7 @@ module.exports = (program) => {
             }
 
             if (!entries.length) {
-                throw 'missing files to build';
+                throw new Error('missing files to build');
             }
 
             let bundles = [];
@@ -124,12 +124,20 @@ module.exports = (program) => {
                                     bundles.push(bundler);
                                 }
                             }
+                            if (!mainFile && !moduleFile && !browserFile && entry.directories.public) {
+                                // maybe a web app?
+                                let bundler = await buildEntry(app, entry, libFile, entry.directories.public, Object.assign({}, options, { targets }));
+                                if (bundler) {
+                                    // collect the generated Bundle.
+                                    bundles.push(bundler);
+                                }
+                            }
                         }
-                    } else {
+                    } else if (moduleFile || styleFile) {
                         if (!output && mainFile) {
                             output = project.directory(mainFile.dirname);
                         } else {
-                            throw 'missing `output` option';
+                            throw new Error('missing `output` option');
                         }
                         // retrocompatibility with RNA 2.0
 
@@ -153,6 +161,8 @@ module.exports = (program) => {
                                 bundles.push(bundler);
                             }
                         }
+                    } else {
+                        throw new Error('missing source file to build');
                     }
                 } else {
                     let output;
@@ -165,7 +175,7 @@ module.exports = (program) => {
                             output = project.directory(options.output);
                         }
                     } else {
-                        throw 'missing `output` option';
+                        throw new Error('missing `output` option');
                     }
 
                     const targets = options.targets ? browserslist(options.targets) : project.browserslist;

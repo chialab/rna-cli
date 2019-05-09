@@ -42,7 +42,7 @@ module.exports = (program) => {
             }
 
             if (entries.length === 0) {
-                throw 'missing files to lint';
+                throw new Error('missing files to lint');
             }
 
             const jsFiles = entries
@@ -57,7 +57,7 @@ module.exports = (program) => {
                 if (await eslint(app, project, {
                     fix: options.fix,
                 }, jsFiles)) {
-                    throw 'ESLint found some errors.';
+                    throw new Error('ESLint found some errors.');
                 }
             }
 
@@ -65,7 +65,7 @@ module.exports = (program) => {
                 if (await stylelint(app, project, {
                     fix: options.fix,
                 }, styleFiles)) {
-                    throw 'Stylelint found some errors';
+                    throw new Error('Stylelint found some errors');
                 }
             }
 

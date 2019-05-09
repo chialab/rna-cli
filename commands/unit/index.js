@@ -42,10 +42,10 @@ module.exports = (program) => {
                     process.env.SAUCE_ACCESS_KEY = app.store.get('saucelabs.accessKey');
                 }
                 if (!process.env.SAUCE_USERNAME) {
-                    throw 'Missing SAUCE_USERNAME variable.';
+                    throw new Error('missing SAUCE_USERNAME variable');
                 }
                 if (!process.env.SAUCE_ACCESS_KEY) {
-                    throw 'Missing SAUCE_ACCESS_KEY variable.';
+                    throw new Error('missing SAUCE_ACCESS_KEY variable');
                 }
             }
 
@@ -236,7 +236,7 @@ async function runTests(app, project, files, options, environments = []) {
     }
 
     if (finalExitCode) {
-        throw 'some tests have failed';
+        throw new Error('some tests have failed');
     }
 
     return runners;
