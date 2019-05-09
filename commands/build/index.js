@@ -13,18 +13,19 @@ module.exports = (program) => {
         .option('<package1> <package2> <package3>', 'The packages to build.')
         .option('--output <file>', 'The destination file.')
         .option('[--targets]', 'A supported browserslist query. Use --no-targets to transpile only non-standard features.')
-        .option('[--name]', 'The bundle name.')
-        .option('[--format]', 'The bundle format (es, umd, iife, cjs).')
-        .option('[--production]', 'Minify bundle.')
+        .option('[--name]', 'The script name.')
+        .option('[--format]', 'The script format (es, umd, iife, cjs).')
+        .option('[--bundle]', 'Should bundle dependencies along the source files.')
+        .option('[--production]', 'Minify script.')
         .option('[--declaration]', 'Generate typescript declarations.')
         .option('[--watch]', 'Watch sources and rebuild on files changes.')
         .option('[--no-map]', 'Do not produce source map.')
-        .option('[--no-lint]', 'Do not lint files before bundle.')
+        .option('[--no-lint]', 'Do not lint files before build.')
         .option('[--jsx.pragma]', 'The JSX pragma to use.')
         .option('[--jsx.pragmaFrag]', 'The JSX pragma fragment to use.')
         .option('[--jsx.module]', 'The module to auto import for JSX pragma.')
         .option('[--typings [file]', 'Generate typescript declarations.')
-        .option('[--analyze <file>]', 'Save an analytic report for bundle size.')
+        .option('[--analyze <file>]', 'Save an analytic report for script size.')
         .action(async (app, options = {}) => {
             const path = require('path');
             const browserslist = require('browserslist');
@@ -134,7 +135,7 @@ module.exports = (program) => {
 
                         if (moduleFile) {
                             let moduleOutput = mainFile ? mainFile : output;
-                            let bundler = await buildEntry(app, entry, moduleFile, moduleOutput, Object.assign({}, options, { targets }));
+                            let bundler = await buildEntry(app, entry, moduleFile, moduleOutput, Object.assign({ bundle: true }, options, { targets }));
                             if (bundler) {
                                 // collect the generated Bundle.
                                 bundles.push(bundler);
@@ -253,6 +254,7 @@ async function buildEntry(app, project, entry, output, options) {
             format: options.format,
             name: options.name,
             targets: options.targets,
+            bundle: options.bundle,
             production: options.production,
             map: options.map,
             lint: options.lint,
