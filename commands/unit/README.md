@@ -3,10 +3,9 @@
 ## Options
 * `--targets` Set specific targets for the build using a [Browserslist](https://github.com/browserslist/browserslist). This query is used by Babel and postCSS to transpile JavaScript and CSS files in order to be compatible with the specified browsers. Use `--no-targets` to prevent code transpiling.
 * `--node` Run tests in node context.
-* `--browser` Run tests in browser context.
+* `--browser [browserName]` Run tests in browser context. If no browser is specified, it runs on all browsers installed.
 * `--saucelabs` Use SauceLabs as browsers provider.
 * `--electron` Run tests in Electron context.
-* `--nativescript <ios|android>` Run tests in Nativescript context.
 * `--coverage` Generate a code coverage report.
 * `--concurrency` Set concurrency level for tests.
 * `--context` Use a specific HTML document for tests.

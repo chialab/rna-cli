@@ -11,7 +11,7 @@ module.exports = (program) => {
         .readme(`${__dirname}/README.md`)
         .option('[--targets]', 'A supported browserslist query.')
         .option('[--node]', 'Run tests in node context.')
-        .option('[--browser]', 'Run tests in browser context.')
+        .option('[--browser [browserName]]', 'Run tests in browser context.')
         .option('[--saucelabs]', 'Use SauceLabs as browsers provider.')
         .option('[--electron]', 'Run tests in Electron context.')
         .option('[--coverage]', 'Generate a code coverage report.')
