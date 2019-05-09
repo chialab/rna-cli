@@ -30,7 +30,6 @@ module.exports = (program) => {
             const browserslist = require('browserslist');
             const Project = require('../../lib/Project');
             const Watcher = require('../../lib/Watcher');
-            const PriorityQueues = require('../../lib/PriorityQueues');
 
             const cwd = process.cwd();
             const project = new Project(cwd);
@@ -189,9 +188,10 @@ module.exports = (program) => {
             // once bundles are generated, check for watch option.
             if (options.watch) {
                 // setup a bundles priority chain.
-                let queue = new PriorityQueues();
+                const PriorityQueues = require('../../lib/PriorityQueues');
+                const queue = new PriorityQueues();
                 // start the watch task
-                let watcher = new Watcher(project, {
+                const watcher = new Watcher(project, {
                     ignore: (file) => !filterChangedBundles(bundles, file).length,
                 });
 

@@ -119,35 +119,57 @@ module.exports = (program) => {
                 options.browser = true;
             }
 
-            try {
-                await runTests(app, project, files, options, taskEnvironments);
-            } catch (error) {
-                if (!options.watch) {
-                    throw error;
-                }
-            }
+            let runners = await runTests(app, project, files, options, taskEnvironments);
 
             if (options.watch) {
+                // setup a runners priority chain.
+                const PriorityQueues = require('../../lib/PriorityQueues');
+                const queue = new PriorityQueues();
                 // start the watch task
-                // const watcher = new Watcher(project, {
-                //     ignore: (file) => !watchFiles.includes(file) || (file === tempUnit.path),
-                // });
+                const watcher = new Watcher(project, {
+                    ignore: (file) => !filterChangedRunners(runners, file).length,
+                });
 
-                // await watcher.watch(async () => {
-                //     app.logger.newline();
-                //     await runTests(app, project, files, options, taskEnvironments);
-                // });
+                watcher.on('change', (file) => {
+                    let label = file.exists() ? 'changed' : 'removed';
+                    app.logger.info(`${file.localPath} ${label}`);
+                });
+
+                await watcher.watch(async (file) => {
+                    let promise = Promise.resolve();
+                    let runnersWithChanges = filterChangedRunners(runners, file.path);
+
+                    if (runnersWithChanges.length === 0) {
+                        return true;
+                    }
+
+                    let ticks = await Promise.all(
+                        // find out manifests with changed file dependency.
+                        runnersWithChanges.map((runner) => queue.tick(runner, 100))
+                    );
+
+                    for (let i = 0; i < ticks.length; i++) {
+                        if (!ticks[i]) {
+                            continue;
+                        }
+
+                        let runner = runnersWithChanges[i];
+                        promise = promise.then(async () => {
+                            try {
+                                await runner.run(files);
+                            } catch (err) {
+                                if (err) {
+                                    app.logger.error(err);
+                                }
+                            }
+                        });
+                    }
+
+                    await promise;
+                });
             }
         });
 };
-
-/**
- * @typedef {Object} TestResult
- * @property {Number} exitCode The exit code of the test.
- * @property {Number} failed Failed tests count.
- * @property {Object} coverage The coverage map result.
- */
-
 
 /**
  * A list of available environments.
@@ -167,11 +189,12 @@ const ENVIRONMENTS = {
  * @param {NavigatorFile[]} files The test files.
  * @param {Object} options A set of options for tests.
  * @param {Array<string>} environments A list of test environments.
- * @return {Promise}
+ * @return {Promise<TestRunner[]>}
  */
 async function runTests(app, project, files, options, environments = []) {
     const coverageMap = require('istanbul-lib-coverage').createCoverageMap({});
 
+    let runners = [];
     let finalExitCode = 0;
     // Test built sources.
     for (let i = 0; i < environments.length; i++) {
@@ -182,6 +205,7 @@ async function runTests(app, project, files, options, environments = []) {
             // Startup Mocha.
             const NodeTestRunner = require('../../lib/TestRunners/NodeTestRunner');
             const runner = new NodeTestRunner(app, project);
+            runners.push(runner);
             await runner.setup(options);
             let { exitCode, coverage } = await runner.run(files);
             if (coverage) {
@@ -193,6 +217,7 @@ async function runTests(app, project, files, options, environments = []) {
         } else if (taskEnv.runner === 'karma') {
             const BrowserTestRunner = require('../../lib/TestRunners/BrowserTestRunner');
             const runner = new BrowserTestRunner(app, project);
+            runners.push(runner);
             await runner.setup(options);
             let { exitCode, coverage } = await runner.run(files);
             if (coverage) {
@@ -214,7 +239,15 @@ async function runTests(app, project, files, options, environments = []) {
         throw 'some tests have failed';
     }
 
-    return coverageMap;
+    return runners;
+}
+
+function filterChangedRunners(runners, file) {
+    return runners
+        .filter((runner) => {
+            let runnerFiles = runner.files || [];
+            return runnerFiles.includes(file);
+        });
 }
 
 /**
