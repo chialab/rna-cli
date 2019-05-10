@@ -5,7 +5,6 @@
 * `--node` Run tests in node context.
 * `--browser [browserName]` Run tests in browser context. If no browser is specified, it runs on all browsers installed.
 * `--saucelabs` Use SauceLabs as browsers provider.
-* `--electron` Run tests in Electron context.
 * `--coverage` Generate a code coverage report.
 * `--concurrency` Set concurrency level for tests.
 * `--context` Use a specific HTML document for tests.

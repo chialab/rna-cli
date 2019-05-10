@@ -13,7 +13,6 @@ module.exports = (program) => {
         .option('[--node]', 'Run tests in node context.')
         .option('[--browser [browserName]]', 'Run tests in browser context.')
         .option('[--saucelabs]', 'Use SauceLabs as browsers provider.')
-        .option('[--electron]', 'Run tests in Electron context.')
         .option('[--coverage]', 'Generate a code coverage report.')
         .option('[--concurrency]', 'Set concurrency level for tests.')
         .option('[--context]', 'Use a specific HTML document for tests.')
@@ -111,7 +110,7 @@ module.exports = (program) => {
                 return;
             }
 
-            let taskEnvironments = Object.keys(options).filter((optName) => options[optName] && optName in ENVIRONMENTS);
+            let taskEnvironments = [options.node && 'node', options.browser && 'browser', options.saucelabs && 'saucelabs'].filter(Boolean);
             if (!taskEnvironments.length) {
                 // If test environment is not provide, use `browser` as default.
                 taskEnvironments.push('node', 'browser');
@@ -172,17 +171,6 @@ module.exports = (program) => {
 };
 
 /**
- * A list of available environments.
- * @type {Object}
- */
-const ENVIRONMENTS = {
-    node: { runner: 'mocha' },
-    browser: { runner: 'karma' },
-    saucelabs: { runner: 'karma' },
-    electron: { runner: 'karma' },
-};
-
-/**
  * Exec tests across multiple environments.
  * @param {CLI} app The current CLI instance.
  * @param {Project} project The active project.
@@ -199,9 +187,8 @@ async function runTests(app, project, files, options, environments = []) {
     // Test built sources.
     for (let i = 0; i < environments.length; i++) {
         let taskEnvName = environments[i];
-        let taskEnv = ENVIRONMENTS[taskEnvName];
 
-        if (taskEnv.runner === 'mocha') {
+        if (taskEnvName === 'mocha') {
             // Startup Mocha.
             const NodeTestRunner = require('../../lib/TestRunners/NodeTestRunner');
             const runner = new NodeTestRunner(app, project);
@@ -214,7 +201,7 @@ async function runTests(app, project, files, options, environments = []) {
             if (exitCode !== 0) {
                 finalExitCode = exitCode;
             }
-        } else if (taskEnv.runner === 'karma') {
+        } else if (taskEnvName === 'browser' || taskEnvName === 'saucelabs') {
             const BrowserTestRunner = require('../../lib/TestRunners/BrowserTestRunner');
             const runner = new BrowserTestRunner(app, project);
             runners.push(runner);
