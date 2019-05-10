@@ -188,7 +188,7 @@ async function runTests(app, project, files, options, environments = []) {
     for (let i = 0; i < environments.length; i++) {
         let taskEnvName = environments[i];
 
-        if (taskEnvName === 'mocha') {
+        if (taskEnvName === 'node') {
             // Startup Mocha.
             const NodeTestRunner = require('../../lib/TestRunners/NodeTestRunner');
             const runner = new NodeTestRunner(app, project);
