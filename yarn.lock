@@ -665,9 +665,9 @@
     to-fast-properties "^2.0.0"
 
 "@chialab/babel-preset@^2.0.0":
-  version "2.1.0"
-  resolved "https://registry.npmjs.org/@chialab/babel-preset/-/babel-preset-2.1.0.tgz#539e5745b4cfa5bd45a99cb312565bb083380143"
-  integrity sha512-N4bX9nfv8YmT7PzzRZNuNFVJJukkupzW4xVtipY/45bijUbPcz6YfLWkCO2QMRTOqwISkcLlVJSf0JziXdSx4Q==
+  version "2.1.1"
+  resolved "https://registry.npmjs.org/@chialab/babel-preset/-/babel-preset-2.1.1.tgz#0ac849b13fdaa85534a26331d85458abe57740db"
+  integrity sha512-UObuVTHgAXLwwtjvNEHK8b0NrTRF3TkB7hME88+Rq4xDUuLL9vvlq87BjR/oGkSLAvcFZOOXD9iJmAr/23SXPQ==
   dependencies:
     "@babel/plugin-syntax-dynamic-import" "^7.0.0"
     "@babel/plugin-transform-react-jsx" "^7.0.0"
