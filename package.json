@@ -68,7 +68,6 @@
     "minimatch": "^3.0.4",
     "mocha": "^5.2.0",
     "nyc": "^14.1.1",
-    "pirates": "^4.0.1",
     "polyfill-library": "^3.31.1",
     "postcss": "^7.0.7",
     "postcss-all-unset": "^1.1.0",

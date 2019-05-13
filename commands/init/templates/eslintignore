@@ -6,7 +6,8 @@
 .stylelintcache
 
 # TEST
-/reports
+/test/__coverage__
+/test/__generated__
 
 /dist
 /public
