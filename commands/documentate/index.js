@@ -58,14 +58,14 @@ module.exports = (program) => {
                     }
                     let output = entry.entry(options.output);
                     if (!output.extname) {
-                        output = project.directory(options.output).file(input.basename.replace(input.extname, '.md'));
+                        output = project.directory(options.output).file(`${input.basename}.md`);
                     }
                     await generate(app, input, output, options);
                 } else {
                     // process file
                     let output = project.entry(options.output);
                     if (!output.extname) {
-                        output = project.directory(options.output).file(entry.basename.replace(entry.extname, '.md'));
+                        output = project.directory(options.output).file(`${entry.basename}.md`);
                     }
                     await generate(app, entry, output, options);
                 }

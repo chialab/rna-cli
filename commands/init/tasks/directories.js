@@ -30,6 +30,8 @@ module.exports = async function directoriesTask(app, otpions, project, templates
             indexFile.write(template({
                 project,
             }));
+            publicDir.file('index.js').ensure();
+            publicDir.file('index.css').ensure();
         }
     }
 

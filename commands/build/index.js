@@ -152,7 +152,7 @@ module.exports = (program) => {
 
                         if (styleFile) {
                             let styleOutput = mainFile ?
-                                mainFile.parent.file(mainFile.basename.replace(mainFile.extname, '.css')) :
+                                mainFile.parent.file(`${mainFile.basename}.css`) :
                                 output;
 
                             let bundler = await buildEntry(app, entry, styleFile, styleOutput, Object.assign({}, options, { targets }));

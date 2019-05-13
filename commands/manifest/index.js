@@ -66,12 +66,12 @@ module.exports = (program) => {
                 let outputDir = project.directory(options.output);
                 // use output flag if defined.
                 if (manifestOptions.input) {
-                    manifestOptions.output = outputDir.file(manifestOptions.input.basename);
+                    manifestOptions.output = outputDir.file(manifestOptions.input.name);
                 } else {
                     manifestOptions.output = outputDir.file('manifest.json');
                 }
                 if (htmlOptions.input) {
-                    htmlOptions.output = outputDir.file(htmlOptions.input.basename);
+                    htmlOptions.output = outputDir.file(htmlOptions.input.name);
                 } else {
                     htmlOptions.output = outputDir.file('index.html');
                 }

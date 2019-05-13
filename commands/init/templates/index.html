@@ -1,11 +1,9 @@
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title><%= project.get('name') %></title><% if (project.get('style')) { %>
-    <link rel="stylesheet" href="<%= project.file(project.get('style')).basename.replace(/\.(.*)$/, '.css') %>"><% } %>
+    <link rel="stylesheet" href="index.css"><% } %>
 </head>
-<body><% if (project.get('module')) { %>
-    <script src="<%= project.file(project.get('module')).basename.replace(/\.(.*)$/, '.js') %>"></script><% } else if (project.get('main')) { %>
-    <script src="<%= project.file(project.get('main')).basename.replace(/\.(.*)$/, '.js') %>"></script><% } %>
+<body>
+    <script src="index.js" type="module"></script>
 </body>
 </html>
