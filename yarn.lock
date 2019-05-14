@@ -6446,7 +6446,7 @@ methods@~1.1.2:
   resolved "https://registry.npmjs.org/methods/-/methods-1.1.2.tgz#5529a4d67654134edcc5266656835b0f851afcee"
   integrity sha1-VSmk1nZUE07cxSZmVoNbD4Ua/O4=
 
-micromatch@^3.0.3, micromatch@^3.1.10, micromatch@^3.1.4:
+micromatch@^3.1.10, micromatch@^3.1.4:
   version "3.1.10"
   resolved "https://registry.npmjs.org/micromatch/-/micromatch-3.1.10.tgz#70859bc95c9840952f359a068a3fc49f9ecfac23"
   integrity sha512-MWikgl9n9M3w+bpsY3He8L+w9eF9338xRl8IAO5viDizwSzziFEyUzo2xrrloB64ADbTf8uA8vRqqttDTOmccg==
@@ -7624,17 +7624,6 @@ postcss-convert-values@^4.0.1:
     postcss "^7.0.0"
     postcss-value-parser "^3.0.0"
 
-postcss-copy@^7.1.0:
-  version "7.1.0"
-  resolved "https://registry.npmjs.org/postcss-copy/-/postcss-copy-7.1.0.tgz#1fee64421c5394451c0a094ecdc96a337779ff57"
-  integrity sha512-O3oGdW1pzEo2hvnKCFk1j4SYlfoeYELVFxJBP5ib/iAPqujJTumDRcxOtMucmpZNWfn5zqh8Hr4kiZUHtoEtUg==
-  dependencies:
-    micromatch "^3.0.3"
-    mkdirp "^0.5.1"
-    pify "^3.0.0"
-    postcss "^6.0.3"
-    postcss-value-parser "^3.3.0"
-
 postcss-discard-comments@^4.0.2:
   version "4.0.2"
   resolved "https://registry.npmjs.org/postcss-discard-comments/-/postcss-discard-comments-4.0.2.tgz#1fbabd2c246bff6aaad7997b2b0918f4d7af4033"
@@ -7995,7 +7984,7 @@ postcss@^5.0.2:
     source-map "^0.5.6"
     supports-color "^3.2.3"
 
-postcss@^6.0.13, postcss@^6.0.14, postcss@^6.0.3:
+postcss@^6.0.13, postcss@^6.0.14:
   version "6.0.23"
   resolved "https://registry.npmjs.org/postcss/-/postcss-6.0.23.tgz#61c82cc328ac60e677645f979054eb98bc0e3324"
   integrity sha512-soOk1h6J3VMTZtVeVpv15/Hpdl2cBLX3CAw4TAbkpTJiNPk9YP/zWcD1ND+xEtvyuuvKzbxliTOIyvkSeSJ6ag==
