@@ -2,6 +2,7 @@ extends:
   - eslint:recommended
 
 globals:
+  globalThis: true
   assert: true
   expect: true
   should: true
