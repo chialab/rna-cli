@@ -1,4 +1,4 @@
-It uses [lerna](https://github.com/lerna/lerna) for monorepo's packages release to NPM.
+It uses [lerna](https://github.com/lerna/lerna) to publish modules of a monorepo to NPM, creating a release tag for Git. Support for plain module is missing at the moment.
 
 ### Options
 
