@@ -98,6 +98,13 @@ module.exports = async function npmTask(app, options, project, templates) {
         },
         {
             type: 'input',
+            name: 'types',
+            message: formatQuestion('types entry point'),
+            default: project.get('types'),
+            when: (answers) => !answers.workspaces && (answers.module || answers.main || answers.browser),
+        },
+        {
+            type: 'input',
             name: 'public',
             message: formatQuestion('public path'),
             default: project.get('directories.public'),
@@ -138,6 +145,7 @@ module.exports = async function npmTask(app, options, project, templates) {
     }
     if (answers.public) {
         project.set('directories.public', answers.public);
+        project.set('private', true);
     } else {
         project.unset('directories.public');
     }
@@ -154,6 +162,9 @@ module.exports = async function npmTask(app, options, project, templates) {
     }
     if (answers.browser) {
         project.set('browser', answers.browser);
+    }
+    if (answers.types) {
+        project.set('types', answers.types);
     }
     if (answers.workspaces) {
         project.set('workspaces', answers.workspaces.split(/,\s*/));
