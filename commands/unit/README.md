@@ -1,5 +1,7 @@
 # Command: `unit`
 
+Run unit and e2e tests in Node and Browser environments, using [Mocha](https://mochajs.org/) as test framework and [Chai](https://www.chaijs.com/) as assertion library. Tests in the browsers are launched by [Karma](https://karma-runner.github.io).
+
 ## Options
 * `--targets` Set specific targets for the build using a [Browserslist](https://github.com/browserslist/browserslist). This query is used by Babel and postCSS to transpile JavaScript and CSS files in order to be compatible with the specified browsers. Use `--no-targets` to prevent code transpiling.
 * `--node` Run tests in node context.

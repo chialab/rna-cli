@@ -7,21 +7,21 @@ const packageJson = require('./package.json');
 
 const program = new CLI('rna', packageJson.name, packageJson.version);
 
+require('./commands/init/index.js')(program);
+require('./commands/build/index.js')(program);
+require('./commands/serve/index.js')(program);
+require('./commands/lint/index.js')(program);
+require('./commands/unit/index.js')(program);
+require('./commands/publish/index.js')(program);
+require('./commands/documentate/index.js')(program);
 require('./commands/config/index.js')(program);
+require('./commands/manifest/index.js')(program);
+require('./commands/sw/index.js')(program);
 require('./commands/start/index.js')(program);
 require('./commands/test/index.js')(program);
 require('./commands/add/index.js')(program);
 require('./commands/remove/index.js')(program);
 require('./commands/install/index.js')(program);
-require('./commands/init/index.js')(program);
-require('./commands/lint/index.js')(program);
-require('./commands/build/index.js')(program);
-require('./commands/manifest/index.js')(program);
-require('./commands/sw/index.js')(program);
-require('./commands/serve/index.js')(program);
-require('./commands/unit/index.js')(program);
-require('./commands/publish/index.js')(program);
-require('./commands/documentate/index.js')(program);
 require('./commands/run/index.js')(program);
 
 (async () => {

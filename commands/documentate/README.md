@@ -1,4 +1,4 @@
-It uses the [dts-apigen](https://github.com/chialab/dts-apigen) to generate API references of modules in Markdown format.
+Generate API references for a module in Markdown format, using [dts-apigen](https://github.com/chialab/dts-apigen).
 
 ### Options
 

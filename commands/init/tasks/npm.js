@@ -57,43 +57,43 @@ module.exports = async function npmTask(app, options, project, templates) {
         {
             type: 'input',
             name: 'src',
-            message: formatQuestion('sources path'),
+            message: formatQuestion('base src path'),
             default: project.get('directories.src'),
             when: (answers) => !answers.workspaces,
         },
         {
             type: 'input',
             name: 'lib',
-            message: formatQuestion('main source file entry'),
+            message: formatQuestion('source file entry'),
             default: project.get('lib'),
             when: (answers) => !answers.workspaces,
         },
         {
             type: 'input',
             name: 'test',
-            message: formatQuestion('tests path'),
+            message: formatQuestion('base test path'),
             default: project.get('directories.test'),
             when: (answers) => !answers.workspaces,
         },
         {
             type: 'input',
             name: 'module',
-            message: formatQuestion('esm entry point'),
+            message: formatQuestion('es module entry point'),
             default: project.get('module'),
             when: (answers) => !answers.workspaces,
         },
         {
             type: 'input',
             name: 'main',
-            message: formatQuestion('commonjs entry point'),
+            message: formatQuestion('cjs module entry point'),
             default: project.get('main'),
             when: (answers) => !answers.workspaces,
         },
         {
             type: 'input',
-            name: 'style',
-            message: formatQuestion('style entry point'),
-            default: project.get('style'),
+            name: 'browser',
+            message: formatQuestion('browser module entry point'),
+            default: project.get('browser'),
             when: (answers) => !answers.workspaces,
         },
         {
@@ -101,7 +101,7 @@ module.exports = async function npmTask(app, options, project, templates) {
             name: 'public',
             message: formatQuestion('public path'),
             default: project.get('directories.public'),
-            when: (answers) => !answers.workspaces && !answers.module && !answers.main && !answers.style,
+            when: (answers) => !answers.workspaces && !answers.module && !answers.main && !answers.browser,
         },
         {
             type: 'input',
@@ -146,14 +146,14 @@ module.exports = async function npmTask(app, options, project, templates) {
     } else {
         project.unset('directories.test');
     }
-    if (answers.main) {
-        project.set('main', answers.main);
-    }
     if (answers.module) {
         project.set('module', answers.module);
     }
-    if (answers.style) {
-        project.set('style', answers.style);
+    if (answers.main) {
+        project.set('main', answers.main);
+    }
+    if (answers.browser) {
+        project.set('browser', answers.browser);
     }
     if (answers.workspaces) {
         project.set('workspaces', answers.workspaces.split(/,\s*/));

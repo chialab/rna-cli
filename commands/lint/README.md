@@ -1,8 +1,6 @@
 It uses [ESLint](https://eslint.org/) for JavaScript files and [Stylelint](https://stylelint.io/) for CSS.
 
-It looks for `.eslintrc.yml` and `.stylelintrc.yml` files in the project folder and fallback to RNA config files missing. RNA rules for [JavaScript](../../.eslintrc.yml) and [Style](../../.stylelint.yml) extends default ones, with support for Sass syntax, `async` and `await` JavaScript statements and Class' private fields through the [`babel-eslint`](https://github.com/babel/babel-eslint) plugin.
-
-The same config files resolution is used for the `build` command.
+Run lint tasks across the projects. It uses ESLint for JavaScript and TypeScript projects and StyleLint for CSS and SCSS files, looking for `.eslintrc.yml` and `.stylelintrc.yml` in the project root and fallbacking to RNA core config files missing. Configuration files and lint runners needs to be saved in the project, in order to provide integration with your IDE (eg VS Code).
 
 ### Options
 
