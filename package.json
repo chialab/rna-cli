@@ -1,6 +1,6 @@
 {
   "name": "@chialab/rna-cli",
-  "version": "3.0.0-beta.11",
+  "version": "3.0.0-beta.12",
   "description": "A CLI to rule them all.",
   "main": "index.js",
   "repository": {
