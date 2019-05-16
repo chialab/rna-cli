@@ -88,7 +88,6 @@ module.exports = (program) => {
  */
 async function eslint(app, project, options, files) {
     const ESLint = require('../../lib/Linters/ESLint.js');
-    const profile = app.profiler.task('eslint');
     app.logger.play('running ESLint...');
 
     try {
@@ -99,13 +98,11 @@ async function eslint(app, project, options, files) {
             app.logger.log(linter.report());
         }
         app.logger.stop();
-        profile.end();
         if (report.errorCount) {
             return report;
         }
     } catch (err) {
         app.logger.stop();
-        profile.end();
         throw err;
     }
 }
@@ -120,7 +117,6 @@ async function eslint(app, project, options, files) {
  */
 async function stylelint(app, project, options, files) {
     const Stylelint = require('../../lib/Linters/Stylelint.js');
-    const profile = app.profiler.task('stylelint');
     app.logger.play('running stylelint...');
 
     try {
@@ -131,13 +127,11 @@ async function stylelint(app, project, options, files) {
             app.logger.log(linter.report());
         }
         app.logger.stop();
-        profile.end();
         if (report.errorCount) {
             return report;
         }
     } catch(err) {
         app.logger.stop();
-        profile.end();
         throw err;
     }
 }
