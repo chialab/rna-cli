@@ -32,12 +32,16 @@ module.exports = (program) => {
             }
 
             let manifestBundler = new WebManifestBundler();
-            manifestBundler.on(WebManifestBundler.START_EVENT, (input) => {
-                app.logger.play('generating webmanifest...', input.localPath);
+            manifestBundler.on(WebManifestBundler.START_EVENT, (input, child) => {
+                if (!child) {
+                    app.logger.play('generating webmanifest...', input.localPath);
+                }
             });
-            manifestBundler.on(WebManifestBundler.END_EVENT, () => {
-                app.logger.stop();
-                app.logger.success('webmanifest ready');
+            manifestBundler.on(WebManifestBundler.END_EVENT, (child) => {
+                if (!child) {
+                    app.logger.stop();
+                    app.logger.success('webmanifest ready');
+                }
             });
             manifestBundler.on(WebManifestBundler.ERROR_EVENT, () => {
                 app.logger.stop();
@@ -74,12 +78,16 @@ module.exports = (program) => {
 
             if (typeof options.index === 'string') {
                 htmlBundler = new HTMLBundler();
-                htmlBundler.on(HTMLBundler.START_EVENT, (input) => {
-                    app.logger.play('generating html...', input.localPath);
+                htmlBundler.on(HTMLBundler.START_EVENT, (input, child) => {
+                    if (!child) {
+                        app.logger.play('generating html...', input.localPath);
+                    }
                 });
-                htmlBundler.on(HTMLBundler.END_EVENT, () => {
-                    app.logger.stop();
-                    app.logger.success('html ready');
+                htmlBundler.on(HTMLBundler.END_EVENT, (child) => {
+                    if (!child) {
+                        app.logger.stop();
+                        app.logger.success('html ready');
+                    }
                 });
                 htmlBundler.on(HTMLBundler.ERROR_EVENT, () => {
                     app.logger.stop();

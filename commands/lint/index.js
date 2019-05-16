@@ -91,8 +91,8 @@ async function eslint(app, project, options, files) {
     app.logger.play('running ESLint...');
 
     try {
-        const config = ESLint.detectConfig(app, project, options);
-        const linter = new ESLint(config);
+        const linter = new ESLint();
+        await linter.setup(project);
         const report = await linter.lint(files);
         if (report.errorCount || report.warningCount) {
             app.logger.log(ESLint.format(linter.result));
@@ -120,8 +120,8 @@ async function stylelint(app, project, options, files) {
     app.logger.play('running stylelint...');
 
     try {
-        const config = Stylelint.detectConfig(app, project, options);
-        const linter = new Stylelint(config);
+        const linter = new Stylelint();
+        await linter.setup(project);
         const report = await linter.lint(files);
         if (report.errorCount || report.warningCount) {
             app.logger.log(Stylelint.format(linter.result));

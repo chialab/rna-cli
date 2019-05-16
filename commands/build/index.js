@@ -1,9 +1,3 @@
-const Linter = require('../../lib/Linters/Linter');
-const ScriptBundler = require('../../lib/Bundlers/ScriptBundler');
-const StyleBundler = require('../../lib/Bundlers/StyleBundler');
-const HTMLBundler = require('../../lib/Bundlers/HTMLBundler');
-const WebManifestBundler = require('../../lib/Bundlers/WebManifestBundler');
-
 /**
  * Register command to CLI.
  *
@@ -266,6 +260,7 @@ function filterChangedBundles(bundles, file) {
 
 async function buildEntry(app, project, entry, output, options) {
     const { isJSFile, isStyleFile, isHTMLFile, isWebManifestFile } = require('../../lib/extensions');
+    const Linter = require('../../lib/Linters/Linter');
 
     function logFile(output) {
         if (output) {
@@ -275,6 +270,7 @@ async function buildEntry(app, project, entry, output, options) {
     }
 
     if (isJSFile(entry.path)) {
+        const ScriptBundler = require('../../lib/Bundlers/ScriptBundler');
         // Javascript file
         let bundler = new ScriptBundler();
         let analysis;
@@ -340,6 +336,7 @@ async function buildEntry(app, project, entry, output, options) {
         // collect the generated Bundle
         return bundler;
     } else if (isStyleFile(entry.path)) {
+        const StyleBundler = require('../../lib/Bundlers/StyleBundler');
         // Style file
         let bundler = new StyleBundler();
         let linterResult;
@@ -383,6 +380,7 @@ async function buildEntry(app, project, entry, output, options) {
         // collect the generated Bundle
         return bundler;
     } else if (isHTMLFile(entry.path)) {
+        const HTMLBundler = require('../../lib/Bundlers/HTMLBundler');
         let bundler = new HTMLBundler();
         let linterResult;
         bundler.on(HTMLBundler.START_EVENT, (input, code, invalidate, child) => {
@@ -428,6 +426,7 @@ async function buildEntry(app, project, entry, output, options) {
         // collect the generated Bundle
         return bundler;
     } else if (isWebManifestFile(entry.path)) {
+        const WebManifestBundler = require('../../lib/Bundlers/WebManifestBundler');
         let bundler = new WebManifestBundler();
         bundler.on(WebManifestBundler.START_EVENT, (input, code, invalidate, child) => {
             if (!child) {
