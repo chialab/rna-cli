@@ -17,7 +17,7 @@ module.exports = (program) => {
         .option('[--scope]', 'Force manifest scope.')
         .deprecate('3.0.0', 'Please checkout the new `rna build` features.')
         .action(async (app, options = {}) => {
-            const { Project } = require('../../lib/Navigator');
+            const { Project } = require('../../lib/File');
             const HTMLBundler = require('../../lib/Bundlers/HTMLBundler');
             const WebManifestBundler = require('../../lib/Bundlers/WebManifestBundler');
 

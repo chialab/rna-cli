@@ -18,7 +18,7 @@ module.exports = (program) => {
         .action(async (app, options = {}) => {
             const { mix } = require('@chialab/proteins');
             const Watcher = require('../../lib/Watcher');
-            const { Project } = require('../../lib/Navigator');
+            const { Project } = require('../../lib/File');
             const Server = require('../../lib/Servers/Server');
 
             const cwd = process.cwd();

@@ -35,7 +35,7 @@ module.exports = (program) => {
         .action(async (app, options = {}) => {
             const path = require('path');
             const browserslist = require('browserslist');
-            const { Project } = require('../../lib/Navigator');
+            const { Project } = require('../../lib/File');
             const Watcher = require('../../lib/Watcher');
 
             const cwd = process.cwd();

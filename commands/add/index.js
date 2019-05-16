@@ -13,7 +13,7 @@ module.exports = (program) => {
         .option('[--dev]', 'Add to dev dependencies.')
         .deprecate('2.0.0', 'Please use `yarn add`.')
         .action(async (app, options) => {
-            const { Project } = require('../../lib/Navigator');
+            const { Project } = require('../../lib/File');
 
             const cwd = process.cwd();
             const project = new Project(cwd);

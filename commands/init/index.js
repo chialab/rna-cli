@@ -18,7 +18,7 @@ module.exports = (program) => {
         .action(async (app, options) => {
             const fs = require('fs-extra');
             const path = require('path');
-            const { NavigatorDirectory, Project } = require('../../lib/Navigator.js');
+            const { Directory, Project } = require('../../lib/File');
 
             // Detect directory to use as project root, and ensure it is present.
             let cwd;
@@ -31,7 +31,7 @@ module.exports = (program) => {
 
             const project = new Project(cwd);
             const parentProject = project.parent;
-            const templates = new NavigatorDirectory(__dirname).directory('templates');
+            const templates = new Directory(__dirname).directory('templates');
 
             // active all flags if none is selected
             const flags = ['git', 'npm', 'lint', 'license', 'readme'];

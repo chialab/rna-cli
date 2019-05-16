@@ -11,7 +11,7 @@ module.exports = (program) => {
         .readme(`${__dirname}/README.md`)
         .deprecate('2.0.0', 'Please use `yarn test`.')
         .action(async () => {
-            const { Project } = require('../../lib/Navigator');
+            const { Project } = require('../../lib/File');
 
             const cwd = process.cwd();
             const project = new Project(cwd);

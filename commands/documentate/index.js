@@ -17,7 +17,7 @@ module.exports = (program) => {
         .option('--header [content]', 'A custom header for markdown documentation')
         .option('--footer [content]', 'A custom footer for markdown documentation')
         .action(async (app, options) => {
-            const { Project } = require('../../lib/Navigator.js');
+            const { Project } = require('../../lib/File');
 
             if (!options.output) {
                 throw new Error('missing \'output\' property');
@@ -77,8 +77,8 @@ module.exports = (program) => {
  * Generate the API reference file.
  *
  * @param {CLI} app The CLI intance.
- * @param {NavigatorEntry} input An input code file.
- * @param {NavigatorEntry} output The output file name.
+ * @param {Entry} input An input code file.
+ * @param {Entry} output The output file name.
  * @param {Object} options Template options.
  * @return {Promise}
  */

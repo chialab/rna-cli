@@ -20,7 +20,7 @@ module.exports = (program) => {
         .option('[--watch]', 'Watch test files.')
         .action(async (app, options = {}) => {
             const browserslist = require('browserslist');
-            const { Project } = require('../../lib/Navigator');
+            const { Project } = require('../../lib/File');
             const Watcher = require('../../lib/Watcher');
 
             const cwd = process.cwd();
@@ -174,7 +174,7 @@ module.exports = (program) => {
  * Exec tests across multiple environments.
  * @param {CLI} app The current CLI instance.
  * @param {Project} project The active project.
- * @param {NavigatorFile[]} files The test files.
+ * @param {File[]} files The test files.
  * @param {Object} options A set of options for tests.
  * @param {Array<string>} environments A list of test environments.
  * @return {Promise<TestRunner[]>}
