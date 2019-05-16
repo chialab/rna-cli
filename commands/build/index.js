@@ -288,7 +288,7 @@ async function buildEntry(app, project, entry, output, options) {
             if (!child) {
                 app.logger.stop();
                 if (linterResult) {
-                    app.logger.log(linterResult);
+                    app.logger.log(Linter.format(linterResult));
                 }
                 if (analysis) {
                     app.logger.info(analysis);
@@ -352,7 +352,7 @@ async function buildEntry(app, project, entry, output, options) {
             if (!child) {
                 app.logger.stop();
                 if (linterResult) {
-                    app.logger.log(linterResult);
+                    app.logger.log(Linter.format(linterResult));
                 }
                 app.logger.success('style ready');
             }
@@ -394,7 +394,7 @@ async function buildEntry(app, project, entry, output, options) {
             if (!child) {
                 app.logger.stop();
                 if (linterResult) {
-                    app.logger.log(linterResult);
+                    app.logger.log(Linter.format(linterResult));
                 }
                 app.logger.success('html ready');
             }
