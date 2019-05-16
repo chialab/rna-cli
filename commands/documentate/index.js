@@ -17,7 +17,7 @@ module.exports = (program) => {
         .option('--header [content]', 'A custom header for markdown documentation')
         .option('--footer [content]', 'A custom footer for markdown documentation')
         .action(async (app, options) => {
-            const Project = require('../../lib/Project.js');
+            const { Project } = require('../../lib/Navigator.js');
 
             if (!options.output) {
                 throw new Error('missing \'output\' property');

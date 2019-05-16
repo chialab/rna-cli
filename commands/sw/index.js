@@ -21,7 +21,7 @@ module.exports = (program) => {
 
             const ServiceWorkerBundler = require('../../lib/Bundlers/ServiceWorkerBundler');
             const Watcher = require('../../lib/Watcher');
-            const Project = require('../../lib/Project');
+            const { Project } = require('../../lib/Navigator');
 
             const cwd = process.cwd();
             const project = new Project(cwd);

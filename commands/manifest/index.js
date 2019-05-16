@@ -17,7 +17,7 @@ module.exports = (program) => {
         .option('[--scope]', 'Force manifest scope.')
         .deprecate('3.0.0', 'Please checkout the new `rna build` features.')
         .action(async (app, options = {}) => {
-            const Project = require('../../lib/Project');
+            const { Project } = require('../../lib/Navigator');
             const HTMLBundler = require('../../lib/Bundlers/HTMLBundler');
             const WebManifestBundler = require('../../lib/Bundlers/WebManifestBundler');
 
@@ -31,9 +31,22 @@ module.exports = (program) => {
                 root = project;
             }
 
-            let manifestBundler = new WebManifestBundler(app, project);
+            let manifestBundler = new WebManifestBundler();
+            manifestBundler.on(WebManifestBundler.START_EVENT, (input) => {
+                app.logger.play('generating webmanifest...', input.localPath);
+            });
+            manifestBundler.on(WebManifestBundler.END_EVENT, () => {
+                app.logger.stop();
+                app.logger.success('webmanifest ready');
+            });
+            manifestBundler.on(WebManifestBundler.ERROR_EVENT, () => {
+                app.logger.stop();
+            });
+
             let manifestOptions = {
                 override: true,
+                name: project.get('name'),
+                description: project.get('description'),
             };
             let htmlBundler;
             let htmlOptions = {
@@ -43,6 +56,8 @@ module.exports = (program) => {
                 scripts: false,
                 icon: false,
                 serviceWorker: false,
+                title: project.get('title'),
+                description: project.get('description'),
             };
 
             if (options.manifest) {
@@ -58,7 +73,17 @@ module.exports = (program) => {
             }
 
             if (typeof options.index === 'string') {
-                htmlBundler = new HTMLBundler(app, project);
+                htmlBundler = new HTMLBundler();
+                htmlBundler.on(HTMLBundler.START_EVENT, (input) => {
+                    app.logger.play('generating html...', input.localPath);
+                });
+                htmlBundler.on(HTMLBundler.END_EVENT, () => {
+                    app.logger.stop();
+                    app.logger.success('html ready');
+                });
+                htmlBundler.on(HTMLBundler.ERROR_EVENT, () => {
+                    app.logger.stop();
+                });
                 htmlOptions.input = project.file(options.index);
             }
 
@@ -85,13 +110,17 @@ module.exports = (program) => {
 
             await manifestBundler.setup(manifestOptions);
             let res = await manifestBundler.build();
-            await manifestBundler.write();
+            let outputFile = await manifestBundler.write();
+            let { size, zipped } = outputFile.size;
+            app.logger.info(outputFile.localPath, `${size}, ${zipped} zipped`);
 
             if (htmlBundler) {
                 htmlOptions.webmanifest = manifestOptions.output;
                 await htmlBundler.setup(htmlOptions);
                 await htmlBundler.build();
-                await htmlBundler.write();
+                let outputFile = await htmlBundler.write();
+                let { size, zipped } = outputFile.size;
+                app.logger.info(outputFile.localPath, `${size}, ${zipped} zipped`);
             }
 
             return res;

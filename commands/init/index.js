@@ -18,8 +18,7 @@ module.exports = (program) => {
         .action(async (app, options) => {
             const fs = require('fs-extra');
             const path = require('path');
-            const Project = require('../../lib/Project');
-            const { NavigatorDirectory } = require('../../lib/Navigator.js');
+            const { NavigatorDirectory, Project } = require('../../lib/Navigator.js');
 
             // Detect directory to use as project root, and ensure it is present.
             let cwd;

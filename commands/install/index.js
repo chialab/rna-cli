@@ -11,7 +11,7 @@ module.exports = (program) => {
         .description('Sync project dependencies after a project update or a git pull.')
         .deprecate('2.0.0', 'Please use `yarn install`.')
         .action(async (app) => {
-            const Project = require('../../lib/Project');
+            const { Project } = require('../../lib/Navigator');
             const cwd = process.cwd();
             const project = new Project(cwd);
 

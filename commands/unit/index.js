@@ -20,7 +20,7 @@ module.exports = (program) => {
         .option('[--watch]', 'Watch test files.')
         .action(async (app, options = {}) => {
             const browserslist = require('browserslist');
-            const Project = require('../../lib/Project');
+            const { Project } = require('../../lib/Navigator');
             const Watcher = require('../../lib/Watcher');
 
             const cwd = process.cwd();

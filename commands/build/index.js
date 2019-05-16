@@ -1,3 +1,9 @@
+const Linter = require('../../lib/Linters/Linter');
+const ScriptBundler = require('../../lib/Bundlers/ScriptBundler');
+const StyleBundler = require('../../lib/Bundlers/StyleBundler');
+const HTMLBundler = require('../../lib/Bundlers/HTMLBundler');
+const WebManifestBundler = require('../../lib/Bundlers/WebManifestBundler');
+
 /**
  * Register command to CLI.
  *
@@ -29,7 +35,7 @@ module.exports = (program) => {
         .action(async (app, options = {}) => {
             const path = require('path');
             const browserslist = require('browserslist');
-            const Project = require('../../lib/Project');
+            const { Project } = require('../../lib/Navigator');
             const Watcher = require('../../lib/Watcher');
 
             const cwd = process.cwd();
@@ -250,14 +256,65 @@ module.exports = (program) => {
         });
 };
 
+function filterChangedBundles(bundles, file) {
+    return bundles
+        .filter((bundle) => {
+            let bundleFiles = bundle.files || [];
+            return bundleFiles.includes(file);
+        });
+}
+
 async function buildEntry(app, project, entry, output, options) {
     const { isJSFile, isStyleFile, isHTMLFile, isWebManifestFile } = require('../../lib/extensions');
 
+    function logFile(output) {
+        if (output) {
+            let { size, zipped } = output.size;
+            app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
+        }
+    }
+
     if (isJSFile(entry.path)) {
         // Javascript file
-        const ScriptBundler = require('../../lib/Bundlers/ScriptBundler.js');
-
-        let bundler = new ScriptBundler(app, project);
+        let bundler = new ScriptBundler();
+        let analysis;
+        let linterResult;
+        bundler.on(ScriptBundler.START_EVENT, (input, code, invalidate, child) => {
+            if (!child) {
+                app.logger.play(`generating script${invalidate.length ? ' (this will be fast)...' : '...'}`, code ? '' : input.localPath);
+            }
+        });
+        bundler.on(ScriptBundler.END_EVENT, (child) => {
+            if (!child) {
+                app.logger.stop();
+                if (linterResult) {
+                    app.logger.log(linterResult);
+                }
+                if (analysis) {
+                    app.logger.info(analysis);
+                }
+                app.logger.success('script ready');
+            }
+        });
+        bundler.on(ScriptBundler.ERROR_EVENT, () => {
+            app.logger.stop();
+        });
+        bundler.on(ScriptBundler.LINT_EVENT, (result) => {
+            if (linterResult) {
+                linterResult = Linter.merge(linterResult, result);
+            } else {
+                linterResult = result;
+            }
+        });
+        bundler.on(ScriptBundler.ANALYSIS_EVENT, (result) => {
+            analysis = result;
+        });
+        bundler.on(ScriptBundler.WARN_EVENT, (message) => {
+            app.logger.warn(message);
+        });
+        bundler.on(ScriptBundler.WRITE_EVENT, (file) => {
+            logFile(file);
+        });
         await bundler.setup({
             input: entry,
             output,
@@ -279,13 +336,40 @@ async function buildEntry(app, project, entry, output, options) {
         });
         await bundler.build();
         await bundler.write();
+
         // collect the generated Bundle
         return bundler;
     } else if (isStyleFile(entry.path)) {
         // Style file
-        const StyleBundler = require('../../lib/Bundlers/StyleBundler.js');
-
-        let bundler = new StyleBundler(app, project);
+        let bundler = new StyleBundler();
+        let linterResult;
+        bundler.on(StyleBundler.START_EVENT, (input, code, invalidate, child) => {
+            if (!child) {
+                app.logger.play('generating style...', !code ? input.localPath : '');
+            }
+        });
+        bundler.on(StyleBundler.END_EVENT, (child) => {
+            if (!child) {
+                app.logger.stop();
+                if (linterResult) {
+                    app.logger.log(linterResult);
+                }
+                app.logger.success('style ready');
+            }
+        });
+        bundler.on(StyleBundler.ERROR_EVENT, () => {
+            app.logger.stop();
+        });
+        bundler.on(StyleBundler.LINT_EVENT, (result) => {
+            if (linterResult) {
+                linterResult = Linter.merge(linterResult, result);
+            } else {
+                linterResult = result;
+            }
+        });
+        bundler.on(StyleBundler.WRITE_EVENT, (file) => {
+            logFile(file);
+        });
         await bundler.setup({
             input: entry,
             output,
@@ -299,11 +383,40 @@ async function buildEntry(app, project, entry, output, options) {
         // collect the generated Bundle
         return bundler;
     } else if (isHTMLFile(entry.path)) {
-        const HTMLBundler = require('../../lib/Bundlers/HTMLBundler.js');
-        let bundler = new HTMLBundler(app, project);
+        let bundler = new HTMLBundler();
+        let linterResult;
+        bundler.on(HTMLBundler.START_EVENT, (input, code, invalidate, child) => {
+            if (!child) {
+                app.logger.play('generating html...', !code ? input.localPath : '');
+            }
+        });
+        bundler.on(HTMLBundler.END_EVENT, (child) => {
+            if (!child) {
+                app.logger.stop();
+                if (linterResult) {
+                    app.logger.log(linterResult);
+                }
+                app.logger.success('html ready');
+            }
+        });
+        bundler.on(HTMLBundler.ERROR_EVENT, () => {
+            app.logger.stop();
+        });
+        bundler.on(HTMLBundler.LINT_EVENT, (result) => {
+            if (linterResult) {
+                linterResult = Linter.merge(linterResult, result);
+            } else {
+                linterResult = result;
+            }
+        });
+        bundler.on(HTMLBundler.WRITE_EVENT, (file) => {
+            logFile(file);
+        });
         await bundler.setup({
             input: entry,
             output,
+            title: project.get('name'),
+            description: project.get('description'),
             targets: options.targets,
             production: options.production,
             map: options.map,
@@ -315,24 +428,33 @@ async function buildEntry(app, project, entry, output, options) {
         // collect the generated Bundle
         return bundler;
     } else if (isWebManifestFile(entry.path)) {
-        const WebManifestBundler = require('../../lib/Bundlers/WebManifestBundler.js');
-
-        let bundler = new WebManifestBundler(app, project);
+        let bundler = new WebManifestBundler();
+        bundler.on(WebManifestBundler.START_EVENT, (input, code, invalidate, child) => {
+            if (!child) {
+                app.logger.play('generating webmanifest...', !code ? input.localPath : '');
+            }
+        });
+        bundler.on(WebManifestBundler.END_EVENT, (child) => {
+            if (!child) {
+                app.logger.stop();
+                app.logger.success('webmanifest ready');
+            }
+        });
+        bundler.on(WebManifestBundler.ERROR_EVENT, () => {
+            app.logger.stop();
+        });
+        bundler.on(WebManifestBundler.WRITE_EVENT, (file) => {
+            logFile(file);
+        });
         await bundler.setup({
             input: entry,
             output,
+            name: project.get('name'),
+            description: project.get('description'),
         });
         await bundler.build();
         await bundler.write();
         // collect the generated Bundle
         return bundler;
     }
-}
-
-function filterChangedBundles(bundles, file) {
-    return bundles
-        .filter((bundle) => {
-            let bundleFiles = bundle.files || [];
-            return bundleFiles.includes(file);
-        });
 }

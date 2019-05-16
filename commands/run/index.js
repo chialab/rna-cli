@@ -12,7 +12,7 @@ module.exports = (program) => {
         .option('<script>', 'The script to trigger.')
         .deprecate('2.0.0', 'Please use `yarn run`.')
         .action(async () => {
-            const Project = require('../../lib/Project');
+            const { Project } = require('../../lib/Navigator');
 
             const cwd = process.cwd();
             const project = new Project(cwd);
