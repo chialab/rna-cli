@@ -1,6 +1,5 @@
 const colors = require('colors/safe');
 const inquirer = require('inquirer');
-const Git = require('../../../lib/Git.js');
 const configurator = require('../../../lib/configurator.js');
 
 /**
@@ -13,12 +12,9 @@ const configurator = require('../../../lib/configurator.js');
  * @returns {Promise}
  */
 module.exports = async function gitTask(app, options, project, templates) {
-    const gitPath = project.directory('.git');
-    const gitClient = new Git(project.path);
-
     // Initialize repository if `.git` directory doesn't already exist.
-    if (!gitPath.exists()) {
-        await gitClient.init();
+    if (!project.git.check()) {
+        await project.git.init();
     }
 
     let remote = project.get('repository.url');
@@ -35,10 +31,10 @@ module.exports = async function gitTask(app, options, project, templates) {
     }
 
     if (!remote) {
-        await gitClient.removeRemote();
+        await project.git.removeRemote();
     } else {
         // Configure remote.
-        await gitClient.addRemote(remote);
+        await project.git.addRemote(remote);
         project.setRepository(remote);
         project.save();
     }

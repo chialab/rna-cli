@@ -1,6 +1,5 @@
 const colors = require('colors/safe');
 const inquirer = require('inquirer');
-const Git = require('../../../lib/Git.js');
 const configurator = require('../../../lib/configurator.js');
 
 /**
@@ -13,8 +12,7 @@ const configurator = require('../../../lib/configurator.js');
  * @returns {Promise}
  */
 module.exports = async function npmTask(app, options, project, templates) {
-    const gitClient = new Git(project.path);
-    const remote = project.get('repository.url') || await gitClient.getRemote();
+    const remote = project.get('repository.url') || (project.git.check() && await project.git.getRemote());
 
     const formatQuestion = (msg) => `${colors.cyan('package')} > ${msg}:`;
     const prompt = inquirer.createPromptModule();
