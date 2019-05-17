@@ -57,6 +57,7 @@ module.exports = (program) => {
             // Load options.
             options = Object.assign({}, options, {
                 targets: browserslist(options.targets || project.browserslist),
+                root: project.directories.test || project.directory('test'),
             });
 
             // Load list of files to be tested.
@@ -191,9 +192,15 @@ async function runTests(app, project, files, options, environments = []) {
         if (taskEnvName === 'node') {
             // Startup Mocha.
             const NodeTestRunner = require('../../lib/TestRunners/NodeTestRunner');
-            const runner = new NodeTestRunner(app, project);
+            const runner = new NodeTestRunner();
             runners.push(runner);
             await runner.setup(options);
+            runner.on(NodeTestRunner.PREPARE_START_EVENT, () => {
+                app.logger.play('generating test...');
+            });
+            runner.on(NodeTestRunner.PREPARE_END_EVENT, () => {
+                app.logger.stop();
+            });
             let { exitCode, coverage } = await runner.run(files);
             if (coverage) {
                 coverageMap.merge(coverage);
@@ -203,9 +210,15 @@ async function runTests(app, project, files, options, environments = []) {
             }
         } else if (taskEnvName === 'browser' || taskEnvName === 'saucelabs') {
             const BrowserTestRunner = require('../../lib/TestRunners/BrowserTestRunner');
-            const runner = new BrowserTestRunner(app, project);
+            const runner = new BrowserTestRunner();
             runners.push(runner);
             await runner.setup(options);
+            runner.on(BrowserTestRunner.PREPARE_START_EVENT, () => {
+                app.logger.play('generating test...');
+            });
+            runner.on(BrowserTestRunner.PREPARE_END_EVENT, () => {
+                app.logger.stop();
+            });
             let { exitCode, coverage } = await runner.run(files);
             if (coverage) {
                 coverageMap.merge(coverage);
