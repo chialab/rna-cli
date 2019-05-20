@@ -12,9 +12,10 @@ module.exports = (program) => {
         .option('<path>', 'The server directory.')
         .option('[--port]', 'The server port.')
         .option('[--watch]', 'Should watch server directory.')
-        .option('[--tunnel]', 'Create a tunnel for the server')
+        .option('[--tunnel]', 'Create a tunnel for the server.')
         .option('[--directory]', 'Should list directories.')
         .option('[--https]', 'Start a server using SSL.')
+        .option('[--compress]', 'Activate gzip compression on static files.')
         .action(async (app, options = {}) => {
             const { mix } = require('@chialab/proteins');
             const Watcher = require('../../lib/Watcher');
@@ -56,6 +57,7 @@ module.exports = (program) => {
                     },
                 ],
                 tunnel: options.tunnel,
+                compress: options.compress,
             };
 
             if (options.https === true) {
