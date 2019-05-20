@@ -10,8 +10,6 @@ A CLI to rule them all.
 ## Install
 ```sh
 $ yarn global add @chialab/rna-cli
-# or
-$ npm install -g @chialab/rna-cli
 ```
 
 ## Usage
