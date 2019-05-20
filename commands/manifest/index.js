@@ -32,12 +32,12 @@ module.exports = (program) => {
             }
 
             let manifestBundler = new WebManifestBundler();
-            manifestBundler.on(WebManifestBundler.START_EVENT, (input, child) => {
+            manifestBundler.on(WebManifestBundler.BUILD_START, (input, child) => {
                 if (!child) {
                     app.logger.play('generating webmanifest...', input.localPath);
                 }
             });
-            manifestBundler.on(WebManifestBundler.END_EVENT, (child) => {
+            manifestBundler.on(WebManifestBundler.BUILD_END, (child) => {
                 if (!child) {
                     app.logger.stop();
                     app.logger.success('webmanifest ready');
@@ -78,12 +78,12 @@ module.exports = (program) => {
 
             if (typeof options.index === 'string') {
                 htmlBundler = new HTMLBundler();
-                htmlBundler.on(HTMLBundler.START_EVENT, (input, child) => {
+                htmlBundler.on(HTMLBundler.BUILD_START, (input, child) => {
                     if (!child) {
                         app.logger.play('generating html...', input.localPath);
                     }
                 });
-                htmlBundler.on(HTMLBundler.END_EVENT, (child) => {
+                htmlBundler.on(HTMLBundler.BUILD_END, (child) => {
                     if (!child) {
                         app.logger.stop();
                         app.logger.success('html ready');
