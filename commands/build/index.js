@@ -11,13 +11,13 @@ module.exports = (program) => {
         .readme(`${__dirname}/README.md`)
         .option('<file>', 'The file to build.')
         .option('<package1> <package2> <package3>', 'The packages to build.')
-        .option('--output <file>', 'The destination file.')
-        .option('[--targets]', 'A supported browserslist query. Use --no-targets to transpile only non-standard features.')
-        .option('[--name]', 'The script name.')
-        .option('[--format]', 'The script format (es, umd, iife, cjs).')
+        .option('--output <file|dir>', 'The destination file.')
+        .option('[--targets]', 'Set specific targets for the build using a [Browserslist](https://github.com/browserslist/browserslist). This query is used by Babel and PostCSS to transpile JavaScript and CSS files in order to be compatible with the specified browsers. Use `--no-targets` to prevent code transpiling.')
+        .option('[--name]', 'For JavaScript builds, you can specify the name of the global variable to use for the bundle.')
+        .option('[--format]', 'Specify the format of the JavaScript bundle. Available formats are `es`, `umd`, `iife` and `cjs`.')
         .option('[--bundle]', 'Should bundle dependencies along the source files.')
+        .option('[--legacy, --no-legacy]', 'Should generete only legacy JS modules for browsers - only ES6 modules for browsers - both if undefined.')
         .option('[--production]', 'Minify script.')
-        .option('[--declaration]', 'Generate typescript declarations.')
         .option('[--watch]', 'Watch sources and rebuild on files changes.')
         .option('[--no-map]', 'Do not produce source map.')
         .option('[--no-lint]', 'Do not lint files before build.')
@@ -25,7 +25,7 @@ module.exports = (program) => {
         .option('[--jsx.pragmaFrag]', 'The JSX pragma fragment to use.')
         .option('[--jsx.module]', 'The module to auto import for JSX pragma.')
         .option('[--typings [file]', 'Generate typescript declarations.')
-        .option('[--analyze <file>]', 'Save an analytic report for script size.')
+        .option('[--analyze <file>]', 'Print analytic report for script size.')
         .action(async (app, options = {}) => {
             const path = require('path');
             const browserslist = require('browserslist');
@@ -501,6 +501,7 @@ async function buildEntry(app, project, entry, output, options) {
             map: options.map,
             lint: options.lint,
             polyfill: options.polyfill,
+            legacy: options.legacy,
         });
         await bundler.build();
         await bundler.write();

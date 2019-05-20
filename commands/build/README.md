@@ -16,37 +16,27 @@ rna build <input> [...options]
 
 ### Options
 
-* `--output <file>` Specify the output file or directory for the build.
+* `--output <file|dir>` Specify the output file or directory for the build.
 * `--targets` Set specific targets for the build using a [Browserslist](https://github.com/browserslist/browserslist). This query is used by Babel and PostCSS to transpile JavaScript and CSS files in order to be compatible with the specified browsers. Use `--no-targets` to prevent code transpiling.
 * `--name` For JavaScript builds, you can specify the name of the global variable to use for the bundle.
-* `--format` Specify the format of the JavaScript bundle. Available formats are `es`, `umd` (default), `iife` and `cjs`.
+* `--format` Specify the format of the JavaScript bundle. Available formats are `es`, `umd`, `iife` and `cjs`.
+* `--bundle` Should bundle dependencies along the source files.
+* `--legacy|--no-legacy` Should generete only legacy JS modules for browsers - only ES6 modules for browsers - both if undefined.
 * `--production` Minify the output of the JavaScript and CSS bundles.
-* `--declaration` Enable TypeScript `.d.ts` generation.
-* `--watch` Watch source files and rebuild the bundle every time a file change occurred.
-* `--no-map` Disable source maps creation. It speeds up the build but you will lose code mapping in the debugger.
-* `--no-lint` Disable linting of the source files.
-* `--jsx.pragma` The pragma to use for JSX transformations.
-* `--jsx.module` The module which contains the pragma reference.
-
-### HTML
-
-@todo
-
-### JavaScript, TypeScript and modules
-
-@todo
-
-### CSS and Sass
-
-@todo
-
-### Internationalization
-
-RNA can bundle all `.po` files with same language and namespace into a single JSON asset file, compatibile with the i18next library.
-Internationalization files must follow the pattern `path/to/locale/files/{{ lang }}/{{ namespace }}.po` in order to be correctly bundled.
+* `--watch` Watch sources and rebuild on files changes.
+* `--no-map` Do not produce source map.
+* `--no-lint` Do not lint files before build.
+* `--jsx.pragma` The JSX pragma to use.
+* `--jsx.pragmaFrag` The JSX pragma fragment to use.
+* `--jsx.module` The module to auto import for JSX pragma.
+* `--typings [file]` Generate typescript declarations.
+* `--analyze` Print analytic report for script size.
 
 ### See also
 
 * [`rna lint`](../lint/)
 * [`rna unit`](../unit/)
 * [`rna serve`](../serve/)
+* [Build JS modules](https://github.com/chialab/rna-cli/wiki/Build-js-modules)
+* [Build CSS modules](https://github.com/chialab/rna-cli/wiki/Build-css-modules)
+* [Build WebApps](https://github.com/chialab/rna-cli/wiki/Build-WebApps)
