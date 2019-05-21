@@ -57,6 +57,7 @@ module.exports = (program) => {
             options = Object.assign({}, options, {
                 targets: options.targets || project.browserslist,
                 root: project.directories.test || project.directory('test'),
+                project,
             });
 
             // Load list of files to be tested.
