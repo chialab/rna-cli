@@ -19,7 +19,6 @@ module.exports = (program) => {
         .option('[--timeout]', 'Set the tests timeout.')
         .option('[--watch]', 'Watch test files.')
         .action(async (app, options = {}) => {
-            const browserslist = require('browserslist');
             const { Project } = require('../../lib/File');
             const Watcher = require('../../lib/Watcher');
 
@@ -56,7 +55,7 @@ module.exports = (program) => {
 
             // Load options.
             options = Object.assign({}, options, {
-                targets: browserslist(options.targets || project.browserslist),
+                targets: options.targets || project.browserslist,
                 root: project.directories.test || project.directory('test'),
             });
 

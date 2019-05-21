@@ -21,7 +21,6 @@ rna build <input> [...options]
 * `--name` For JavaScript builds, you can specify the name of the global variable to use for the bundle.
 * `--format` Specify the format of the JavaScript bundle. Available formats are `es`, `umd`, `iife` and `cjs`.
 * `--bundle` Should bundle dependencies along the source files.
-* `--legacy|--no-legacy` Should generete only legacy JS modules for browsers - only ES6 modules for browsers - both if undefined.
 * `--production` Minify the output of the JavaScript and CSS bundles.
 * `--watch` Watch sources and rebuild on files changes.
 * `--no-map` Do not produce source map.

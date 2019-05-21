@@ -16,7 +16,6 @@ module.exports = (program) => {
         .option('[--name]', 'For JavaScript builds, you can specify the name of the global variable to use for the bundle.')
         .option('[--format]', 'Specify the format of the JavaScript bundle. Available formats are `es`, `umd`, `iife` and `cjs`.')
         .option('[--bundle]', 'Should bundle dependencies along the source files.')
-        .option('[--legacy, --no-legacy]', 'Should generete only legacy JS modules for browsers - only ES6 modules for browsers - both if undefined.')
         .option('[--production]', 'Minify script.')
         .option('[--watch]', 'Watch sources and rebuild on files changes.')
         .option('[--no-map]', 'Do not produce source map.')
@@ -28,7 +27,6 @@ module.exports = (program) => {
         .option('[--analyze <file>]', 'Print analytic report for script size.')
         .action(async (app, options = {}) => {
             const path = require('path');
-            const browserslist = require('browserslist');
             const { Project } = require('../../lib/File');
             const Watcher = require('../../lib/Watcher');
 
@@ -80,8 +78,6 @@ module.exports = (program) => {
                         }
                     }
 
-                    const targets = options.targets ? browserslist(options.targets) : entry.browserslist;
-
                     let output;
                     if (options.output) {
                         if (outputRelative) {
@@ -97,14 +93,14 @@ module.exports = (program) => {
 
                     if (libFile) {
                         if (output) {
-                            let bundler = await buildEntry(app, entry, libFile, output, Object.assign({}, options, { targets, typings: typingsFile || !!options.typings }));
+                            let bundler = await buildEntry(app, entry, libFile, output, Object.assign({}, options, { targets: options.targets || entry.browserslist, typings: typingsFile || !!options.typings }));
                             if (bundler) {
                                 // collect the generated Bundle.
                                 bundles.push(bundler);
                             }
                         } else {
                             if (mainFile) {
-                                let bundler = await buildEntry(app, entry, libFile, mainFile, Object.assign({}, options, { targets, format: 'cjs', typings: typingsFile || !!options.typings }));
+                                let bundler = await buildEntry(app, entry, libFile, mainFile, Object.assign({}, options, { targets: options.targets || entry.browserslist, format: 'cjs', typings: typingsFile || !!options.typings }));
                                 if (bundler) {
                                     // collect the generated Bundle.
                                     bundles.push(bundler);
@@ -118,7 +114,7 @@ module.exports = (program) => {
                                 }
                             }
                             if (browserFile) {
-                                let bundler = await buildEntry(app, entry, libFile, browserFile, Object.assign({}, options, { targets, format: 'umd', typings: typingsFile || !!options.typings }));
+                                let bundler = await buildEntry(app, entry, libFile, browserFile, Object.assign({}, options, { targets: options.targets || entry.browserslist, format: 'umd', typings: typingsFile || !!options.typings }));
                                 if (bundler) {
                                     // collect the generated Bundle.
                                     bundles.push(bundler);
@@ -126,7 +122,7 @@ module.exports = (program) => {
                             }
                             if (!mainFile && !moduleFile && !browserFile && entry.directories.public) {
                                 // maybe a web app?
-                                let bundler = await buildEntry(app, entry, libFile, entry.directories.public, Object.assign({}, options, { targets }));
+                                let bundler = await buildEntry(app, entry, libFile, entry.directories.public, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
                                 if (bundler) {
                                     // collect the generated Bundle.
                                     bundles.push(bundler);
@@ -143,7 +139,7 @@ module.exports = (program) => {
 
                         if (moduleFile) {
                             let moduleOutput = mainFile ? mainFile : output;
-                            let bundler = await buildEntry(app, entry, moduleFile, moduleOutput, Object.assign({ bundle: true }, options, { targets }));
+                            let bundler = await buildEntry(app, entry, moduleFile, moduleOutput, Object.assign({ bundle: true }, options, { targets: options.targets || entry.browserslist }));
                             if (bundler) {
                                 // collect the generated Bundle.
                                 bundles.push(bundler);
@@ -155,7 +151,7 @@ module.exports = (program) => {
                                 mainFile.parent.file(`${mainFile.basename}.css`) :
                                 output;
 
-                            let bundler = await buildEntry(app, entry, styleFile, styleOutput, Object.assign({}, options, { targets }));
+                            let bundler = await buildEntry(app, entry, styleFile, styleOutput, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
                             if (bundler) {
                                 // collect the generated Bundle.
                                 bundles.push(bundler);
@@ -178,7 +174,6 @@ module.exports = (program) => {
                         throw new Error('missing `output` option');
                     }
 
-                    const targets = options.targets ? browserslist(options.targets) : project.browserslist;
                     let typingsFile;
                     if (typeof options.typings === 'string') {
                         typingsFile = project.file(options.typings);
@@ -188,7 +183,7 @@ module.exports = (program) => {
                         }
                     }
 
-                    let bundler = await buildEntry(app, project, entry, output, Object.assign({}, options, { targets, typings: typingsFile || !!options.typings }));
+                    let bundler = await buildEntry(app, project, entry, output, Object.assign({}, options, { targets: options.targets || project.browserslist, typings: typingsFile || !!options.typings }));
                     if (bundler) {
                         // collect the generated Bundle.
                         bundles.push(bundler);
@@ -501,7 +496,6 @@ async function buildEntry(app, project, entry, output, options) {
             map: options.map,
             lint: options.lint,
             polyfill: options.polyfill,
-            legacy: options.legacy,
         });
         await bundler.build();
         await bundler.write();
