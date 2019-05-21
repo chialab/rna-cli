@@ -81,7 +81,7 @@ module.exports = (program) => {
                     // File updated: notify BrowserSync so that it can be reloaded.
                     server.reload(base.relative(file));
                     if (file.exists()) {
-                        app.logger.info(`\n${file.localPath} injected\n`);
+                        app.logger.info(`${file.localPath} injected`);
                     }
                 });
             }

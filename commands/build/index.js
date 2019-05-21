@@ -92,48 +92,35 @@ module.exports = (program) => {
                     }
 
                     if (libFile) {
+                        let bundler;
                         if (output) {
-                            let bundler = await buildEntry(app, entry, libFile, output, Object.assign({}, options, { targets: options.targets || entry.browserslist, typings: typingsFile || !!options.typings }));
-                            if (bundler) {
-                                // collect the generated Bundle.
-                                bundles.push(bundler);
-                            }
+                            bundler = await buildEntry(app, entry, libFile, output, Object.assign({}, options, { targets: options.targets || entry.browserslist, typings: typingsFile || !!options.typings }));
                         } else {
                             if (mainFile) {
-                                let bundler = await buildEntry(app, entry, libFile, mainFile, Object.assign({}, options, { targets: options.targets || entry.browserslist, format: 'cjs', typings: typingsFile || !!options.typings }));
-                                if (bundler) {
-                                    // collect the generated Bundle.
-                                    bundles.push(bundler);
-                                }
+                                bundler = await buildEntry(app, entry, libFile, mainFile, Object.assign({}, options, { targets: options.targets || entry.browserslist, format: 'cjs', typings: typingsFile || !!options.typings }));
                             }
                             if (moduleFile) {
-                                let bundler = await buildEntry(app, entry, libFile, moduleFile, Object.assign({}, options, { targets: 'esmodules', format: 'esm', lint: !mainFile && options.lint, typings: !mainFile && (typingsFile || !!options.typings) }));
-                                if (bundler) {
-                                    // collect the generated Bundle.
-                                    bundles.push(bundler);
-                                }
+                                bundler = await buildEntry(app, entry, libFile, moduleFile, Object.assign({}, options, { targets: 'esmodules', format: 'esm', lint: !mainFile && options.lint, typings: !mainFile && (typingsFile || !!options.typings) }));
                             }
                             if (browserFile) {
-                                let bundler = await buildEntry(app, entry, libFile, browserFile, Object.assign({}, options, { targets: options.targets || entry.browserslist, format: 'umd', typings: typingsFile || !!options.typings }));
-                                if (bundler) {
-                                    // collect the generated Bundle.
-                                    bundles.push(bundler);
-                                }
+                                bundler = await buildEntry(app, entry, libFile, browserFile, Object.assign({}, options, { targets: options.targets || entry.browserslist, format: 'umd', typings: typingsFile || !!options.typings }));
                             }
                             if (!mainFile && !moduleFile && !browserFile && entry.directories.public) {
                                 // maybe a web app?
-                                let bundler = await buildEntry(app, entry, libFile, entry.directories.public, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
-                                if (bundler) {
-                                    // collect the generated Bundle.
-                                    bundles.push(bundler);
-                                }
+                                bundler = await buildEntry(app, entry, libFile, entry.directories.public, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
                             }
+                        }
+                        if (bundler) {
+                            // collect the generated Bundle.
+                            bundles.push(bundler);
+                        } else {
+                            throw new Error(`missing "input" option for project ${entry.path}`);
                         }
                     } else if (moduleFile || styleFile) {
                         if (!output && mainFile) {
                             output = project.directory(mainFile.dirname);
                         } else {
-                            throw new Error('missing `output` option');
+                            throw new Error('missing "output" option');
                         }
                         // retrocompatibility with RNA 2.0
 
@@ -496,6 +483,11 @@ async function buildEntry(app, project, entry, output, options) {
             map: options.map,
             lint: options.lint,
             polyfill: options.polyfill,
+            jsx: {
+                module: options['jsx.module'],
+                pragma: options['jsx.pragma'],
+                pragmaFrag: options['jsx.pragmaFrag'],
+            },
         });
         await bundler.build();
         await bundler.write();
