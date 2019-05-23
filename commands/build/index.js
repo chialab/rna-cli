@@ -291,6 +291,7 @@ async function buildEntry(app, project, entry, output, options) {
             if (!child) {
                 if (linterResult) {
                     app.logger.log(Linter.format(linterResult));
+                    linterResult = null;
                 }
                 if (analysis) {
                     app.logger.info(analysis);
@@ -379,6 +380,7 @@ async function buildEntry(app, project, entry, output, options) {
             if (!child) {
                 if (linterResult) {
                     app.logger.log(Linter.format(linterResult));
+                    linterResult = null;
                 }
                 app.logger.success(`${bundlerToType(bundler)} ready`);
             } else if (buildStarted) {
@@ -441,6 +443,7 @@ async function buildEntry(app, project, entry, output, options) {
             if (!child) {
                 if (linterResult) {
                     app.logger.log(Linter.format(linterResult));
+                    linterResult = null;
                 }
                 app.logger.success(`${bundlerToType(bundler)} ready`);
             } else if (buildStarted) {
