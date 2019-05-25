@@ -486,6 +486,10 @@ async function buildEntry(app, project, entry, output, options) {
             map: options.map,
             lint: options.lint,
             polyfill: options.polyfill,
+            icon: options.hasOwnProperty('icon') ? options.icon : undefined,
+            scripts: options.hasOwnProperty('scripts') ? options.scripts : undefined,
+            styles: options.hasOwnProperty('styles') ? options.styles : undefined,
+            webmanifest: options.hasOwnProperty('webmanifest') ? options.webmanifest : undefined,
             jsx: {
                 module: options['jsx.module'],
                 pragma: options['jsx.pragma'],
