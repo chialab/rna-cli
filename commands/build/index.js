@@ -189,8 +189,11 @@ module.exports = (program) => {
                 });
 
                 watcher.on('change', (file) => {
-                    let label = file.exists() ? 'changed' : 'removed';
-                    app.logger.info(`\n${file.localPath} ${label}\n`);
+                    if (file.exists()) {
+                        app.logger.info(`\n${file.localPath} changed\n`);
+                    } else {
+                        app.logger.info(`\n${file.path} removed\n`);
+                    }
                 });
 
                 await watcher.watch(async (file) => {
