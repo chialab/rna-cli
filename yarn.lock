@@ -700,10 +700,10 @@
     lodash "^4.17.11"
     to-fast-properties "^2.0.0"
 
-"@chialab/babel-preset@^2.3.4":
-  version "2.3.5"
-  resolved "https://registry.npmjs.org/@chialab/babel-preset/-/babel-preset-2.3.5.tgz#b2efcb3ae2c8a59c2dbc8177478ad40632d8aa95"
-  integrity sha512-Ch246Z7rx/BywKacZh2CslNh13MgF6PjBDl1BrOyRM0inlb8buSKROm5NYrJaAOmrC3fhl5iy1Cn4NW/ak6D8g==
+"@chialab/babel-preset@^2.4.0":
+  version "2.4.0"
+  resolved "https://registry.npmjs.org/@chialab/babel-preset/-/babel-preset-2.4.0.tgz#47d9408abb41767480adc79ea10f85e9414f1a06"
+  integrity sha512-BdRJ7yyhpkXx7F8RDO93mjEvmk91s1Ec2UqyhHlDEZgLobtLq7JXc48T0WbC5B1BpFymwOaCvmt/Pm2H15y+vA==
   dependencies:
     "@babel/plugin-proposal-class-properties" "^7.3.4"
     "@babel/plugin-proposal-decorators" "^7.3.0"
@@ -8801,10 +8801,10 @@ rollup-pluginutils@^2.3.1, rollup-pluginutils@^2.8.0:
   dependencies:
     estree-walker "^0.6.1"
 
-rollup@^1.14.6:
-  version "1.14.6"
-  resolved "https://registry.npmjs.org/rollup/-/rollup-1.14.6.tgz#4d1165bdcdac4d0510ce127495c42f238098943d"
-  integrity sha512-A8f54Fms9PAG2VBLBg/XOBgN6tRQKgroltD86f+gF5+6eRmAAlFBJAFV0K7MHl2aHOCcrATWO1B8SAjVD2Ehsw==
+rollup@^1.15.0:
+  version "1.15.0"
+  resolved "https://registry.npmjs.org/rollup/-/rollup-1.15.0.tgz#bb179a93370612ccbccfe53d09866b249a74ee04"
+  integrity sha512-IeZwWTqJHkZpU3zXtY3rtWkeoZc299DN8MOyNtkzlm2PpsZZLmLGlffW5giTRe7z5mhgBYvQKKpFtnnzyDOySw==
   dependencies:
     "@types/estree" "0.0.39"
     "@types/node" "^12.0.7"
