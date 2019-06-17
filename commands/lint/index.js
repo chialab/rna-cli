@@ -92,7 +92,7 @@ async function eslint(app, project, options, files) {
 
     try {
         const linter = new ESLint();
-        await linter.setup(project);
+        await linter.setup(project, options);
         const report = await linter.lint(files);
         if (report.errorCount || report.warningCount) {
             app.logger.log(ESLint.format(linter.result));
@@ -121,7 +121,7 @@ async function stylelint(app, project, options, files) {
 
     try {
         const linter = new Stylelint();
-        await linter.setup(project);
+        await linter.setup(project, options);
         const report = await linter.lint(files);
         if (report.errorCount || report.warningCount) {
             app.logger.log(Stylelint.format(linter.result));
