@@ -279,7 +279,6 @@ async function buildEntry(app, project, entry, output, options) {
         // Javascript file
         let bundler = new ScriptBundler();
         let analysis;
-        let linterResult;
         let buildStarted = false;
         bundler.on(ScriptBundler.BUILD_START, (input, code, child) => {
             if (!child) {
@@ -292,10 +291,6 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(ScriptBundler.BUILD_END, (input, code, child) => {
             app.logger.stop();
             if (!child) {
-                if (linterResult) {
-                    app.logger.log(Linter.format(linterResult));
-                    linterResult = null;
-                }
                 if (analysis) {
                     app.logger.info(analysis);
                 }
@@ -304,15 +299,14 @@ async function buildEntry(app, project, entry, output, options) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, code ? 'inline' : input.localPath);
             }
         });
+        bundler.on(ScriptBundler.BUNDLE_END, () => {
+            app.logger.log(Linter.format(bundler.linter.result));
+            if (analysis) {
+                app.logger.info(analysis);
+            }
+        });
         bundler.on(ScriptBundler.ERROR_EVENT, () => {
             app.logger.stop();
-        });
-        bundler.on(ScriptBundler.LINT_EVENT, (result) => {
-            if (linterResult) {
-                linterResult = Linter.merge(linterResult, result);
-            } else {
-                linterResult = result;
-            }
         });
         bundler.on(ScriptBundler.ANALYSIS_EVENT, (result) => {
             analysis = result;
@@ -368,7 +362,6 @@ async function buildEntry(app, project, entry, output, options) {
         const StyleBundler = require('../../lib/Bundlers/StyleBundler');
         // Style file
         let bundler = new StyleBundler();
-        let linterResult;
         let buildStarted = false;
         bundler.on(StyleBundler.BUILD_START, (input, code, child) => {
             if (!child) {
@@ -381,24 +374,16 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(StyleBundler.BUILD_END, (input, code, child) => {
             app.logger.stop();
             if (!child) {
-                if (linterResult) {
-                    app.logger.log(Linter.format(linterResult));
-                    linterResult = null;
-                }
                 app.logger.success(`${bundlerToType(bundler)} ready`);
             } else if (buildStarted) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
             }
         });
+        bundler.on(StyleBundler.BUNDLE_END, () => {
+            app.logger.log(Linter.format(bundler.linter.result));
+        });
         bundler.on(StyleBundler.ERROR_EVENT, () => {
             app.logger.stop();
-        });
-        bundler.on(StyleBundler.LINT_EVENT, (result) => {
-            if (linterResult) {
-                linterResult = Linter.merge(linterResult, result);
-            } else {
-                linterResult = result;
-            }
         });
         bundler.on(StyleBundler.WRITE_START, (child) => {
             if (!child) {
@@ -431,7 +416,6 @@ async function buildEntry(app, project, entry, output, options) {
     } else if (isHTMLFile(entry.path)) {
         const HTMLBundler = require('../../lib/Bundlers/HTMLBundler');
         let bundler = new HTMLBundler();
-        let linterResult;
         let buildStarted = false;
         bundler.on(HTMLBundler.BUILD_START, (input, code, child) => {
             if (!child) {
@@ -444,24 +428,16 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(HTMLBundler.BUILD_END, (input, code, child) => {
             app.logger.stop();
             if (!child) {
-                if (linterResult) {
-                    app.logger.log(Linter.format(linterResult));
-                    linterResult = null;
-                }
                 app.logger.success(`${bundlerToType(bundler)} ready`);
             } else if (buildStarted) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
             }
         });
+        bundler.on(HTMLBundler.BUNDLE_END, () => {
+            app.logger.log(Linter.format(bundler.linter.result));
+        });
         bundler.on(HTMLBundler.ERROR_EVENT, () => {
             app.logger.stop();
-        });
-        bundler.on(HTMLBundler.LINT_EVENT, (result) => {
-            if (linterResult) {
-                linterResult = Linter.merge(linterResult, result);
-            } else {
-                linterResult = result;
-            }
         });
         bundler.on(HTMLBundler.WRITE_START, (child) => {
             if (!child) {
