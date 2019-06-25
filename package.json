@@ -89,8 +89,8 @@
     "serve-index": "^1.9.1",
     "source-map-support": "^0.5.12",
     "spdx-license-list": "^3.0.1",
-    "stylelint": "^9.10.1",
-    "stylelint-order": "^0.8.1",
+    "stylelint": "^10.1.0",
+    "stylelint-order": "^3.0.0",
     "terser": "^3.17.0",
     "typescript": "^3.5.2",
     "workbox-build": "^3.6.3"

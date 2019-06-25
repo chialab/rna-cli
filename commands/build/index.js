@@ -343,7 +343,7 @@ async function buildEntry(app, project, entry, output, options) {
             bundle: options.bundle,
             production: options.production,
             map: options.map,
-            lint: options.lint,
+            lint: options.lint !== false,
             analyze: options.analyze,
             polyfill: options.polyfill,
             typings: options.typings,
@@ -407,7 +407,7 @@ async function buildEntry(app, project, entry, output, options) {
             targets: options.targets,
             production: options.production,
             map: options.map,
-            lint: options.lint,
+            lint: options.lint !== false,
         });
         await bundler.build();
         await bundler.write();
@@ -463,7 +463,7 @@ async function buildEntry(app, project, entry, output, options) {
             targets: options.targets,
             production: options.production,
             map: options.map,
-            lint: options.lint,
+            lint: options.lint !== false,
             polyfill: options.polyfill,
             icon: options.hasOwnProperty('icon') ? options.icon : undefined,
             scripts: options.hasOwnProperty('scripts') ? options.scripts : undefined,
