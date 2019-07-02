@@ -56,14 +56,14 @@ module.exports = (program) => {
                     if (!input) {
                         throw new Error('no files for documentation found');
                     }
-                    let output = entry.entry(options.output);
+                    let output = entry.file(options.output);
                     if (!output.extname) {
                         output = project.directory(options.output).file(`${input.basename}.md`);
                     }
                     await generate(app, input, output, options);
                 } else {
                     // process file
-                    let output = project.entry(options.output);
+                    let output = project.file(options.output);
                     if (!output.extname) {
                         output = project.directory(options.output).file(`${entry.basename}.md`);
                     }

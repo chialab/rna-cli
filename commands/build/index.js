@@ -291,16 +291,16 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(ScriptBundler.BUILD_END, (input, code, child) => {
             app.logger.stop();
             if (!child) {
-                if (analysis) {
-                    app.logger.info(analysis);
-                }
+                app.logger.newline();
                 app.logger.success(`${bundlerToType(bundler)} ready`);
             } else if (buildStarted) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, code ? 'inline' : input.localPath);
             }
         });
         bundler.on(ScriptBundler.BUNDLE_END, () => {
-            app.logger.log(Linter.format(bundler.linter.result));
+            if (bundler.linter.hasWarnings() || bundler.linter.hasErrors()) {
+                app.logger.log(Linter.format(bundler.linter.result));
+            }
             if (analysis) {
                 app.logger.info(analysis);
             }
@@ -374,13 +374,16 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(StyleBundler.BUILD_END, (input, code, child) => {
             app.logger.stop();
             if (!child) {
+                app.logger.newline();
                 app.logger.success(`${bundlerToType(bundler)} ready`);
             } else if (buildStarted) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
             }
         });
         bundler.on(StyleBundler.BUNDLE_END, () => {
-            app.logger.log(Linter.format(bundler.linter.result));
+            if (bundler.linter.hasWarnings() || bundler.linter.hasErrors()) {
+                app.logger.log(Linter.format(bundler.linter.result));
+            }
         });
         bundler.on(StyleBundler.ERROR_EVENT, () => {
             app.logger.stop();
@@ -428,13 +431,16 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(HTMLBundler.BUILD_END, (input, code, child) => {
             app.logger.stop();
             if (!child) {
+                app.logger.newline();
                 app.logger.success(`${bundlerToType(bundler)} ready`);
             } else if (buildStarted) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
             }
         });
         bundler.on(HTMLBundler.BUNDLE_END, () => {
-            app.logger.log(Linter.format(bundler.linter.result));
+            if (bundler.linter.hasWarnings() || bundler.linter.hasErrors()) {
+                app.logger.log(Linter.format(bundler.linter.result));
+            }
         });
         bundler.on(HTMLBundler.ERROR_EVENT, () => {
             app.logger.stop();
@@ -494,6 +500,7 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(WebManifestBundler.BUILD_END, (input, code, child) => {
             app.logger.stop();
             if (!child) {
+                app.logger.newline();
                 app.logger.success(`${bundlerToType(bundler)} ready`);
             } else if (buildStarted) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
