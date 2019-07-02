@@ -552,6 +552,7 @@ async function getKarmaConfig(app, project, options) {
             `RNA # ${Date.now()}`;
 
         // SauceLabs configuration.
+        conf.hostname = '127.0.0.1.xip.io';
         conf.retryLimit = 0;
         conf.reporters.push('saucelabs');
         conf.sauceLabs = {
