@@ -3810,10 +3810,10 @@ dotenv@^6.2.0:
   resolved "https://registry.npmjs.org/dotenv/-/dotenv-6.2.0.tgz#941c0410535d942c8becf28d3f357dbd9d476064"
   integrity sha512-HygQCKUBSFl8wKQZBSemMywRWcEDNidvNbjGVyZu3nbZ8qq9ubiPoGLMdRDpfSrpkkm9BXYFkpKxxFX38o/76w==
 
-dts-apigen@^1.0.0-beta.9:
-  version "1.0.0-beta.9"
-  resolved "https://registry.npmjs.org/dts-apigen/-/dts-apigen-1.0.0-beta.9.tgz#c81abfd1ef4940972d86696e37f31e41c164f587"
-  integrity sha512-zrdi2ZSDO9hhnz54G8x19h8MTQrURvmWB4sBFjzI7C2RiLAPE59EXOPx30GO94+gIjyRzPjCGX40yzMHlB4RMQ==
+dts-apigen@^1.0.0-beta.10:
+  version "1.0.0-beta.10"
+  resolved "https://registry.npmjs.org/dts-apigen/-/dts-apigen-1.0.0-beta.10.tgz#53680f92dcd87011ff86e3a3fd7f98e7157b9659"
+  integrity sha512-XOkYEhFAB25gDGR6kAfl9rZafWzNTCsxMt3Ab4u8w08/H1rcmd2OeqTLpIBbI5BJKMdAe44iPEOfQX/UvZEJ/Q==
   dependencies:
     "@babel/core" "^7.4.4"
     "@babel/plugin-syntax-jsx" "^7.2.0"
