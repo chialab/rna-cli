@@ -49,7 +49,7 @@
     "jimp": "^0.6.4",
     "js-beautify": "^1.10.0",
     "jsdom": "^14.1.0",
-    "karma": "^3.1.4",
+    "karma": "^4.1.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "^1.1.2",
     "karma-detect-browsers": "^2.3.3",
