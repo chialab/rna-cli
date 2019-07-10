@@ -385,6 +385,9 @@ async function buildEntry(app, project, entry, output, options) {
                 app.logger.log(Linter.format(bundler.linter.result));
             }
         });
+        bundler.on(StyleBundler.WARN_EVENT, (message) => {
+            app.logger.warn(message);
+        });
         bundler.on(StyleBundler.ERROR_EVENT, () => {
             app.logger.stop();
         });
@@ -441,6 +444,9 @@ async function buildEntry(app, project, entry, output, options) {
             if (bundler.linter.hasWarnings() || bundler.linter.hasErrors()) {
                 app.logger.log(Linter.format(bundler.linter.result));
             }
+        });
+        bundler.on(HTMLBundler.WARN_EVENT, (message) => {
+            app.logger.warn(message);
         });
         bundler.on(HTMLBundler.ERROR_EVENT, () => {
             app.logger.stop();
