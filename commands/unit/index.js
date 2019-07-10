@@ -119,6 +119,10 @@ module.exports = (program) => {
                 options.browser = true;
             }
 
+            if (typeof options.context === 'string') {
+                options.context = project.file(options.context);
+            }
+
             let runners = await runTests(app, project, files, options, taskEnvironments);
 
             if (options.watch) {
