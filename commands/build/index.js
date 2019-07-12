@@ -64,6 +64,8 @@ module.exports = (program) => {
                 let entry = entries[i];
 
                 if (entry instanceof Project) {
+                    app.logger.heading(`\nbuilding project ${entry.get('name')}:`);
+
                     const libFile = entry.get('lib') && entry.file(entry.get('lib'));
                     const moduleFile = entry.get('module') && entry.file(entry.get('module'));
                     const mainFile = entry.get('main') && entry.file(entry.get('main'));
@@ -110,7 +112,7 @@ module.exports = (program) => {
                                 bundler = await buildEntry(app, entry, libFile, entry.directories.public, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
                             }
                         }
-                        if (bundler) {
+                        if (bundler && options.watch) {
                             // collect the generated Bundle.
                             bundles.push(bundler);
                         } else {
@@ -127,7 +129,7 @@ module.exports = (program) => {
                         if (moduleFile) {
                             let moduleOutput = mainFile ? mainFile : output;
                             let bundler = await buildEntry(app, entry, moduleFile, moduleOutput, Object.assign({ bundle: true }, options, { targets: options.targets || entry.browserslist }));
-                            if (bundler) {
+                            if (bundler && options.watch) {
                                 // collect the generated Bundle.
                                 bundles.push(bundler);
                             }
@@ -139,7 +141,7 @@ module.exports = (program) => {
                                 output;
 
                             let bundler = await buildEntry(app, entry, styleFile, styleOutput, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
-                            if (bundler) {
+                            if (bundler && options.watch) {
                                 // collect the generated Bundle.
                                 bundles.push(bundler);
                             }
@@ -171,7 +173,7 @@ module.exports = (program) => {
                     }
 
                     let bundler = await buildEntry(app, project, entry, output, Object.assign({}, options, { targets: options.targets || project.browserslist, typings: typingsFile || !!options.typings }));
-                    if (bundler) {
+                    if (bundler && options.watch) {
                         // collect the generated Bundle.
                         bundles.push(bundler);
                     }
