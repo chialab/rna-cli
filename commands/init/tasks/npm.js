@@ -154,15 +154,23 @@ module.exports = async function npmTask(app, options, project, templates) {
     }
     if (answers.module) {
         project.set('module', answers.module);
+    } else {
+        project.unset('module');
     }
     if (answers.main) {
         project.set('main', answers.main);
+    } else {
+        project.unset('main');
     }
     if (answers.browser) {
         project.set('browser', answers.browser);
+    } else {
+        project.unset('browser');
     }
     if (answers.types) {
         project.set('types', answers.types);
+    } else {
+        project.unset('types');
     }
     if (answers.workspaces) {
         project.set('workspaces', answers.workspaces.split(/,\s*/));
