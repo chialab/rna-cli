@@ -112,11 +112,11 @@ module.exports = (program) => {
                                 bundler = await buildEntry(app, entry, libFile, entry.directories.public, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
                             }
                         }
-                        if (bundler && options.watch) {
+                        if (!bundler) {
+                            throw new Error(`missing "input" option for project ${entry.path}`);
+                        } else if (options.watch) {
                             // collect the generated Bundle.
                             bundles.push(bundler);
-                        } else {
-                            throw new Error(`missing "input" option for project ${entry.path}`);
                         }
                     } else if (moduleFile || styleFile) {
                         if (!output && mainFile) {
