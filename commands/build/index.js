@@ -476,6 +476,7 @@ async function buildEntry(app, project, entry, output, options) {
             description: project.get('description'),
             targets: options.targets,
             production: options.production,
+            format: options.format,
             map: options.map,
             lint: options.lint !== false,
             polyfill: options.polyfill,
