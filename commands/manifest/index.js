@@ -15,10 +15,11 @@ module.exports = (program) => {
         .option('[--icon]', 'The path of the main icon to generate.')
         .option('[--index]', 'Path to the index.html to update.')
         .option('[--scope]', 'Force manifest scope.')
+        .deprecate('3.0.0', 'Please checkout the new `rna build` features.')
         .action(async (app, options = {}) => {
-            const path = require('path');
-            const Project = require('../../lib/Project');
-            const JSDOM = require('jsdom').JSDOM;
+            const { Project } = require('../../lib/File');
+            const HTMLBundler = require('../../lib/Bundlers/HTMLBundler');
+            const WebManifestBundler = require('../../lib/Bundlers/WebManifestBundler');
 
             const cwd = process.cwd();
             const project = new Project(cwd);
@@ -30,446 +31,106 @@ module.exports = (program) => {
                 root = project;
             }
 
-            let manifest = {};
-            let index;
-            let manifestPath;
-            let indexPath;
-            let inputManifest;
-            let inputIndex;
+            let manifestBundler = new WebManifestBundler();
+            manifestBundler.on(WebManifestBundler.BUILD_START, (input, code, child) => {
+                if (!child) {
+                    app.logger.play('generating webmanifest...', input.localPath);
+                }
+            });
+            manifestBundler.on(WebManifestBundler.BUILD_END, (input, code, child) => {
+                if (!child) {
+                    app.logger.stop();
+                    app.logger.success('webmanifest ready');
+                }
+            });
+            manifestBundler.on(WebManifestBundler.ERROR_EVENT, () => {
+                app.logger.stop();
+            });
+
+            let manifestOptions = {
+                override: true,
+                name: project.get('name'),
+                description: project.get('description'),
+            };
+            let htmlBundler;
+            let htmlOptions = {
+                links: false,
+                sources: false,
+                styles: false,
+                scripts: false,
+                icon: false,
+                serviceWorker: false,
+                title: project.get('title'),
+                description: project.get('description'),
+            };
 
             if (options.manifest) {
-                inputManifest = project.file(options.manifest);
+                manifestOptions.input = project.file(options.manifest);
+            }
+
+            if (options.scope) {
+                manifestOptions.scope = options.scope;
+            }
+
+            if (options.icon) {
+                htmlOptions.icon = manifestOptions.icon = project.file(options.icon);
             }
 
             if (typeof options.index === 'string') {
-                inputIndex = project.file(options.index);
+                htmlBundler = new HTMLBundler();
+                htmlBundler.on(HTMLBundler.BUILD_START, (input, code, child) => {
+                    if (!child) {
+                        app.logger.play('generating html...', input.localPath);
+                    }
+                });
+                htmlBundler.on(HTMLBundler.BUILD_END, (input, code, child) => {
+                    if (!child) {
+                        app.logger.stop();
+                        app.logger.success('html ready');
+                    }
+                });
+                htmlBundler.on(HTMLBundler.ERROR_EVENT, () => {
+                    app.logger.stop();
+                });
+                htmlOptions.input = project.file(options.index);
             }
 
             if (options.output) {
                 let outputDir = project.directory(options.output);
                 // use output flag if defined.
-                if (inputManifest) {
-                    manifestPath = outputDir.file(inputManifest.basename);
+                if (manifestOptions.input) {
+                    manifestOptions.output = outputDir.file(manifestOptions.input.name);
                 } else {
-                    manifestPath = outputDir.file('manifest.json');
+                    manifestOptions.output = outputDir.file('manifest.json');
                 }
-                if (inputIndex) {
-                    indexPath = outputDir.file(inputIndex.basename);
+                if (htmlOptions.input) {
+                    htmlOptions.output = outputDir.file(htmlOptions.input.name);
                 } else {
-                    indexPath = outputDir.file('index.html');
+                    htmlOptions.output = outputDir.file('index.html');
                 }
             } else {
                 // default manifest path.
-                manifestPath = root.file('manifest.json');
-                if (options.index) {
-                    indexPath = root.file('index.html');
+                manifestOptions.output = root.file('manifest.json');
+                if (htmlBundler) {
+                    htmlOptions.output = root.file('index.html');
                 }
             }
 
-            if (inputManifest.exists()) {
-                // if a manifest already exists, use it.
-                manifest = inputManifest.readJson();
+            await manifestBundler.setup(manifestOptions);
+            let res = await manifestBundler.build();
+            let outputFile = await manifestBundler.write();
+            let { size, zipped } = outputFile.size;
+            app.logger.info(outputFile.localPath, `${size}, ${zipped} zipped`);
+
+            if (htmlBundler) {
+                htmlOptions.webmanifest = manifestOptions.output;
+                await htmlBundler.setup(htmlOptions);
+                await htmlBundler.build();
+                let outputFile = await htmlBundler.write();
+                let { size, zipped } = outputFile.size;
+                app.logger.info(outputFile.localPath, `${size}, ${zipped} zipped`);
             }
 
-            // create a fake DOM document for the index.html
-            if (inputIndex.exists()) {
-                index = new JSDOM(inputIndex.read(), {
-                    url: 'https://example.org/',
-                    referrer: 'https://example.com/',
-                }).window.document;
-            }
-
-            // set manifest defaults
-            manifest.name = manifest.name || project.get('name') || path.basename(cwd);
-            manifest.short_name = manifest.short_name || manifest.name || project.get('name') || path.basename(cwd);
-            manifest.description = manifest.description || project.get('description');
-            manifest.start_url = manifest.start_url || '/';
-            manifest.scope = manifest.scope || '/';
-            manifest.display = manifest.display || 'standalone';
-            manifest.orientation = manifest.orientation || 'any';
-            manifest.theme_color = manifest.theme_color || '#000';
-            manifest.background_color = manifest.background_color || '#fff';
-            manifest.lang = manifest.lang || 'en-US';
-
-            if (typeof options.icon === 'string') {
-                // generate icons.
-                const icon = project.file(options.icon);
-                if (!icon.exists()) {
-                    // provided icons does not exists.
-                    throw `icon file not found. (${icon.localPath})`;
-                }
-                // exec the request.
-                app.logger.play('generating icons...');
-                try {
-                    const iconsPath = await generateIcons(manifest, index, icon, root);
-                    app.logger.stop();
-                    app.logger.success('icons generated');
-                    iconsPath.files().forEach((iconPath) => {
-                        let { size, zipped } = iconPath.size;
-                        app.logger.info(iconPath.localPath, `${size}, ${zipped} zipped`);
-                    });
-                } catch (err) {
-                    app.logger.stop();
-                    throw err;
-                }
-            }
-
-            if (options.scope) {
-                manifest.scope = options.scope;
-            }
-
-            if (index) {
-                if (manifest.scope) {
-                    // update index <base> using manifest.scope
-                    let base = index.querySelector('base') || index.createElement('base');
-                    base.setAttribute('href', manifest.scope);
-                    if (!base.parentNode) {
-                        index.head.appendChild(base);
-                    }
-                }
-                // update index meta title
-                let meta = index.querySelector('meta[name="apple-mobile-web-app-title"]') || index.createElement('meta');
-                meta.setAttribute('name', 'apple-mobile-web-app-title');
-                meta.setAttribute('content', manifest.name || manifest.short_name);
-                if (!meta.parentNode) {
-                    index.head.appendChild(meta);
-                }
-                // update index title
-                let title = index.querySelector('title') || index.createElement('title');
-                title.innerHTML = manifest.name || manifest.short_name;
-                if (!title.parentNode) {
-                    index.head.appendChild(title);
-                }
-                // update theme meta
-                if (manifest.theme) {
-                    let theme = index.querySelector('meta[name="theme-color"]') || index.createElement('meta');
-                    theme.setAttribute('name', 'theme-color');
-                    theme.setAttribute('content', manifest.theme);
-                    if (!theme.parentNode) {
-                        index.head.appendChild(theme);
-                    }
-                }
-                // update manifest link
-                let link = index.querySelector('link[rel="manifest"]') || index.createElement('link');
-                link.setAttribute('rel', 'manifest');
-                link.setAttribute('href', manifestPath.basename);
-                if (!link.parentNode) {
-                    index.head.appendChild(link);
-                }
-
-                // beautify html
-                let html = require('js-beautify').html(
-                    index.documentElement.outerHTML, {
-                        indent_size: 4,
-                        indent_char: ' ',
-                        preserve_newlines: false,
-                    }
-                );
-                indexPath.write(`<!DOCTYPE html>\n${html}`);
-                let { size, zipped } = indexPath.size;
-                app.logger.success('index updated');
-                app.logger.info(indexPath.localPath, `${size}, ${zipped} zipped`);
-            }
-            // write the new manifest file.
-            manifestPath.writeJson(manifest);
-            let { size, zipped } = manifestPath.size;
-            app.logger.success('manifest generated');
-            app.logger.info(manifestPath.localPath, `${size}, ${zipped} zipped`);
+            return res;
         });
 };
-
-const FAVICONS = {
-    FAVICON_16x16: {
-        name: 'favicon-16x16.png',
-        size: 16,
-    },
-    FAVICON_32x32: {
-        name: 'favicon-32x32.png',
-        size: 32,
-    },
-    FAVICON_192x192: {
-        name: 'favicon-192x192.png',
-        size: 192,
-    },
-    FAVICON_48x48: {
-        name: 'favicon-48x48.png',
-        size: 48,
-    },
-};
-
-const MANIFEST_ICONS = {
-    ANDROID_CHROME_36x36: {
-        name: 'android-chrome-36x36.png',
-        size: 36,
-    },
-    ANDROID_CHROME_48x48: {
-        name: 'android-chrome-48x48.png',
-        size: 48,
-    },
-    ANDROID_CHROME_72x72: {
-        name: 'android-chrome-72x72.png',
-        size: 72,
-    },
-    ANDROID_CHROME_96x96: {
-        name: 'android-chrome-96x96.png',
-        size: 96,
-    },
-    ANDROID_CHROME_144x144: {
-        name: 'android-chrome-144x144.png',
-        size: 144,
-    },
-    ANDROID_CHROME_192x192: {
-        name: 'android-chrome-192x192.png',
-        size: 192,
-    },
-    ANDROID_CHROME_256x256: {
-        name: 'android-chrome-256x256.png',
-        size: 256,
-    },
-    ANDROID_CHROME_384x384: {
-        name: 'android-chrome-384x384.png',
-        size: 384,
-    },
-    ANDROID_CHROME_512x512: {
-        name: 'android-chrome-512x512.png',
-        size: 512,
-    },
-};
-
-const APPLE_ICONS = {
-    APPLE_TOUCH_ICON: {
-        name: 'apple-touch-icon.png',
-        size: 180,
-        background: { r: 255, g: 255, b: 255, alpha: 1 },
-        gutter: 30,
-    },
-    APPLE_TOUCH_ICON_IPAD: {
-        name: 'apple-touch-icon-ipad.png',
-        size: 167,
-        background: { r: 255, g: 255, b: 255, alpha: 1 },
-        gutter: 30,
-    },
-};
-
-const APPLE_LAUNCH = {
-    IPHONE_X: {
-        name: 'apple-launch-iphonex.png',
-        width: 1125,
-        height: 2436,
-        background: { r: 255, g: 255, b: 255, alpha: 1 },
-        query: '(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)',
-    },
-    IPHONE_8: {
-        name: 'apple-launch-iphone8.png',
-        width: 750,
-        height: 1334,
-        background: { r: 255, g: 255, b: 255, alpha: 1 },
-        query: '(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)',
-    },
-    IPHONE_8_PLUS: {
-        name: 'apple-launch-iphone8-plus.png',
-        width: 1242,
-        height: 2208,
-        background: { r: 255, g: 255, b: 255, alpha: 1 },
-        query: '(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)',
-    },
-    IPHONE_5: {
-        name: 'apple-launch-iphone5.png',
-        width: 640,
-        height: 1136,
-        background: { r: 255, g: 255, b: 255, alpha: 1 },
-        query: '(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)',
-    },
-    IPAD_AIR: {
-        name: 'apple-launch-ipadair.png',
-        width: 1536,
-        height: 2048,
-        background: { r: 255, g: 255, b: 255, alpha: 1 },
-        query: '(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)',
-    },
-    IPAD_PRO_10: {
-        name: 'apple-launch-ipadpro10.png',
-        width: 1668,
-        height: 2224,
-        background: { r: 255, g: 255, b: 255, alpha: 1 },
-        query: '(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2)',
-    },
-    IPAD_PRO_12: {
-        name: 'apple-launch-ipadpro12.png',
-        width: 2048,
-        height: 2732,
-        background: { r: 255, g: 255, b: 255, alpha: 1 },
-        query: '(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)',
-    },
-};
-
-/**
- * Generate icon files.
- * Update manifest and index.html.
- * @param {Object} manifest The original manifest object.
- * @param {DOMDocument} index The original index DOM document.
- * @param {NavigatorFile} icon The path to the master icon.
- * @param {NavigatorDirectory} root The download path for the generated icons.
- * @return {Promise<NavigatorDirectory>} Resolve the icons directory.
- */
-async function generateIcons(manifest, index, icon, root) {
-    const iconsPath = root.directory('icons');
-    // create or empty the icons path.
-    iconsPath.ensure();
-    iconsPath.empty();
-
-    // remove old favicons
-    if (index) {
-        index.querySelectorAll('[rel="icon"], [rel="shortcut icon"], [rel="apple-touch-icon"]').forEach((elem) => {
-            elem.parentNode.removeChild(elem);
-        });
-    }
-
-    let icons = await generateIcon(icon.path, iconsPath, MANIFEST_ICONS);
-    let favicons = await generateIcon(icon.path, iconsPath, FAVICONS);
-    let appleIcons = await generateIcon(icon.path, iconsPath, APPLE_ICONS);
-    let appleLaunch = await generateLaunch(icon.path, iconsPath, APPLE_LAUNCH);
-
-    // update manifest icons
-    manifest.icons = icons.map((file) => ({
-        src: root.relative(file.src),
-        sizes: `${file.size}x${file.size}`,
-        type: 'image/png',
-    }));
-
-    // update favicons
-    if (index) {
-        favicons.forEach((file) => {
-            index.head.innerHTML += `<link rel="icon" type="image/png" sizes="${file.size}x${file.size}" href="${root.relative(file.src)}">`;
-        });
-        index.head.innerHTML += `<link rel="shortcut icon" href="${root.relative(favicons[favicons.length - 1].src)}">`;
-    }
-
-    // update apple icons
-    if (index) {
-        index.head.innerHTML += `<link rel="apple-touch-icon" href="${root.relative(appleIcons[0].src)}">`;
-        appleIcons.forEach((file) => {
-            index.head.innerHTML += `<link rel="apple-touch-icon" sizes="${file.size}x${file.size}" href="${root.relative(file.src)}">`;
-        });
-    }
-
-    // update apple launch screens
-    if (index) {
-        Object.keys(APPLE_LAUNCH)
-            .forEach((key, num) => {
-                let rule = APPLE_LAUNCH[key];
-                let image = appleLaunch[num];
-                index.head.innerHTML += `<link rel="apple-touch-startup-image" media="${rule.query}" href="${root.relative(image.src)}">`;
-            });
-    }
-
-    return iconsPath;
-}
-
-/**
- * @typedef {Object} Color
- * @property {number} r Red value [0-255]
- * @property {number} g Green value [0-255]
- * @property {number} b Blue value [0-255]
- * @property {number} alpha Alpha value [0-1]
- */
-
-/**
- * @typedef {Object} IconDescriptor
- * @property {string} name The filename
- * @property {number} size The size of the icon
- * @property {number} gutter The margin between the icon edge and the input image
- * @property {number} round The rounded corner value
- * @property {Color}  background The background color of the icon
- */
-
-/**
- * @typedef {Object} LaunchDescriptor
- * @property {string} name The filename
- * @property {number} width The width of the icon
- * @property {number} height The size of the icon
- * @property {Color}  background The background color of the icon
- */
-
-/**
- * Generate icons.
- *
- * @param {string} input The icon source image.
- * @param {NavigatorDirectory} output The output folder for generated icons.
- * @param {Object<string, IconDescriptor>} presets Custom presets configurations.
- * @return {Promise}
- */
-function generateIcon(input, output, presets = {}) {
-    const Jimp = require('jimp');
-
-    // ensure the output dir exists
-    output.ensure();
-    return Promise.all(
-        Object.keys(presets).map(async (k) => {
-            // merge preset options
-            let options = Object.assign({}, presets[k]);
-            let dest = output.file(options.name);
-            // create the icon
-            let iconBuffer = new Jimp(options.size, options.size, colorToString(options.background || { r: 255, g: 255, b: 255, alpha: 0 }));
-            // load the icon source
-            let sourceBuffer = (await Jimp.read(input))
-                // resize the image
-                .resize(options.size - (options.gutter || 0), options.size - (options.gutter || 0));
-
-            iconBuffer.composite(sourceBuffer, (options.gutter || 0) / 2, (options.gutter || 0) / 2);
-
-            // save the file
-            await iconBuffer.write(dest.path);
-
-            return {
-                src: dest,
-                size: options.size,
-            };
-        })
-    );
-}
-
-/**
- * Generate launch screens.
- *
- * @param {string} input The icon source image.
- * @param {NavigatorDirectory} output The output folder for generated icons.
- * @param {Object<string, LaunchDescriptor>} presets Custom presets configurations.
- * @return {Promise}
- */
-function generateLaunch(input, output, presets = {}) {
-    const Jimp = require('jimp');
-
-    // ensure the output dir exists
-    output.ensure();
-    return Promise.all(
-        Object.keys(presets).map(async (k) => {
-
-            // merge preset options
-            let options = Object.assign({}, presets[k]);
-            let dest = output.file(options.name);
-            let size = Math.round(Math.min(options.height / 6, options.width / 6)) - (options.gutter || 0);
-            // create the splashscreen
-            let splashBuffer = new Jimp(options.width, options.height, colorToString(options.background || { r: 255, g: 255, b: 255, alpha: 1 }));
-            // load the icon source
-            let sourceBuffer = (await Jimp.read(input))
-                // resize the image
-                .resize(size, size);
-
-            splashBuffer.composite(sourceBuffer, (options.width - size) / 2, (options.height - size) / 2);
-
-            // save the file
-            await splashBuffer.write(dest.path);
-
-            return {
-                src: dest,
-                size: options.size,
-                width: options.width,
-            };
-        })
-    );
-}
-
-function colorToString({ r, g, b, alpha }) {
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}

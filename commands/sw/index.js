@@ -13,97 +13,49 @@ module.exports = (program) => {
         .option('--output', 'The service worker to generate or update.')
         .option('[--exclude]', 'A glob of files to exclude from the precache.')
         .option('[--watch]', 'Regenerated service worker on source changes.')
-        .action(async function sw(app, options) {
+        .deprecate('3.0.0', 'Please checkout the new `rna build` features.')
+        .action(async (app, options) => {
             if (!options.arguments.length) {
-                throw 'missing input files.';
+                throw new Error('missing input files');
             }
 
-            const workbox = require('workbox-build');
+            const ServiceWorkerBundler = require('../../lib/Bundlers/ServiceWorkerBundler');
             const Watcher = require('../../lib/Watcher');
-            const Project = require('../../lib/Project');
+            const { Project } = require('../../lib/File');
 
             const cwd = process.cwd();
             const project = new Project(cwd);
 
-            let input = project.directory(options.arguments[0]);
+            let root = project.directory(options.arguments[0]);
+            let output = options.output && project.file(options.output);
+            let bundler = new ServiceWorkerBundler(app, project);
 
-            let output;
-            if (options.output) {
-                output = project.file(options.output);
-            } else {
-                input.file('service-worker.js');
-            }
-            app.logger.play('generating service worker...');
-            let exclude = [
-                'service-worker.js',
-                '*.map',
-            ];
-            if (options.exclude) {
-                exclude.push(options.exclude);
-            }
+            await bundler.setup({
+                root,
+                output,
+                exclude: options.exclude,
+            });
 
-            if (output.mapFile.exists()) {
-                output.mapFile.unlink();
-            }
+            let res = await bundler.build();
+            await bundler.write();
 
-            try {
-                let res;
-                if (output.exists()) {
-                    let content = output.read();
-                    if (content.match(/\.(precache|precacheAndRoute)\s*\(\s*\[([^\]]*)\]\)/i)) {
-                        let tmpFile = app.store.tmpfile('sw.js');
-                        tmpFile.write(content.replace(/\.(precache|precacheAndRoute)\s*\(\s*\[([^\]]*)\]\)/gi, '.$1([])'));
-                        try {
-                            res = await workbox.injectManifest({
-                                swSrc: tmpFile.path,
-                                swDest: output.path,
-                                globDirectory: input.path,
-                                globPatterns: ['**/*'],
-                                globIgnores: exclude,
-                                maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
-                            });
-                        } catch (err) {
-                            tmpFile.unlink();
-                            throw err;
+            if (options.watch) {
+                let watcher = new Watcher(root, {
+                    ignore: '**/*.map',
+                });
+
+                await watcher.watch(async (file) => {
+                    if (file.path === output.path) {
+                        const content = output.read();
+                        if (!content.match(/\.(precache|precacheAndRoute)\(\[\]\)/)) {
+                            return;
                         }
-                    } else {
-                        res = content;
                     }
-                } else {
-                    res = await workbox.generateSW({
-                        globDirectory: input.path,
-                        swDest: output.path,
-                        globPatterns: ['**/*'],
-                        globIgnores: exclude,
-                        maximumFileSizeToCacheInBytes: 1024 * 1024 * 10,
-                    });
-                }
-
-                app.logger.stop();
-
-                let { size, zipped } = output.size;
-                app.logger.success('service worker generated');
-                app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
-
-                if (options.watch) {
-                    let watcher = new Watcher(input, {
-                        ignore: '**/*.map',
-                    });
-
-                    await watcher.watch(async (file) => {
-                        if (file.path === output.path) {
-                            const content = output.read();
-                            if (!content.match(/\.(precache|precacheAndRoute)\(\[\]\)/)) {
-                                return;
-                            }
-                        }
-                        await sw(app, Object.assign({}, options, { watch: false }));
-                    });
-                }
-                return res;
-            } catch(err) {
-                app.logger.stop();
-                throw err;
+                    await bundler.build();
+                    await bundler.write();
+                });
             }
+
+            return res;
         });
 };

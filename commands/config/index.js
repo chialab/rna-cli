@@ -12,7 +12,7 @@ module.exports = (program) => {
         .option('<key> <value>', 'The key/value pair to set.')
         .action(async (app, options) => {
             if (options.arguments.length !== 2) {
-                throw 'you must provide a key/value pair to set';
+                throw new Error('you must provide a key/value pair to set');
             }
 
             let key = options.arguments[0];

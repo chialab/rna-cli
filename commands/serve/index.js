@@ -12,14 +12,15 @@ module.exports = (program) => {
         .option('<path>', 'The server directory.')
         .option('[--port]', 'The server port.')
         .option('[--watch]', 'Should watch server directory.')
-        .option('[--tunnel]', 'Create a tunnel for the server')
+        .option('[--tunnel]', 'Create a tunnel for the server.')
         .option('[--directory]', 'Should list directories.')
         .option('[--https]', 'Start a server using SSL.')
+        .option('[--compress]', 'Activate gzip compression on static files.')
         .action(async (app, options = {}) => {
             const { mix } = require('@chialab/proteins');
             const Watcher = require('../../lib/Watcher');
-            const Project = require('../../lib/Project.js');
-            const Server = require('../../lib/Servers/Server.js');
+            const { Project } = require('../../lib/File');
+            const Server = require('../../lib/Servers/Server');
 
             const cwd = process.cwd();
             const project = new Project(cwd);
@@ -38,10 +39,10 @@ module.exports = (program) => {
             }
 
             let LiveReloadServer = mix(Server).with(...[
-                options.watch && require('../../lib/Servers/LiveReload.js'),
-                require('../../lib/Servers/Static.js'),
-                require('../../lib/Servers/Html5.js'),
-                options.tunnel && require('../../lib/Servers/Tunnel.js'),
+                options.watch && require('../../lib/Servers/LiveReload'),
+                require('../../lib/Servers/Static'),
+                require('../../lib/Servers/Html5'),
+                options.tunnel && require('../../lib/Servers/Tunnel'),
             ].filter(Boolean));
 
             // Load configuration.
@@ -56,6 +57,7 @@ module.exports = (program) => {
                     },
                 ],
                 tunnel: options.tunnel,
+                compress: options.compress,
             };
 
             if (options.https === true) {

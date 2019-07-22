@@ -11,19 +11,15 @@ module.exports = (program) => {
         .readme(`${__dirname}/README.md`)
         .option('[--targets]', 'A supported browserslist query.')
         .option('[--node]', 'Run tests in node context.')
-        .option('[--browser]', 'Run tests in browser context.')
+        .option('[--browser [browserName]]', 'Run tests in browser context.')
         .option('[--saucelabs]', 'Use SauceLabs as browsers provider.')
-        .option('[--electron]', 'Run tests in Electron context.')
-        .option('[--nativescript <ios|android>]', 'Run tests in Nativescript context.')
         .option('[--coverage]', 'Generate a code coverage report.')
         .option('[--concurrency]', 'Set concurrency level for tests.')
         .option('[--context]', 'Use a specific HTML document for tests.')
         .option('[--timeout]', 'Set the tests timeout.')
         .option('[--watch]', 'Watch test files.')
         .action(async (app, options = {}) => {
-            const browserslist = require('browserslist');
-            const Project = require('../../lib/Project');
-            const Rollup = require('../../lib/Bundlers/Rollup');
+            const { Project } = require('../../lib/File');
             const Watcher = require('../../lib/Watcher');
 
             const cwd = process.cwd();
@@ -44,10 +40,10 @@ module.exports = (program) => {
                     process.env.SAUCE_ACCESS_KEY = app.store.get('saucelabs.accessKey');
                 }
                 if (!process.env.SAUCE_USERNAME) {
-                    throw 'Missing SAUCE_USERNAME variable.';
+                    throw new Error('missing SAUCE_USERNAME variable');
                 }
                 if (!process.env.SAUCE_ACCESS_KEY) {
-                    throw 'Missing SAUCE_ACCESS_KEY variable.';
+                    throw new Error('missing SAUCE_ACCESS_KEY variable');
                 }
             }
 
@@ -59,7 +55,9 @@ module.exports = (program) => {
 
             // Load options.
             options = Object.assign({}, options, {
-                targets: browserslist(options.targets || project.browserslist),
+                targets: options.targets || project.browserslist,
+                root: project.directories.test || project.directory('test'),
+                project,
             });
 
             // Load list of files to be tested.
@@ -113,7 +111,7 @@ module.exports = (program) => {
                 return;
             }
 
-            let taskEnvironments = Object.keys(options).filter((optName) => options[optName] && optName in ENVIRONMENTS);
+            let taskEnvironments = [options.node && 'node', options.browser && 'browser', options.saucelabs && 'saucelabs'].filter(Boolean);
             if (!taskEnvironments.length) {
                 // If test environment is not provide, use `browser` as default.
                 taskEnvironments.push('node', 'browser');
@@ -121,134 +119,111 @@ module.exports = (program) => {
                 options.browser = true;
             }
 
-            const unitCode = `${files.map((entry) => `import '${entry.path}';`).join('\n')}`;
-
-            // build tests
-            const tempSource = app.store.tmpfile('unit-source.js');
-            const tempUnit = app.store.tmpfile('unit-build.js');
-            tempSource.write(unitCode);
-
-            let rebuild;
-            let watchFiles;
-            try {
-                const config = Rollup.detectConfig(app, project, {
-                    'input': tempSource.path,
-                    'output': tempUnit.path,
-                    'map': 'inline',
-                    'coverage': options.coverage,
-                    'targets': options.targets,
-                    'jsx.pragma': options['jsx.pragma'],
-                    'jsx.module': options['jsx.module'],
-                });
-
-                rebuild = async function() {
-                    app.logger.play('bundling test...', tempSource.localPath);
-                    const rollupBundle = new Rollup(config);
-                    await rollupBundle.build();
-                    await rollupBundle.write();
-                    watchFiles = rollupBundle.files;
-                    app.logger.stop();
-                };
-
-                await rebuild();
-            } catch (error) {
-                app.logger.stop();
-                throw error;
+            if (typeof options.context === 'string') {
+                options.context = project.file(options.context);
             }
 
-            app.logger.stop();
-
-            try {
-                await runTests(app, project, tempUnit, options, taskEnvironments);
-            } catch (error) {
-                if (!options.watch) {
-                    throw error;
-                }
-            }
+            let runners = await runTests(app, project, files, options, taskEnvironments);
 
             if (options.watch) {
+                // setup a runners priority chain.
+                const PriorityQueues = require('../../lib/PriorityQueues');
+                const queue = new PriorityQueues();
                 // start the watch task
                 const watcher = new Watcher(project, {
-                    ignore: (file) => !watchFiles.includes(file) || (file === tempUnit.path),
+                    ignore: (file) => !filterChangedRunners(runners, file).length,
                 });
 
-                await watcher.watch(async () => {
-                    app.logger.newline();
-                    await rebuild();
-                    await runTests(app, project, tempUnit, options, taskEnvironments);
+                watcher.on('change', (file) => {
+                    let label = file.exists() ? 'changed' : 'removed';
+                    app.logger.info(`\n${file.localPath} ${label}\n`);
+                });
+
+                await watcher.watch(async (file) => {
+                    let promise = Promise.resolve();
+                    let runnersWithChanges = filterChangedRunners(runners, file.path);
+
+                    if (runnersWithChanges.length === 0) {
+                        return true;
+                    }
+
+                    let ticks = await Promise.all(
+                        // find out manifests with changed file dependency.
+                        runnersWithChanges.map((runner) => queue.tick(runner, 100))
+                    );
+
+                    for (let i = 0; i < ticks.length; i++) {
+                        if (!ticks[i]) {
+                            continue;
+                        }
+
+                        let runner = runnersWithChanges[i];
+                        promise = promise.then(async () => {
+                            try {
+                                await runner.run(files);
+                            } catch (err) {
+                                if (err) {
+                                    app.logger.error(err);
+                                }
+                            }
+                        });
+                    }
+
+                    await promise;
                 });
             }
         });
 };
 
 /**
- * @typedef {Object} TestResult
- * @property {Number} exitCode The exit code of the test.
- * @property {Number} failed Failed tests count.
- * @property {Object} coverage The coverage map result.
- */
-
-
-/**
- * A list of available environments.
- * @type {Object}
- */
-const ENVIRONMENTS = {
-    node: { runner: 'mocha' },
-    browser: { runner: 'karma' },
-    saucelabs: { runner: 'karma' },
-    electron: { runner: 'karma' },
-    nativescript: { runner: 'ns' },
-};
-
-/**
  * Exec tests across multiple environments.
  * @param {CLI} app The current CLI instance.
  * @param {Project} project The active project.
- * @param {NavigatorFile} testFile The source test file.
+ * @param {File[]} files The test files.
  * @param {Object} options A set of options for tests.
  * @param {Array<string>} environments A list of test environments.
- * @return {Promise}
+ * @return {Promise<TestRunner[]>}
  */
-async function runTests(app, project, testFile, options, environments = []) {
+async function runTests(app, project, files, options, environments = []) {
     const coverageMap = require('istanbul-lib-coverage').createCoverageMap({});
 
+    let runners = [];
     let finalExitCode = 0;
     // Test built sources.
     for (let i = 0; i < environments.length; i++) {
         let taskEnvName = environments[i];
-        let taskEnv = ENVIRONMENTS[taskEnvName];
 
-        if (taskEnv.runner === 'mocha') {
+        if (taskEnvName === 'node') {
             // Startup Mocha.
-            let { exitCode, coverage } = await runNodeTests(app, project, testFile, options);
+            const NodeTestRunner = require('../../lib/TestRunners/NodeTestRunner');
+            const runner = new NodeTestRunner();
+            runners.push(runner);
+            await runner.setup(options);
+            runner.on(NodeTestRunner.PREPARE_START_EVENT, () => {
+                app.logger.play('generating test...');
+            });
+            runner.on(NodeTestRunner.PREPARE_END_EVENT, () => {
+                app.logger.stop();
+            });
+            let { exitCode, coverage } = await runner.run(files);
             if (coverage) {
                 coverageMap.merge(coverage);
             }
             if (exitCode !== 0) {
                 finalExitCode = exitCode;
             }
-            continue;
-        }
-
-        if (taskEnv.runner === 'karma') {
-            // Startup Karma.
-            let { exitCode, coverage } = await runBrowserTests(app, project, testFile, options);
-            if (coverage) {
-                coverageMap.merge(coverage);
-            }
-            if (exitCode !== 0) {
-                finalExitCode = exitCode;
-            }
-            continue;
-        }
-
-        if (taskEnv.runner === 'ns') {
-            if (!['ios', 'android'].includes(options.nativescript.toLowerCase())) {
-                throw 'Invalid nativescript platform. Valid platforms are `ios` and `android`.';
-            }
-            // Create fake NS application.
-            let { exitCode, coverage } = await runNativeScriptTest(app, testFile, options.nativescript);
+        } else if (taskEnvName === 'browser' || taskEnvName === 'saucelabs') {
+            const BrowserTestRunner = require('../../lib/TestRunners/BrowserTestRunner');
+            const runner = new BrowserTestRunner();
+            runners.push(runner);
+            await runner.setup(options);
+            runner.on(BrowserTestRunner.PREPARE_START_EVENT, () => {
+                app.logger.play('generating test...');
+            });
+            runner.on(BrowserTestRunner.PREPARE_END_EVENT, () => {
+                app.logger.stop();
+            });
+            let { exitCode, coverage } = await runner.run(files);
             if (coverage) {
                 coverageMap.merge(coverage);
             }
@@ -265,355 +240,18 @@ async function runTests(app, project, testFile, options, environments = []) {
     }
 
     if (finalExitCode) {
-        throw 'some tests have failed';
+        throw new Error('some tests have failed');
     }
 
-    return coverageMap;
+    return runners;
 }
 
-/**
- * Exec tests in a Node environment using Node Mocha API.
- * @param {CLI} app The current CLI instance.
- * @param {Project} project The active project.
- * @param {NavigatorFile} testFile The source test file.
- * @param {Object} options A set of options for tests.
- * @return {Promise<TestResult>}
- */
-async function runNodeTests(app, project, testFile, options = {}) {
-    const Mocha = require('mocha');
-    require('source-map-support/register');
-    const mocha = new Mocha();
-
-    mocha.addFile(testFile.path);
-    return await new Promise((resolve) => {
-        mocha.run((failures) => {
-            let coverage;
-            if (options.coverage) {
-                const { Collector, Reporter, config } = require('istanbul');
-                const collector = new Collector();
-                const reporter = new Reporter(config.loadObject({
-                    reporting: {
-                        print: 'summary',
-                        reports: [ 'lcov' ],
-                        dir: project.directory(`reports/coverage/${process.title}-${process.version}`).path,
-                    },
-                }));
-                coverage = global.__coverage__;
-                collector.add(coverage);
-                delete global.__coverage__;
-                reporter.addAll(['lcov']);
-                reporter.write(collector, true, () => {});
-            }
-            resolve({
-                exitCode: failures ? 1 : 0,
-                coverage,
-                failed: failures.length,
-            });
+function filterChangedRunners(runners, file) {
+    return runners
+        .filter((runner) => {
+            let runnerFiles = runner.files || [];
+            return runnerFiles.includes(file);
         });
-    });
-}
-
-/**
- * Exec tests in a Browser environment using Karma test runner.
- * @param {CLI} app The current CLI instance.
- * @param {Project} project The active project.
- * @param {NavigatorFile} testFile The source test file.
- * @param {Object} options A set of options for tests.
- * @return {Promise<TestResult>}
- */
-async function runBrowserTests(app, project, testFile, options = {}) {
-    const karma = require('karma');
-    const coverageMap = require('istanbul-lib-coverage').createCoverageMap({});
-
-    // Handle Karma custom context file option
-    let customContextFile;
-    if (options['context']) {
-        let original = project.file(options['context']);
-        customContextFile = testFile.directory.file(original.basename);
-        customContextFile.write(original.read());
-    }
-
-    const karmaOptions = await getKarmaConfig(app, project, {
-        basePath: testFile.dirname,
-        watch: options.watch,
-        coverage: options.coverage,
-        targets: options.targets,
-        concurrency: options.concurrency || (options.watch ? Infinity : undefined),
-        timeout: options.timeout,
-        customContextFile: customContextFile ? customContextFile.basename : undefined,
-        saucelabs: !!options.saucelabs,
-        electron: !!options.electron,
-        browser: !!options.browser,
-    });
-    karmaOptions.middleware = karmaOptions.middleware || [];
-    karmaOptions.middleware.push('base');
-    karmaOptions.plugins = karmaOptions.plugins || [];
-    karmaOptions.plugins.push({
-        'middleware:base': ['factory', function base() {
-            return function(request, response, next) {
-                if (request.url.startsWith('/base/')) {
-                    return next();
-                }
-                response.writeHead(302, {
-                    Location: `/base${request.url}`,
-                });
-                response.end();
-            };
-        }],
-    });
-    karmaOptions.files = [
-        {
-            pattern: testFile.basename,
-            included: true,
-            served: true,
-            nocache: true,
-            watched: false,
-        },
-        {
-            pattern: '**/*',
-            included: false,
-            served: true,
-            nocache: false,
-            watched: false,
-        },
-    ];
-    karmaOptions.preprocessors = karmaOptions.preprocessors || {};
-    karmaOptions.preprocessors[testFile.path] = ['sourcemap'];
-
-    return await new Promise((resolve) => {
-        let failed = 0;
-        const server = new karma.Server(karmaOptions, (exitCode) => {
-            resolve({
-                exitCode,
-                failed,
-                coverage: coverageMap.toJSON(),
-            });
-        });
-
-        server.on('coverage_complete', (browser, coverageReport) => {
-            coverageMap.merge(coverageReport);
-        });
-
-        server.on('run_complete', (browser, result) => {
-            failed = result.failed;
-        });
-
-        server.start();
-    });
-}
-
-/**
- * Exec tests in a NativeScript environment using tns cli.
- * @param {CLI} app The current CLI instance.
- * @param {NavigatorFile} testFile The source test file.
- * @param {String} platform Android or iOS.
- * @return {Promise<TestResult>}
- */
-async function runNativeScriptTest(app, file, platform) {
-    const exec = require('../../lib/exec.js');
-
-    let dir = app.store.tmpdir('NSTest');
-    let appDir = dir.directory('Test');
-    await exec('tns', ['create', 'Test', '--path', dir.path, '--js']);
-    await exec('tns', ['test', 'init', '--path', appDir.path, '--framework', 'mocha']);
-    let testDir = appDir.directory('app').directory('tests');
-    testDir.empty();
-    testDir.file('test.js').write(file.read());
-    let exitCode = 0;
-    try {
-        await exec('tns', ['test', platform, '--emulator', '--justlaunch', '--path', appDir.path]);
-    } catch (error) {
-        exitCode = 1;
-    }
-    return {
-        exitCode,
-        failed: null,
-        coverage: null,
-    };
-}
-
-/**
- * Get Karma configuration.
- *
- * @param {CLI} app CLI.
- * @param {Project} project The current project.
- * @param {Object} options Options.
- * @returns {Promise<string|Object>}
- */
-async function getKarmaConfig(app, project, options) {
-    const localConf = project.file('karma.conf.js');
-    if (localConf.exists()) {
-        // Local Karma config exists. Use that.
-        return localConf;
-    }
-
-    const conf = {
-        // base path that will be used to resolve all patterns (eg. files, exclude)
-        basePath: options.basePath || project.path,
-
-        // frameworks to use
-        // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-        frameworks: ['mocha', 'chai'],
-
-        // mocha timeout option if given
-        client: {
-            mocha: {
-                timeout: !isNaN(options.timeout) ? options.timeout : 2000,
-            },
-        },
-
-        // test results reporter to use
-        // possible values: 'dots', 'progress'
-        // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-        reporters: ['mocha'],
-
-        // web server port
-        port: 9876,
-
-        // browser's timeout for handling Safari issues
-        browserDisconnectTimeout: 6 * 1000,
-        browserDisconnectTolerance: 0,
-        browserNoActivityTimeout: 2 * 60 * 1000,
-        captureTimeout: 5 * 60 * 1000,
-
-        // enable / disable colors in the output (reporters and logs)
-        colors: true,
-
-        // level of logging
-        // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
-        logLevel: 'INFO',
-
-        // enable / disable watching file and executing tests whenever any file changes
-        autoWatch: false,
-
-        // start these browsers
-        // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-        browsers: [],
-
-        // customContextFile if any
-        customContextFile: options.customContextFile ? options.customContextFile : null,
-
-        plugins: [
-            require('karma-sourcemap-loader'),
-            require('karma-mocha'),
-            require('./plugins/karma-mocha-reporter/index.js'),
-            require('./plugins/karma-chai/index.js'),
-        ],
-
-        // Continuous Integration mode
-        // if true, Karma captures browsers, runs the tests and exits
-        singleRun: !options.watch,
-
-        // Concurrency level
-        // how many browser should be started simultaneously
-        concurrency: !isNaN(options.concurrency) ? options.concurrency : 2,
-    };
-
-    if (options.browser) {
-        const launchers = ['chrome', 'firefox', 'ie', 'edge', 'opera', 'safari'];
-
-        conf.frameworks.push('detectBrowsers');
-        conf.plugins.push(
-            require('karma-chrome-launcher'),
-            require('karma-firefox-launcher'),
-            require('karma-ie-launcher'),
-            require('karma-edge-launcher'),
-            require('karma-opera-launcher'),
-            require('./plugins/karma-safari-launcher/karma-safari-launcher'),
-            require('karma-detect-browsers')
-        );
-        conf.customLaunchers = {
-            Chrome_CI: {
-                base: 'Chrome',
-                flags: ['--no-sandbox'],
-            },
-        };
-
-        conf.detectBrowsers = {
-            usePhantomJS: false,
-            postDetection: (availableBrowser) => {
-                // remove available browsers without a launcher.
-                availableBrowser = availableBrowser.filter((browserName) => launchers.indexOf(browserName.toLowerCase()) !== -1);
-                // we are replacing the detected `Chrome` with the `Chrome_CI` configuration.
-                const ioChrome = availableBrowser.indexOf('Chrome');
-                if (ioChrome !== -1) {
-                    availableBrowser.splice(ioChrome, 1, 'Chrome_CI');
-                }
-                return availableBrowser;
-            },
-        };
-    }
-
-    if (options.saucelabs) {
-        const saucelabs = require('../../lib/saucelabs');
-
-        let job = (process.env.TRAVIS && `TRAVIS # ${process.env.TRAVIS_BUILD_NUMBER} (${process.env.TRAVIS_BUILD_ID})`) ||
-            (process.env.GITLAB_CI && `GITLAB # ${process.env.CI_JOB_NAME} (${process.env.CI_JOB_ID})`) ||
-            `RNA # ${Date.now()}`;
-
-        // SauceLabs configuration.
-        conf.hostname = '127.0.0.1.xip.io';
-        conf.retryLimit = 0;
-        conf.reporters.push('saucelabs');
-        conf.sauceLabs = {
-            startConnect: true,
-            connectOptions: {
-                'no-ssl-bump-domains': 'all',
-            },
-            idleTimeout: 3 * 60 * 1000,
-            username: process.env.SAUCE_USERNAME,
-            accessKey: process.env.SAUCE_ACCESS_KEY,
-            build: job,
-            recordScreenshots: true,
-            testName: getTestName(project),
-        };
-
-        let saucelabsBrowsers = await saucelabs.launchers(options.targets);
-        conf.customLaunchers = saucelabsBrowsers;
-        conf.browsers = Object.keys(saucelabsBrowsers);
-        if (conf.browsers.length === 0) {
-            throw new Error('invalid SauceLabs targets.');
-        }
-        conf.plugins.push(require('./plugins/karma-sauce-launcher/index.js'));
-    }
-
-    if (options.electron) {
-        // Test on Electron.
-        conf.browsers = ['ElectronBrowser'];
-        conf.customLaunchers = {
-            ElectronBrowser: {
-                base: 'Electron',
-                tmpdir: app.store.tmpdir('ElectronTest').path,
-            },
-        };
-        conf.plugins.push(require('./plugins/karma-electron-launcher/index.js'));
-    }
-
-    if (process.env.CI) {
-        // Optimal configuration for CI environment.
-        conf.client = conf.client || {};
-        conf.client.captureConsole = false;
-    }
-
-    if (options.coverage) {
-        // Collect code coverage.
-        conf.plugins.push('karma-coverage');
-        conf.coverageReporter = {
-            dir: project.directory('reports/coverage').path,
-            reporters: [
-                {
-                    type: 'in-memory',
-                },
-                {
-                    type: 'lcov',
-                    subdir: (browserName) => browserName,
-                },
-            ],
-        };
-        conf.reporters.push('coverage');
-    }
-
-    return conf;
 }
 
 /**
@@ -669,34 +307,4 @@ function formatCoverageReport(summary, key) {
         type,
         message,
     };
-}
-
-/**
- * Create a Test name using git status.
- * @param {Project} project The project to test.
- * @return {String}
- */
-function getTestName(project) {
-    const Git = require('../../lib/Git.js');
-
-    let message = `Tests for ${project.get('name')}`;
-    const gitClient = new Git(project.path);
-
-    const branchName = gitClient.getBranchName();
-    const commit = gitClient.getShortCommitCode();
-    const commitMessage = gitClient.getCommitMessage();
-
-    if (branchName) {
-        message = `${message} | ${branchName.trim()}`;
-    }
-
-    if (commit) {
-        message = `${message}, ${commit.trim()}`;
-    }
-
-    if (commitMessage) {
-        message = `${message}: '${commitMessage.trim().replace(/^['"]*/, '').replace(/['"]*$/, '')}'`;
-    }
-
-    return message;
 }

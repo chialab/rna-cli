@@ -1,3 +1,5 @@
+⚠️  Although the command has been retained for backward compatibility with version 1.0 and 2.0, you really should use the new `rna build` command.
+
 Generate a WebApp [manifest](https://developer.mozilla.org/en-US/docs/Web/Manifest).
 
 ### Options
@@ -14,4 +16,4 @@ $ rna manifest public/ --icon resources/icon.png --scope '/'
 
 ### See also
 
-* [`rna sw`](../sw/)
+* [`rna build`](../build/)

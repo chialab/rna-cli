@@ -10,8 +10,6 @@ A CLI to rule them all.
 ## Install
 ```sh
 $ yarn global add @chialab/rna-cli
-# or
-$ npm install -g @chialab/rna-cli
 ```
 
 ## Usage
@@ -29,19 +27,11 @@ $ docker run chialab/rna-cli rna --version
 
 ## Commands
 
-* [**config**](./commands/config) - Set RNA cli configuration.
 * [**init**](./commands/init) - Setup a new project.
-* [**install**](./commands/install) - Sync project dependencies. `yarn install` alias.
-* [**add**](./commands/add) - Add a project dependency. `yarn add` alias.
-* [**remove**](./commands/remove) - Remove a project dependency. `yarn remove` alias.
-* [**lint**](./commands/lint) - Lint your source files.
 * [**build**](./commands/build) - Build the project.
-* [**manifest**](./commands/manifest) - Generate webapp manifest.
-* [**sw**](./commands/sw) - Generate Service Worker with precached files.
 * [**serve**](./commands/serve) - Setup a server for your project.
+* [**lint**](./commands/lint) - Lint your source files.
 * [**unit**](./commands/unit) - Run project unit tests.
 * [**publish**](./commands/publish) - Publish to NPM.
-* [**documentation**](./commands/documentation) - Generate API references.
-* [**start**](./commands/start) - `yarn start` alias.
-* [**run**](./commands/run) - `yarn run` alias.
-* [**test**](./commands/test) - `yarn test` alias.
+* [**documentate**](./commands/documentate) - Generate API references.
+* [**config**](./commands/config) - Set RNA cli configuration.

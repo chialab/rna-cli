@@ -13,7 +13,7 @@ module.exports = (program) => {
         .option('[--fix]', 'Should autofix warnings.')
         .option('[--watch]', 'Watch files and re-lint on changes.')
         .action(async function lint(app, options) {
-            const Project = require('../../lib/Project');
+            const { Project } = require('../../lib/File');
             const { isJSFile, isStyleFile } = require('../../lib/extensions');
             const Watcher = require('../../lib/Watcher');
 
@@ -42,7 +42,7 @@ module.exports = (program) => {
             }
 
             if (entries.length === 0) {
-                throw 'missing files to lint';
+                throw new Error('missing files to lint');
             }
 
             const jsFiles = entries
@@ -57,7 +57,7 @@ module.exports = (program) => {
                 if (await eslint(app, project, {
                     fix: options.fix,
                 }, jsFiles)) {
-                    throw 'ESLint found some errors.';
+                    throw new Error('ESLint found some errors.');
                 }
             }
 
@@ -65,7 +65,7 @@ module.exports = (program) => {
                 if (await stylelint(app, project, {
                     fix: options.fix,
                 }, styleFiles)) {
-                    throw 'Stylelint found some errors';
+                    throw new Error('Stylelint found some errors');
                 }
             }
 
@@ -88,24 +88,21 @@ module.exports = (program) => {
  */
 async function eslint(app, project, options, files) {
     const ESLint = require('../../lib/Linters/ESLint.js');
-    const profile = app.profiler.task('eslint');
     app.logger.play('running ESLint...');
 
     try {
-        const config = ESLint.detectConfig(app, project, options);
-        const linter = new ESLint(config);
+        const linter = new ESLint();
+        await linter.setup(project, options);
         const report = await linter.lint(files);
         if (report.errorCount || report.warningCount) {
-            app.logger.log(linter.report());
+            app.logger.log(ESLint.format(linter.result));
         }
         app.logger.stop();
-        profile.end();
         if (report.errorCount) {
             return report;
         }
     } catch (err) {
         app.logger.stop();
-        profile.end();
         throw err;
     }
 }
@@ -120,24 +117,21 @@ async function eslint(app, project, options, files) {
  */
 async function stylelint(app, project, options, files) {
     const Stylelint = require('../../lib/Linters/Stylelint.js');
-    const profile = app.profiler.task('stylelint');
     app.logger.play('running stylelint...');
 
     try {
-        const config = Stylelint.detectConfig(app, project, options);
-        const linter = new Stylelint(config);
+        const linter = new Stylelint();
+        await linter.setup(project, options);
         const report = await linter.lint(files);
         if (report.errorCount || report.warningCount) {
-            app.logger.log(linter.report());
+            app.logger.log(Stylelint.format(linter.result));
         }
         app.logger.stop();
-        profile.end();
         if (report.errorCount) {
             return report;
         }
     } catch(err) {
         app.logger.stop();
-        profile.end();
         throw err;
     }
 }

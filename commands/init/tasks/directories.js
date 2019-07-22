@@ -12,6 +12,7 @@ const _ = require('lodash');
  */
 module.exports = async function directoriesTask(app, otpions, project, templates) {
     const directories = project.directories;
+    const srcDir = directories.src;
     const publicDir = directories.public;
     const styleFile = project.get('style') && project.file(project.get('style'));
     const moduleFile = project.get('module') && project.file(project.get('module'));
@@ -24,12 +25,18 @@ module.exports = async function directoriesTask(app, otpions, project, templates
     // Ensure path specified in `package.json` "main" key is present.
     if (publicDir) {
         // Using a simple HTML file as main entrypoint.
-        let indexFile = publicDir.file('index.html');
+        let indexFile = srcDir.file('index.html');
         if (!indexFile.exists()) {
             let template = _.template(templates.file('index.html').read());
             indexFile.write(template({
                 project,
             }));
+            if (!srcDir.file('index.js').exists()) {
+                srcDir.file('index.js').write('');
+            }
+            if (!srcDir.file('index.css').exists()) {
+                srcDir.file('index.css').write('');
+            }
         }
     }
 

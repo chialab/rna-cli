@@ -11,25 +11,24 @@ module.exports = (program) => {
         .readme(`${__dirname}/README.md`)
         .option('<file>', 'The file to build.')
         .option('<package1> <package2> <package3>', 'The packages to build.')
-        .option('--output', 'The destination file.')
-        .option('[--targets]', 'A supported browserslist query. Use --no-targets to transpile only non-standard features.')
-        .option('[--name]', 'The bundle name.')
-        .option('[--format]', 'The bundle format (es, umd, iife, cjs).')
-        .option('[--production]', 'Minify bundle.')
-        .option('[--declaration]', 'Generate typescript declarations.')
+        .option('--output <file|dir>', 'The destination file.')
+        .option('[--targets]', 'Set specific targets for the build using a [Browserslist](https://github.com/browserslist/browserslist). This query is used by Babel and PostCSS to transpile JavaScript and CSS files in order to be compatible with the specified browsers. Use `--no-targets` to prevent code transpiling.')
+        .option('[--name]', 'For JavaScript builds, you can specify the name of the global variable to use for the bundle.')
+        .option('[--format]', 'Specify the format of the JavaScript bundle. Available formats are `es`, `umd`, `iife` and `cjs`.')
+        .option('[--bundle]', 'Should bundle dependencies along the source files.')
+        .option('[--production]', 'Minify script.')
         .option('[--watch]', 'Watch sources and rebuild on files changes.')
         .option('[--no-map]', 'Do not produce source map.')
-        .option('[--no-lint]', 'Do not lint files before bundle.')
+        .option('[--no-lint]', 'Do not lint files before build.')
         .option('[--jsx.pragma]', 'The JSX pragma to use.')
+        .option('[--jsx.pragmaFrag]', 'The JSX pragma fragment to use.')
         .option('[--jsx.module]', 'The module to auto import for JSX pragma.')
-        .option('[--analyze <file>]', 'Save an analytic report for bundle size.')
+        .option('[--typings [file]', 'Generate typescript declarations.')
+        .option('[--analyze <file>]', 'Print analytic report for script size.')
         .action(async (app, options = {}) => {
             const path = require('path');
-            const browserslist = require('browserslist');
-            const Project = require('../../lib/Project');
+            const { Project } = require('../../lib/File');
             const Watcher = require('../../lib/Watcher');
-            const { isJSFile, isStyleFile } = require('../../lib/extensions');
-            const PriorityQueues = require('../../lib/PriorityQueues');
 
             const cwd = process.cwd();
             const project = new Project(cwd);
@@ -55,7 +54,7 @@ module.exports = (program) => {
             }
 
             if (!entries.length) {
-                throw 'missing files to build';
+                throw new Error('missing files to build');
             }
 
             let bundles = [];
@@ -65,126 +64,138 @@ module.exports = (program) => {
                 let entry = entries[i];
 
                 if (entry instanceof Project) {
-                    const directories = entry.directories;
+                    app.logger.heading(`\nbuilding project ${entry.get('name')}:`);
+
+                    const libFile = entry.get('lib') && entry.file(entry.get('lib'));
                     const moduleFile = entry.get('module') && entry.file(entry.get('module'));
                     const mainFile = entry.get('main') && entry.file(entry.get('main'));
+                    const browserFile = entry.get('browser') && entry.file(entry.get('browser'));
                     const styleFile = entry.get('style') && entry.file(entry.get('style'));
-
-                    const targets = options.targets ? browserslist(options.targets) : project.browserslist;
+                    let typingsFile;
+                    if (typeof options.typings === 'string') {
+                        typingsFile = entry.file(options.typings);
+                    } else if (options.typings) {
+                        if (entry.get('types')) {
+                            typingsFile = entry.file(entry.get('types'));
+                        }
+                    }
 
                     let output;
                     if (options.output) {
                         if (outputRelative) {
-                            output = moduleFile.directory.file(options.output);
-                        }  else if (path.extname(options.output)) {
+                            output = (libFile || moduleFile).parent.file(options.output);
+                        } else if (path.extname(options.output)) {
                             output = project.file(options.output);
                         } else if (mainFile) {
                             output = mainFile;
                         } else {
                             output = project.directory(options.output);
                         }
-                    } else if (directories.public || directories.lib) {
-                        output = directories.public || directories.lib;
-                    } else if (mainFile) {
-                        output = project.directory(mainFile.dirname);
+                    }
+
+                    if (libFile) {
+                        let bundler;
+                        if (output) {
+                            bundler = await buildEntry(app, entry, libFile, output, Object.assign({}, options, { targets: options.targets || entry.browserslist, typings: typingsFile || !!options.typings }));
+                        } else {
+                            if (mainFile) {
+                                bundler = await buildEntry(app, entry, libFile, mainFile, Object.assign({}, options, { targets: options.targets || entry.browserslist, format: 'cjs', typings: typingsFile || !!options.typings }));
+                            }
+                            if (moduleFile) {
+                                bundler = await buildEntry(app, entry, libFile, moduleFile, Object.assign({}, options, { targets: 'esmodules', format: 'esm', lint: !mainFile && options.lint, typings: !mainFile && (typingsFile || !!options.typings) }));
+                            }
+                            if (browserFile) {
+                                bundler = await buildEntry(app, entry, libFile, browserFile, Object.assign({}, options, { targets: options.targets || entry.browserslist, format: 'umd', typings: typingsFile || !!options.typings }));
+                            }
+                            if (!mainFile && !moduleFile && !browserFile && entry.directories.public) {
+                                // maybe a web app?
+                                bundler = await buildEntry(app, entry, libFile, entry.directories.public, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
+                            }
+                        }
+                        if (!bundler) {
+                            throw new Error(`missing "input" option for project ${entry.path}`);
+                        } else if (options.watch) {
+                            // collect the generated Bundle.
+                            bundles.push(bundler);
+                        }
+                    } else if (moduleFile || styleFile) {
+                        if (!output && mainFile) {
+                            output = project.directory(mainFile.dirname);
+                        } else {
+                            throw new Error('missing "output" option');
+                        }
+                        // retrocompatibility with RNA 2.0
+
+                        if (moduleFile) {
+                            let moduleOutput = mainFile ? mainFile : output;
+                            let bundler = await buildEntry(app, entry, moduleFile, moduleOutput, Object.assign({ bundle: true }, options, { targets: options.targets || entry.browserslist }));
+                            if (bundler && options.watch) {
+                                // collect the generated Bundle.
+                                bundles.push(bundler);
+                            }
+                        }
+
+                        if (styleFile) {
+                            let styleOutput = mainFile ?
+                                mainFile.parent.file(`${mainFile.basename}.css`) :
+                                output;
+
+                            let bundler = await buildEntry(app, entry, styleFile, styleOutput, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
+                            if (bundler && options.watch) {
+                                // collect the generated Bundle.
+                                bundles.push(bundler);
+                            }
+                        }
                     } else {
-                        throw 'missing `output` option';
-                    }
-
-                    if (moduleFile) {
-                        let moduleOutput = mainFile ? mainFile : output;
-                        // a javascript source has been detected.
-                        let manifest = await rollup(app, entry, {
-                            input: moduleFile,
-                            output: moduleOutput,
-                            targets,
-                            production: options.production,
-                            map: options.map,
-                            lint: options.lint,
-                            analyze: options.analyze,
-                        });
-                        // collect the generated Bundle.
-                        bundles.push(manifest);
-                    }
-
-                    if (styleFile) {
-                        let styleOutput = mainFile ?
-                            mainFile.directory.file(mainFile.basename.replace(mainFile.extname, '.css')) :
-                            output;
-                        // a style source has been detected.
-                        let manifest = await postcss(app, entry, {
-                            input: styleFile,
-                            output: styleOutput,
-                            targets,
-                            production: options.production,
-                            map: options.map,
-                            lint: options.lint,
-                        });
-                        // collect the generated Bundle.
-                        bundles.push(manifest);
-                    }
-                    continue;
-                }
-
-                let output;
-                if (options.output) {
-                    if (outputRelative) {
-                        output = entry.directory.file(options.output);
-                    } else if (path.extname(options.output)) {
-                        output = project.file(options.output);
-                    } else {
-                        output = project.directory(options.output);
+                        throw new Error('missing source file to build');
                     }
                 } else {
-                    throw 'missing `output` option';
-                }
+                    let output;
+                    if (options.output) {
+                        if (outputRelative) {
+                            output = entry.parent.file(options.output);
+                        } else if (path.extname(options.output)) {
+                            output = project.file(options.output);
+                        } else {
+                            output = project.directory(options.output);
+                        }
+                    } else {
+                        throw new Error('missing `output` option');
+                    }
 
-                const targets = options.targets ? browserslist(options.targets) : project.browserslist;
+                    let typingsFile;
+                    if (typeof options.typings === 'string') {
+                        typingsFile = project.file(options.typings);
+                    } else if (options.typings) {
+                        if (entry.get('types')) {
+                            typingsFile = project.file(entry.get('types'));
+                        }
+                    }
 
-                if (isJSFile(entry.path)) {
-                    // Javascript file
-                    let manifest = await rollup(app, project, {
-                        input: entry,
-                        output,
-                        targets,
-                        production: options.production,
-                        map: options.map,
-                        lint: options.lint,
-                        analyze: options.analyze,
-                    });
-                    // collect the generated Bundle
-                    bundles.push(manifest);
-                    continue;
-                }
-
-                if (isStyleFile(entry.path)) {
-                    // Style file
-                    let manifest = await postcss(app, project, {
-                        input: entry,
-                        output,
-                        targets,
-                        production: options.production,
-                        map: options.map,
-                        lint: options.lint,
-                    });
-                    // collect the generated Bundle
-                    bundles.push(manifest);
-                    continue;
+                    let bundler = await buildEntry(app, project, entry, output, Object.assign({}, options, { targets: options.targets || project.browserslist, typings: typingsFile || !!options.typings }));
+                    if (bundler && options.watch) {
+                        // collect the generated Bundle.
+                        bundles.push(bundler);
+                    }
                 }
             }
 
             // once bundles are generated, check for watch option.
             if (options.watch) {
                 // setup a bundles priority chain.
-                let queue = new PriorityQueues();
+                const PriorityQueues = require('../../lib/PriorityQueues');
+                const queue = new PriorityQueues();
                 // start the watch task
-                let watcher = new Watcher(project, {
+                const watcher = new Watcher(project, {
                     ignore: (file) => !filterChangedBundles(bundles, file).length,
                 });
 
                 watcher.on('change', (file) => {
-                    let label = file.exists() ? 'changed' : 'removed';
-                    app.logger.info(`${file.localPath} ${label}`);
+                    if (file.exists()) {
+                        app.logger.info(`\n${file.localPath} changed\n`);
+                    } else {
+                        app.logger.info(`\n${file.path} removed\n`);
+                    }
                 });
 
                 await watcher.watch(async (file) => {
@@ -208,7 +219,8 @@ module.exports = (program) => {
                         let bundle = bundlesWithChanges[i];
                         promise = promise.then(async () => {
                             try {
-                                await bundle.rebuild();
+                                await bundle.build(file.path);
+                                await bundle.write();
                             } catch (err) {
                                 if (err) {
                                     app.logger.error(err);
@@ -225,154 +237,312 @@ module.exports = (program) => {
         });
 };
 
-async function rollup(app, project, options, bundle = {}) {
-    const Rollup = require('../../lib/Bundlers/Rollup.js');
-    const profile = app.profiler.task('rollup');
-
-    try {
-        let input = options.input;
-        let output = options.output;
-        if (!output.extname) {
-            output = output.file(input.basename.replace(input.extname, '.js'));
-        }
-
-        if (output.mapFile.exists()) {
-            output.mapFile.unlink();
-        }
-
-        app.logger.play(`bundling${bundle.config ? ' (this will be fast)...' : '...'}`, input.localPath);
-
-        if (!bundle.config && project) {
-            bundle.config = Rollup.detectConfig(app, project, {
-                cacheRoot: app.store.tmpdir('rollup'),
-                input: input.path,
-                output: output.path,
-                production: options.production,
-                map: options.map,
-                lint: options.lint,
-                targets: options.targets,
-                analyze: options.analyze,
-            });
-        }
-
-        let rollupBundle = new Rollup(bundle.config);
-        rollupBundle.on('warning', (warning) => {
-            let message = warning && warning.message || warning;
-            message = message.toString();
-            if (message.indexOf('The \'this\' keyword') !== -1) {
-                return false;
-            }
-            if (message.indexOf('rollupPluginBabelHelper') !== -1) {
-                return false;
-            }
-            app.logger.warn(message);
-        });
-        await rollupBundle.build();
-        await rollupBundle.write();
-        if (app.options.profile) {
-            let tasks = rollupBundle.timings;
-            for (let k in tasks) {
-                profile.task(k, false).set(tasks[k]);
-            }
-        }
-
-        profile.end();
-        app.logger.stop();
-
-        let { size, zipped } = output.size;
-        app.logger.success('bundle ready');
-        app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
-
-        if (rollupBundle.linter && (rollupBundle.linter.hasErrors() || rollupBundle.linter.hasWarnings())) {
-            app.logger.log(rollupBundle.linter.report());
-        }
-
-        bundle.files = rollupBundle.files;
-
-        bundle.rebuild = async function() {
-            return await rollup(app, project, options, bundle);
-        };
-
-        try {
-            global.gc();
-        } catch (err) {
-            //
-        }
-
-        return bundle;
-    } catch (err) {
-        app.logger.stop();
-        profile.end();
-        throw err;
-    }
-}
-
-async function postcss(app, project, options, bundle = {}) {
-    const PostCSS = require('../../lib/Bundlers/PostCSS.js');
-    const profile = app.profiler.task('postcss');
-
-    try {
-        let input = options.input;
-        let output = options.output;
-        if (!output.extname) {
-            output = output.file(input.basename.replace(input.extname, '.css'));
-        }
-
-        if (output.mapFile.exists()) {
-            output.mapFile.unlink();
-        }
-
-        if (!bundle.config) {
-            bundle.config = PostCSS.detectConfig(app, project, {
-                input: input.path,
-                output: output.path,
-                production: options.production,
-                map: options.map,
-                lint: options.lint,
-                targets: options.targets,
-            });
-        }
-        app.logger.play('postcss...', input.localPath);
-
-        let postCSSBundle = new PostCSS(bundle.config);
-        await postCSSBundle.build();
-        await postCSSBundle.write();
-
-        app.logger.stop();
-        profile.end();
-
-        let { size, zipped } = output.size;
-        app.logger.success('css ready');
-        app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
-
-        if (postCSSBundle.linter && (postCSSBundle.linter.hasErrors() || postCSSBundle.linter.hasWarnings())) {
-            app.logger.log(postCSSBundle.linter.report());
-        }
-
-        bundle.files = postCSSBundle.files;
-
-        bundle.rebuild = async function() {
-            return await postcss(app, project, options, bundle);
-        };
-
-        try {
-            global.gc();
-        } catch (err) {
-            //
-        }
-
-        return bundle;
-    } catch (err) {
-        app.logger.stop();
-        profile.end();
-        throw err;
-    }
-}
-
 function filterChangedBundles(bundles, file) {
     return bundles
         .filter((bundle) => {
             let bundleFiles = bundle.files || [];
             return bundleFiles.includes(file);
         });
+}
+
+function bundlerToType(bundler) {
+    switch (bundler.name) {
+        case 'ScriptBundler':
+            return 'script';
+        case 'StyleBundler':
+            return 'style';
+        case 'HTMLBundler':
+            return 'html';
+        case 'WebManifestBundler':
+            return 'webmanifest';
+        case 'IconBundler':
+            return 'icon';
+        case 'ServiceWorkerBundler':
+            return 'sw';
+        case 'CopyBundler':
+            return 'asset';
+    }
+    return '';
+}
+
+async function buildEntry(app, project, entry, output, options) {
+    const { isJSFile, isStyleFile, isHTMLFile, isWebManifestFile } = require('../../lib/extensions');
+    const Linter = require('../../lib/Linters/Linter');
+
+    function logFile(output) {
+        if (output) {
+            let { size, zipped } = output.size;
+            app.logger.info(output.localPath, `${size}, ${zipped} zipped`);
+        }
+    }
+
+    if (isJSFile(entry.path)) {
+        const ScriptBundler = require('../../lib/Bundlers/ScriptBundler');
+        // Javascript file
+        let bundler = new ScriptBundler();
+        let analysis;
+        let buildStarted = false;
+        bundler.on(ScriptBundler.BUILD_START, (input, code, child) => {
+            if (!child) {
+                app.logger.play(`generating ${bundlerToType(bundler)}`, code ? 'inline' : input.localPath);
+                buildStarted = true;
+            } else {
+                app.logger.play(`generating ${bundlerToType(bundler)} > ${bundlerToType(child)}`, code ? 'inline' : input.localPath);
+            }
+        });
+        bundler.on(ScriptBundler.BUILD_END, (input, code, child) => {
+            app.logger.stop();
+            if (!child) {
+                app.logger.newline();
+                app.logger.success(`${bundlerToType(bundler)} ready`);
+            } else if (buildStarted) {
+                app.logger.play(`generating ${bundlerToType(bundler)}...`, code ? 'inline' : input.localPath);
+            }
+        });
+        bundler.on(ScriptBundler.BUNDLE_END, () => {
+            if (bundler.linter.hasWarnings() || bundler.linter.hasErrors()) {
+                app.logger.log(Linter.format(bundler.linter.result));
+            }
+            if (analysis) {
+                app.logger.info(analysis);
+            }
+        });
+        bundler.on(ScriptBundler.ERROR_EVENT, () => {
+            app.logger.stop();
+        });
+        bundler.on(ScriptBundler.ANALYSIS_EVENT, (result) => {
+            analysis = result;
+        });
+        bundler.on(ScriptBundler.WARN_EVENT, (message) => {
+            app.logger.warn(message);
+        });
+        bundler.on(ScriptBundler.WRITE_START, (child) => {
+            if (!child) {
+                app.logger.play(`writing ${bundlerToType(bundler)}...`);
+            } else {
+                app.logger.play(`writing ${bundlerToType(bundler)} > ${bundlerToType(child)}...`);
+            }
+        });
+        bundler.on(ScriptBundler.WRITE_PROGRESS, (file) => {
+            logFile(file);
+        });
+        bundler.on(ScriptBundler.WRITE_END, (child) => {
+            app.logger.stop();
+            if (child) {
+                app.logger.play(`writing ${bundlerToType(bundler)}...`);
+            }
+        });
+        bundler.on(ScriptBundler.WRITE_END, (file) => {
+            app.logger.stop();
+            logFile(file);
+        });
+        await bundler.setup({
+            input: entry,
+            output,
+            format: options.format,
+            name: options.name,
+            targets: options.targets,
+            bundle: options.bundle,
+            production: options.production,
+            map: options.map,
+            lint: options.lint !== false,
+            analyze: options.analyze,
+            polyfill: options.polyfill,
+            typings: options.typings,
+            jsx: {
+                module: options['jsx.module'],
+                pragma: options['jsx.pragma'],
+                pragmaFrag: options['jsx.pragmaFrag'],
+            },
+        });
+        await bundler.build();
+        await bundler.write();
+
+        // collect the generated Bundle
+        return bundler;
+    } else if (isStyleFile(entry.path)) {
+        const StyleBundler = require('../../lib/Bundlers/StyleBundler');
+        // Style file
+        let bundler = new StyleBundler();
+        let buildStarted = false;
+        bundler.on(StyleBundler.BUILD_START, (input, code, child) => {
+            if (!child) {
+                app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
+                buildStarted = true;
+            } else {
+                app.logger.play(`generating ${bundlerToType(bundler)} > ${bundlerToType(child)}...`, code ? 'inline' : input.localPath);
+            }
+        });
+        bundler.on(StyleBundler.BUILD_END, (input, code, child) => {
+            app.logger.stop();
+            if (!child) {
+                app.logger.newline();
+                app.logger.success(`${bundlerToType(bundler)} ready`);
+            } else if (buildStarted) {
+                app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
+            }
+        });
+        bundler.on(StyleBundler.BUNDLE_END, () => {
+            if (bundler.linter.hasWarnings() || bundler.linter.hasErrors()) {
+                app.logger.log(Linter.format(bundler.linter.result));
+            }
+        });
+        bundler.on(StyleBundler.WARN_EVENT, (message) => {
+            app.logger.warn(message);
+        });
+        bundler.on(StyleBundler.ERROR_EVENT, () => {
+            app.logger.stop();
+        });
+        bundler.on(StyleBundler.WRITE_START, (child) => {
+            if (!child) {
+                app.logger.play(`writing ${bundlerToType(bundler)}...`);
+            } else {
+                app.logger.play(`writing ${bundlerToType(bundler)} > ${bundlerToType(child)}...`);
+            }
+        });
+        bundler.on(StyleBundler.WRITE_PROGRESS, (file) => {
+            logFile(file);
+        });
+        bundler.on(StyleBundler.WRITE_END, (child) => {
+            app.logger.stop();
+            if (child) {
+                app.logger.play(`writing ${bundlerToType(bundler)}...`);
+            }
+        });
+        await bundler.setup({
+            input: entry,
+            output,
+            targets: options.targets,
+            production: options.production,
+            map: options.map,
+            lint: options.lint !== false,
+        });
+        await bundler.build();
+        await bundler.write();
+        // collect the generated Bundle
+        return bundler;
+    } else if (isHTMLFile(entry.path)) {
+        const HTMLBundler = require('../../lib/Bundlers/HTMLBundler');
+        let bundler = new HTMLBundler();
+        let buildStarted = false;
+        bundler.on(HTMLBundler.BUILD_START, (input, code, child) => {
+            if (!child) {
+                app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
+                buildStarted = true;
+            } else {
+                app.logger.play(`generating ${bundlerToType(bundler)} > ${bundlerToType(child)}...`, code ? 'inline' : input.localPath);
+            }
+        });
+        bundler.on(HTMLBundler.BUILD_END, (input, code, child) => {
+            app.logger.stop();
+            if (!child) {
+                app.logger.newline();
+                app.logger.success(`${bundlerToType(bundler)} ready`);
+            } else if (buildStarted) {
+                app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
+            }
+        });
+        bundler.on(HTMLBundler.BUNDLE_END, () => {
+            if (bundler.linter.hasWarnings() || bundler.linter.hasErrors()) {
+                app.logger.log(Linter.format(bundler.linter.result));
+            }
+        });
+        bundler.on(HTMLBundler.WARN_EVENT, (message) => {
+            app.logger.warn(message);
+        });
+        bundler.on(HTMLBundler.ERROR_EVENT, () => {
+            app.logger.stop();
+        });
+        bundler.on(HTMLBundler.WRITE_START, (child) => {
+            if (!child) {
+                app.logger.play(`writing ${bundlerToType(bundler)}...`);
+            } else {
+                app.logger.play(`writing ${bundlerToType(bundler)} > ${bundlerToType(child)}...`);
+            }
+        });
+        bundler.on(HTMLBundler.WRITE_PROGRESS, (file) => {
+            logFile(file);
+        });
+        bundler.on(HTMLBundler.WRITE_END, (child) => {
+            app.logger.stop();
+            if (child) {
+                app.logger.play(`writing ${bundlerToType(bundler)}...`);
+            }
+        });
+        await bundler.setup({
+            input: entry,
+            output,
+            title: project.get('name'),
+            description: project.get('description'),
+            targets: options.targets,
+            production: options.production,
+            format: options.format,
+            map: options.map,
+            lint: options.lint !== false,
+            polyfill: options.polyfill,
+            icon: options.hasOwnProperty('icon') ? options.icon : undefined,
+            scripts: options.hasOwnProperty('scripts') ? options.scripts : undefined,
+            styles: options.hasOwnProperty('styles') ? options.styles : undefined,
+            webmanifest: options.hasOwnProperty('webmanifest') ? options.webmanifest : undefined,
+            jsx: {
+                module: options['jsx.module'],
+                pragma: options['jsx.pragma'],
+                pragmaFrag: options['jsx.pragmaFrag'],
+            },
+        });
+        await bundler.build();
+        await bundler.write();
+        // collect the generated Bundle
+        return bundler;
+    } else if (isWebManifestFile(entry.path)) {
+        const WebManifestBundler = require('../../lib/Bundlers/WebManifestBundler');
+        let bundler = new WebManifestBundler();
+        let buildStarted = false;
+        bundler.on(WebManifestBundler.BUILD_START, (input, code, child) => {
+            if (!child) {
+                app.logger.play('generating webmanifest...', !code ? input.localPath : '');
+                buildStarted = true;
+            } else {
+                app.logger.play(`generating ${bundlerToType(bundler)} > ${bundlerToType(child)}...`, code ? 'inline' : input.localPath);
+            }
+        });
+        bundler.on(WebManifestBundler.BUILD_END, (input, code, child) => {
+            app.logger.stop();
+            if (!child) {
+                app.logger.newline();
+                app.logger.success(`${bundlerToType(bundler)} ready`);
+            } else if (buildStarted) {
+                app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
+            }
+        });
+        bundler.on(WebManifestBundler.ERROR_EVENT, () => {
+            app.logger.stop();
+        });
+        bundler.on(WebManifestBundler.WRITE_START, (child) => {
+            if (!child) {
+                app.logger.play(`writing ${bundlerToType(bundler)}...`);
+            } else {
+                app.logger.play(`writing ${bundlerToType(bundler)} > ${bundlerToType(child)}...`);
+            }
+        });
+        bundler.on(WebManifestBundler.WRITE_PROGRESS, (file) => {
+            logFile(file);
+        });
+        bundler.on(WebManifestBundler.WRITE_END, (child) => {
+            app.logger.stop();
+            if (child) {
+                app.logger.play(`writing ${bundlerToType(bundler)}...`);
+            }
+        });
+        await bundler.setup({
+            input: entry,
+            output,
+            name: project.get('name'),
+            description: project.get('description'),
+        });
+        await bundler.build();
+        await bundler.write();
+        // collect the generated Bundle
+        return bundler;
+    }
 }
