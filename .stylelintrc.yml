@@ -247,6 +247,7 @@ rules:
       - appearance
       - overflow-scrolling
       - line-clamp
+      - box-orient
     - severity: warning
 
   # https://stylelint.io/user-guide/rules/custom-property-empty-line-before
