@@ -17,7 +17,7 @@ module.exports = async function gitTask(app, options, project, templates) {
         await project.git.init();
     }
 
-    let remote = project.get('repository.url');
+    let remote = (await project.git.getRemote()) || project.get('repository.url');
     if (!remote) {
         let prompt = inquirer.createPromptModule();
         // Ask user if they already have a remote ready for their repo.
