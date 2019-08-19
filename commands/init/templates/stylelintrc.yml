@@ -221,7 +221,7 @@ rules:
       - -webkit-overflow-scrolling
       - -webkit-tap-highlight-color
       - -webkit-line-clamp
-    - severity: error
+      severity: error
 
   # https://stylelint.io/user-guide/rules/shorthand-property-no-redundant-values
   # Disallow redundant values in shorthand properties (Autofixable).
@@ -248,7 +248,7 @@ rules:
       - overflow-scrolling
       - line-clamp
       - box-orient
-    - severity: warning
+      severity: warning
 
   # https://stylelint.io/user-guide/rules/custom-property-empty-line-before
   # Require or disallow an empty line before custom properties (Autofixable).
@@ -266,7 +266,9 @@ rules:
   # Disallow vendor prefixes for values.
   value-no-vendor-prefix:
     - true
-    - severity: warning
+    - ignoreValues:
+      - box
+      severity: warning
 
   # https://stylelint.io/user-guide/rules/value-keyword-case
   # Specify lowercase or uppercase for keywords values.
@@ -274,7 +276,7 @@ rules:
     - lower
     - ignoreKeywords:
       - '/^U\+/'
-    - severity: warning
+      severity: warning
 
   # https://stylelint.io/user-guide/rules/value-list-comma-newline-after
   # Require a newline or disallow whitespace after the commas of value lists.
@@ -500,7 +502,7 @@ rules:
     - true
     - ignorePseudoClasses:
       - focus-visible
-    - severity: error
+      severity: error
 
   # https://stylelint.io/user-guide/rules/selector-pseudo-element-no-unknown
   # Disallow unknown pseudo-element selectors.
@@ -719,7 +721,7 @@ rules:
       - first-nested
       ignore:
       - after-comment
-    - severity: warning
+      severity: warning
 
   ### Media features
 
@@ -821,7 +823,7 @@ rules:
       - mixin
       - include
       - extend
-    - severity: error
+      severity: error
 
   # https://stylelint.io/user-guide/rules/at-rule-no-vendor-prefix
   # Disallow vendor prefixes for at-rules.
@@ -846,7 +848,7 @@ rules:
       - first-nested
       ignore:
       - after-comment
-    - severity: warning
+      severity: warning
 
   # https://stylelint.io/user-guide/rules/at-rule-name-case
   # Specify lowercase or uppercase for at-rules names (Autofixable).
@@ -958,7 +960,7 @@ rules:
     - 1
     - ignore:
       - comments
-    - severity: warning
+      severity: warning
 
   # https://stylelint.io/user-guide/rules/max-line-length
   # Limit the length of a line.
