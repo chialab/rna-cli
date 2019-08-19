@@ -106,4 +106,4 @@ rules:
   no-console:
     - 1
   require-atomic-updates:
-    - 1
+    - 0
