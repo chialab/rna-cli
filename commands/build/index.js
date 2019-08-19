@@ -34,7 +34,7 @@ module.exports = (program) => {
             const cwd = process.cwd();
             const project = new Project(cwd);
 
-            if (options.production && !process.env.hasOwnProperty('NODE_ENV')) {
+            if (options.production && !Object.prototype.hasOwnProperty.call(process.env, 'NODE_ENV')) {
                 // Set NODE_ENV environment variable if `--production` flag is set.
                 app.logger.info('setting "production" environment');
                 process.env.NODE_ENV = 'production';
@@ -481,10 +481,10 @@ async function buildEntry(app, project, entry, output, options) {
             map: options.map,
             lint: options.lint !== false,
             polyfill: options.polyfill,
-            icon: options.hasOwnProperty('icon') ? options.icon : undefined,
-            scripts: options.hasOwnProperty('scripts') ? options.scripts : undefined,
-            styles: options.hasOwnProperty('styles') ? options.styles : undefined,
-            webmanifest: options.hasOwnProperty('webmanifest') ? options.webmanifest : undefined,
+            icon: Object.prototype.hasOwnProperty.call(options, 'icon') ? options.icon : undefined,
+            scripts: Object.prototype.hasOwnProperty.call(options, 'scripts') ? options.scripts : undefined,
+            styles: Object.prototype.hasOwnProperty.call(options, 'styles') ? options.styles : undefined,
+            webmanifest: Object.prototype.hasOwnProperty.call(options, 'webmanifest') ? options.webmanifest : undefined,
             jsx: {
                 module: options['jsx.module'],
                 pragma: options['jsx.pragma'],
