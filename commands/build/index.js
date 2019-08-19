@@ -17,6 +17,7 @@ module.exports = (program) => {
         .option('[--format]', 'Specify the format of the JavaScript bundle. Available formats are `es`, `umd`, `iife` and `cjs`.')
         .option('[--bundle]', 'Should bundle dependencies along the source files.')
         .option('[--production]', 'Minify script.')
+        .option('[--polyfill]', 'Should include polyfills based on `targets` query.')
         .option('[--watch]', 'Watch sources and rebuild on files changes.')
         .option('[--no-map]', 'Do not produce source map.')
         .option('[--no-lint]', 'Do not lint files before build.')
