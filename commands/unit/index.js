@@ -236,7 +236,7 @@ async function runTests(app, project, files, options, environments = []) {
     app.logger.newline();
 
     if (options.coverage) {
-        printCoverageReport(app, coverageMap.toJSON());
+        printCoverageReport(app, coverageMap);
     }
 
     if (finalExitCode) {
@@ -261,50 +261,37 @@ function filterChangedRunners(runners, file) {
  * @return {void}
  */
 function printCoverageReport(app, report) {
-    const utils = require('istanbul/lib/object-utils');
-    const coverageFiles = Object.keys(report);
-    if (!coverageFiles.length) {
-        return;
-    }
-    let summaries = coverageFiles.map((coverageFile) => utils.summarizeFileCoverage(report[coverageFile]));
-    let finalSummary = utils.mergeSummaryObjects.apply(null, summaries);
-    app.logger.info('COVERAGE SUMMARY:');
-    let statementsReport = formatCoverageReport(finalSummary, 'statements');
-    app.logger[statementsReport.type](statementsReport.message);
-    let branchesReport = formatCoverageReport(finalSummary, 'branches');
-    app.logger[branchesReport.type](branchesReport.message);
-    let functionsReport = formatCoverageReport(finalSummary, 'functions');
-    app.logger[functionsReport.type](functionsReport.message);
-    let linesReport = formatCoverageReport(finalSummary, 'lines');
-    app.logger[linesReport.type](linesReport.message);
+    const colors = require('colors/safe');
+    const summary = report.getCoverageSummary();
+    const printLine = function(key) {
+        const str = lineForKey(summary, key);
+        let type = 'warning';
+        if (summary[key].pct > 80) {
+            type = 'success';
+        } else if (!isNaN(summary[key].pct) && summary[key].pct < 50) {
+            type = 'error';
+        }
+        app.logger[type](str);
+    };
+
+    app.logger.newline();
+    app.logger.log(colors.underline('COVERAGE:'));
+    printLine('statements');
+    printLine('branches');
+    printLine('functions');
+    printLine('lines');
 }
 
-/**
- * Format coverage report metrics.
- * @param {Object} summary The full file coverage report.
- * @param {String} key The metric name.
- * @return {String}
- */
-function formatCoverageReport(summary, key) {
-    let metrics = summary[key];
-    let skipped;
-    let message;
-    // Capitalize the field name
-    let field = key.substring(0, 1).toUpperCase() + key.substring(1);
-    if (field.length < 12) {
-        // add extra spaces after the field name
-        field += '                   '.substring(0, 12 - field.length);
+function lineForKey(summary, key) {
+    const metrics = summary[key];
+    key = key.substring(0, 1).toUpperCase() + key.substring(1);
+    if (key.length < 12) {
+        key += '                   '.substring(0, 12 - key.length);
     }
-    message = `${field} : ${metrics.pct}% (${metrics.covered}/${metrics.total})`;
-    skipped = metrics.skipped;
+    const result = `${key}: ${metrics.pct}% (${metrics.covered}/${metrics.total})`;
+    const skipped = metrics.skipped;
     if (skipped > 0) {
-        message += `, ${skipped} ignored`;
+        return `${result}, ${skipped} ignored`;
     }
-    let type = (metrics.pct >= 80 && 'success') ||
-        (metrics.pct >= 50 && 'warn') ||
-        'error';
-    return {
-        type,
-        message,
-    };
+    return result;
 }
