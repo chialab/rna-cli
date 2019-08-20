@@ -97,6 +97,6 @@
     "systemjs": "^5.0.0",
     "terser": "^4.1.4",
     "typescript": "^3.5.3",
-    "workbox-build": "^3.6.3"
+    "workbox-build": "^4.3.1"
   }
 }
