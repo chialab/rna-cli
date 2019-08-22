@@ -265,7 +265,7 @@ function printCoverageReport(app, report) {
     const summary = report.getCoverageSummary();
     const printLine = function(key) {
         const str = lineForKey(summary, key);
-        let type = 'warning';
+        let type = 'warn';
         if (summary[key].pct > 80) {
             type = 'success';
         } else if (!isNaN(summary[key].pct) && summary[key].pct < 50) {
