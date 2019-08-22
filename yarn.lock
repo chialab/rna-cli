@@ -729,9 +729,9 @@
     to-fast-properties "^2.0.0"
 
 "@chialab/babel-preset@^2.5.0":
-  version "2.5.1"
-  resolved "https://registry.npmjs.org/@chialab/babel-preset/-/babel-preset-2.5.1.tgz#9d94ebbb3861cfb71af2a5b3760ec2216639e459"
-  integrity sha512-eUUgoZ63Y6fKnOwKh4HlWljUKmAO7j8b4SSgC21xa1Z+xNEx5uiPvCEREz9LcT6qVHChLJY7hEJkctKbuGUvLw==
+  version "2.5.2"
+  resolved "https://registry.npmjs.org/@chialab/babel-preset/-/babel-preset-2.5.2.tgz#8cc5e76daf45c7ec8982559ab8b7d28f8fdcdf69"
+  integrity sha512-oT2KTvRmusK1LhtY7efuX9XxA/u2XLKlRax/DKjCRN2lFlT3CEGnmq+jaZ1q9rAg9WtjfSe5dOSpd+avh815Qg==
   dependencies:
     "@babel/plugin-proposal-class-properties" "^7.5.5"
     "@babel/plugin-proposal-decorators" "^7.4.4"
@@ -743,7 +743,6 @@
     babel-plugin-transform-inline-environment-variables "^0.4.1"
     chai "^4.1.2"
     fast-async "7.0.0"
-    resolve "^1.10.0"
 
 "@chialab/proteins@^3.0.2":
   version "3.0.2"
@@ -4067,9 +4066,9 @@ eslint-plugin-babel@^5.3.0:
     eslint-rule-composer "^0.3.0"
 
 eslint-plugin-mocha@^6.0.0:
-  version "6.0.0"
-  resolved "https://registry.npmjs.org/eslint-plugin-mocha/-/eslint-plugin-mocha-6.0.0.tgz#0a2af057280962e9deab929361141865b2b8a761"
-  integrity sha512-Qgy1q64cTKqiHiYP3ZPAcMlEoPejeM7GLKDs2pvYG/fXbVDYDJw7ELlHlbn3147SL9+cPSqat7uCCbbNmVpc1g==
+  version "6.1.0"
+  resolved "https://registry.npmjs.org/eslint-plugin-mocha/-/eslint-plugin-mocha-6.1.0.tgz#4950ceea8e51b1f4265116c0d03d0cbae86d0a6f"
+  integrity sha512-EQj355rhaSGOLP6WH9P9xu+0Xuy+G5dZUuRTlLPNpICw5x0zrqK+uxQZvMVKWO9zOJA4PDVR1XHO0rm9wbOLuA==
   dependencies:
     ramda "^0.26.1"
 
