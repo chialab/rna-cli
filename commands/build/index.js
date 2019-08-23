@@ -17,7 +17,6 @@ module.exports = (program) => {
         .option('[--format]', 'Specify the format of the JavaScript bundle. Available formats are `es`, `umd`, `iife` and `cjs`.')
         .option('[--bundle]', 'Should bundle dependencies along the source files.')
         .option('[--production]', 'Minify script.')
-        .option('[--polyfill]', 'Should include polyfills based on `targets` query.')
         .option('[--watch]', 'Watch sources and rebuild on files changes.')
         .option('[--no-map]', 'Do not produce source map.')
         .option('[--no-lint]', 'Do not lint files before build.')
@@ -348,7 +347,6 @@ async function buildEntry(app, project, entry, output, options) {
             map: options.map,
             lint: options.lint !== false,
             analyze: options.analyze,
-            polyfill: options.polyfill,
             typings: options.typings,
             jsx: {
                 module: options['jsx.module'],
@@ -480,7 +478,6 @@ async function buildEntry(app, project, entry, output, options) {
             format: options.format,
             map: options.map,
             lint: options.lint !== false,
-            polyfill: options.polyfill,
             icon: Object.prototype.hasOwnProperty.call(options, 'icon') ? options.icon : undefined,
             scripts: Object.prototype.hasOwnProperty.call(options, 'scripts') ? options.scripts : undefined,
             styles: Object.prototype.hasOwnProperty.call(options, 'styles') ? options.styles : undefined,

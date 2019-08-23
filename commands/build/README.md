@@ -22,7 +22,6 @@ rna build <input> [...options]
 * `--format` Specify the format of the JavaScript bundle. Available formats are `es`, `umd`, `iife` and `cjs`.
 * `--bundle` Should bundle dependencies along the source files.
 * `--production` Minify the output of the JavaScript and CSS bundles.
-* `--polyfills` Should include polyfills based on `--targets` query.
 * `--watch` Watch sources and rebuild on files changes.
 * `--no-map` Do not produce source map.
 * `--no-lint` Do not lint files before build.
