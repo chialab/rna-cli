@@ -35,7 +35,7 @@ module.exports = (program) => {
 
             if (options.production && !Object.prototype.hasOwnProperty.call(process.env, 'NODE_ENV')) {
                 // Set NODE_ENV environment variable if `--production` flag is set.
-                app.logger.info('setting "production" environment');
+                app.logger.info('--------------------------------\nsetting "production" environment\n--------------------------------');
                 process.env.NODE_ENV = 'production';
             }
 
@@ -179,6 +179,8 @@ module.exports = (program) => {
                     }
                 }
             }
+
+            app.logger.newline();
 
             // once bundles are generated, check for watch option.
             if (options.watch) {
@@ -331,10 +333,6 @@ async function buildEntry(app, project, entry, output, options) {
             if (child) {
                 app.logger.play(`writing ${bundlerToType(bundler)}...`);
             }
-        });
-        bundler.on(ScriptBundler.WRITE_END, (file) => {
-            app.logger.stop();
-            logFile(file);
         });
         await bundler.setup({
             input: entry,

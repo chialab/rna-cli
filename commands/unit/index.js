@@ -49,7 +49,7 @@ module.exports = (program) => {
 
             if (!Object.prototype.hasOwnProperty.call(process.env, 'NODE_ENV')) {
                 // Set NODE_ENV environment variable.
-                app.logger.info('setting "test" environment');
+                app.logger.info('--------------------------\nsetting "test" environment\n--------------------------');
                 process.env.NODE_ENV = 'test';
             }
 
