@@ -476,6 +476,7 @@ async function buildEntry(app, project, entry, output, options) {
             format: options.format,
             map: options.map,
             lint: options.lint !== false,
+            base: Object.prototype.hasOwnProperty.call(options, 'base') ? options.base : undefined,
             icon: Object.prototype.hasOwnProperty.call(options, 'icon') ? options.icon : undefined,
             scripts: Object.prototype.hasOwnProperty.call(options, 'scripts') ? options.scripts : undefined,
             styles: Object.prototype.hasOwnProperty.call(options, 'styles') ? options.styles : undefined,
