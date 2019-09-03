@@ -77,10 +77,10 @@ module.exports = (program) => {
                 }, (eventType, file) => {
                     // File updated: notify BrowserSync so that it can be reloaded.
                     server.reload(base.relative(file));
-                    if (eventType !== 'unlink') {
-                        app.logger.info(`${file.localPath} injected`);
+                    if (eventType === 'unlink') {
+                        app.logger.info(`${file.path} removed`);
                     } else {
-                        app.logger.info(`${file.localPath} removed`);
+                        app.logger.info(`${file.localPath} injected`);
                     }
                 });
             }

@@ -166,7 +166,7 @@ module.exports = (program) => {
                     ignore: (file) => !filterChangedRunners(runners, [file]).length,
                 }, async (eventType, file) => {
                     if (eventType === 'unlink') {
-                        app.logger.info(`${file.localPath} removed`);
+                        app.logger.info(`${file.path} removed`);
                     } else {
                         app.logger.info(`${file.localPath} changed`);
                     }
