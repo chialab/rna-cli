@@ -31,7 +31,8 @@ module.exports = (program) => {
                 root = project;
             }
 
-            let manifestBundler = new WebManifestBundler();
+            const manifestBundler = new WebManifestBundler();
+            let htmlBundler;
             manifestBundler.on(WebManifestBundler.BUILD_START, (input, code, child) => {
                 if (!child) {
                     app.logger.play('generating webmanifest...', input.localPath);
@@ -47,13 +48,13 @@ module.exports = (program) => {
                 app.logger.stop();
             });
 
-            let manifestOptions = {
-                override: true,
-                name: project.get('name'),
-                description: project.get('description'),
+            const manifestOptions = {
+                overrides: {
+                    name: project.get('name'),
+                    description: project.get('description'),
+                },
             };
-            let htmlBundler;
-            let htmlOptions = {
+            const htmlOptions = {
                 links: false,
                 sources: false,
                 styles: false,
@@ -117,20 +118,20 @@ module.exports = (program) => {
             }
 
             await manifestBundler.setup(manifestOptions);
-            let res = await manifestBundler.build();
-            let outputFile = await manifestBundler.write();
-            let { size, zipped } = outputFile.size;
+            const result = await manifestBundler.build();
+            const outputFile = await manifestBundler.write();
+            const { size, zipped } = outputFile.size;
             app.logger.info(outputFile.localPath, `${size}, ${zipped} zipped`);
 
             if (htmlBundler) {
                 htmlOptions.webmanifest = manifestOptions.output;
                 await htmlBundler.setup(htmlOptions);
                 await htmlBundler.build();
-                let outputFile = await htmlBundler.write();
-                let { size, zipped } = outputFile.size;
+                const outputFile = await htmlBundler.write();
+                const { size, zipped } = outputFile.size;
                 app.logger.info(outputFile.localPath, `${size}, ${zipped} zipped`);
             }
 
-            return res;
+            return result;
         });
 };
