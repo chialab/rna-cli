@@ -20,7 +20,6 @@ module.exports = (program) => {
         .option('[--watch]', 'Watch test files.')
         .action(async (app, options = {}) => {
             const { Project } = require('../../lib/File');
-            const Watcher = require('../../lib/Watcher');
 
             const cwd = process.cwd();
             const project = new Project(cwd);
@@ -129,47 +128,48 @@ module.exports = (program) => {
                 // setup a runners priority chain.
                 const PriorityQueues = require('../../lib/PriorityQueues');
                 const queue = new PriorityQueues();
+                let promise = Promise.resolve();
                 // start the watch task
-                const watcher = new Watcher(project, {
+                project.watch({
                     ignore: (file) => !filterChangedRunners(runners, file).length,
-                });
+                }, async (eventType, file) => {
+                    if (eventType === 'unlink') {
+                        app.logger.info(`\n${file.localPath} removed\n`);
+                    } else {
+                        app.logger.info(`\n${file.localPath} changed\n`);
+                    }
 
-                watcher.on('change', (file) => {
-                    let label = file.exists() ? 'changed' : 'removed';
-                    app.logger.info(`\n${file.localPath} ${label}\n`);
-                });
+                    await promise;
 
-                await watcher.watch(async (file) => {
-                    let promise = Promise.resolve();
-                    let runnersWithChanges = filterChangedRunners(runners, file.path);
-
+                    const runnersWithChanges = filterChangedRunners(runners, file.path);
                     if (runnersWithChanges.length === 0) {
                         return true;
                     }
 
-                    let ticks = await Promise.all(
-                        // find out manifests with changed file dependency.
-                        runnersWithChanges.map((runner) => queue.tick(runner, 100))
-                    );
+                    try {
+                        const ticks = await Promise.all(
+                            // find out manifests with changed file dependency.
+                            runnersWithChanges.map((runner) => queue.tick(runner, 100))
+                        );
 
-                    for (let i = 0; i < ticks.length; i++) {
-                        if (!ticks[i]) {
-                            continue;
-                        }
-
-                        let runner = runnersWithChanges[i];
-                        promise = promise.then(async () => {
-                            try {
-                                await runner.run(files);
-                            } catch (err) {
-                                if (err) {
-                                    app.logger.error(err);
-                                }
+                        for (let i = 0; i < ticks.length; i++) {
+                            if (!ticks[i]) {
+                                continue;
                             }
-                        });
+                            const runner = runnersWithChanges[i];
+                            promise = promise.then(async () => {
+                                try {
+                                    await runner.run(files);
+                                } catch (err) {
+                                    if (err) {
+                                        app.logger.error(err);
+                                    }
+                                }
+                            });
+                        }
+                    } catch (err) {
+                        //
                     }
-
-                    await promise;
                 });
             }
         });

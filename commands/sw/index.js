@@ -20,7 +20,6 @@ module.exports = (program) => {
             }
 
             const ServiceWorkerBundler = require('../../lib/Bundlers/ServiceWorkerBundler');
-            const Watcher = require('../../lib/Watcher');
             const { Project } = require('../../lib/File');
 
             const cwd = process.cwd();
@@ -40,11 +39,9 @@ module.exports = (program) => {
             await bundler.write();
 
             if (options.watch) {
-                let watcher = new Watcher(root, {
-                    ignore: '**/*.map',
-                });
-
-                await watcher.watch(async (file) => {
+                root.watch({
+                    ignore: [/\.git/, /\.map$/],
+                }, async (eventType, file) => {
                     if (file.path === output.path) {
                         const content = output.read();
                         if (!content.match(/\.(precache|precacheAndRoute)\(\[\]\)/)) {

@@ -15,7 +15,6 @@ module.exports = (program) => {
         .action(async function lint(app, options) {
             const { Project } = require('../../lib/File');
             const { isJSFile, isStyleFile } = require('../../lib/extensions');
-            const Watcher = require('../../lib/Watcher');
 
             const cwd = process.cwd();
             const project = new Project(cwd);
@@ -70,10 +69,25 @@ module.exports = (program) => {
             }
 
             if (options.watch) {
-                const watcher = new Watcher(project);
+                let requested = false;
+                let running = false;
 
-                await watcher.watch(async () => {
+                const reLint = async (app, options) => {
+                    requested = false;
+                    running = true;
                     await lint(app, options);
+                    running = false;
+                    if (requested) {
+                        reLint(app, options);
+                    }
+                };
+
+                project.watch(() => {
+                    if (running) {
+                        requested = true;
+                        return;
+                    }
+                    reLint(app, options);
                 });
             }
         });

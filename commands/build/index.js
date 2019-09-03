@@ -28,7 +28,6 @@ module.exports = (program) => {
         .action(async (app, options = {}) => {
             const path = require('path');
             const { Project } = require('../../lib/File');
-            const Watcher = require('../../lib/Watcher');
 
             const cwd = process.cwd();
             const project = new Project(cwd);
@@ -187,51 +186,50 @@ module.exports = (program) => {
                 // setup a bundles priority chain.
                 const PriorityQueues = require('../../lib/PriorityQueues');
                 const queue = new PriorityQueues();
-                // start the watch task
-                const watcher = new Watcher(project, {
+                let promise = Promise.resolve();
+
+                project.watch({
                     ignore: (file) => !filterChangedBundles(bundles, file).length,
-                });
-
-                watcher.on('change', (file) => {
-                    if (file.exists()) {
-                        app.logger.info(`\n${file.localPath} changed\n`);
-                    } else {
+                }, async (eventType, file) => {
+                    if (eventType === 'unlink') {
                         app.logger.info(`\n${file.path} removed\n`);
+                    } else {
+                        app.logger.info(`\n${file.localPath} changed\n`);
                     }
-                });
 
-                await watcher.watch(async (file) => {
-                    let promise = Promise.resolve();
-                    let bundlesWithChanges = filterChangedBundles(bundles, file.path);
+                    await promise;
 
+                    const bundlesWithChanges = filterChangedBundles(bundles, file.path);
                     if (bundlesWithChanges.length === 0) {
                         return true;
                     }
 
-                    let ticks = await Promise.all(
-                        // find out manifests with changed file dependency.
-                        bundlesWithChanges.map((bundle) => queue.tick(bundle, 100))
-                    );
+                    try {
+                        const ticks = await Promise.all(
+                            // find out manifests with changed file dependency.
+                            bundlesWithChanges.map((bundle) => queue.tick(bundle, 100))
+                        );
 
-                    for (let i = 0; i < ticks.length; i++) {
-                        if (!ticks[i]) {
-                            continue;
-                        }
-
-                        let bundle = bundlesWithChanges[i];
-                        promise = promise.then(async () => {
-                            try {
-                                await bundle.build(file.path);
-                                await bundle.write();
-                            } catch (err) {
-                                if (err) {
-                                    app.logger.error(err);
-                                }
+                        for (let i = 0; i < ticks.length; i++) {
+                            if (!ticks[i]) {
+                                continue;
                             }
-                        });
-                    }
 
-                    await promise;
+                            const bundle = bundlesWithChanges[i];
+                            promise = promise.then(async () => {
+                                try {
+                                    await bundle.build(file.path);
+                                    await bundle.write();
+                                } catch (err) {
+                                    if (err) {
+                                        app.logger.error(err);
+                                    }
+                                }
+                            });
+                        }
+                    } catch (err) {
+                        //
+                    }
                 });
             }
             // resolve build task with the list of generated manifests.
@@ -242,7 +240,7 @@ module.exports = (program) => {
 function filterChangedBundles(bundles, file) {
     return bundles
         .filter((bundle) => {
-            let bundleFiles = bundle.files || [];
+            const bundleFiles = bundle.files || [];
             return bundleFiles.includes(file);
         });
 }

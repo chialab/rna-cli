@@ -18,7 +18,6 @@ module.exports = (program) => {
         .option('[--compress]', 'Activate gzip compression on static files.')
         .action(async (app, options = {}) => {
             const { mix } = require('@chialab/proteins');
-            const Watcher = require('../../lib/Watcher');
             const { Project } = require('../../lib/File');
             const Server = require('../../lib/Servers/Server');
 
@@ -38,7 +37,7 @@ module.exports = (program) => {
                 }
             }
 
-            let LiveReloadServer = mix(Server).with(...[
+            const LiveReloadServer = mix(Server).with(...[
                 options.watch && require('../../lib/Servers/LiveReload'),
                 require('../../lib/Servers/Static'),
                 require('../../lib/Servers/Html5'),
@@ -46,7 +45,7 @@ module.exports = (program) => {
             ].filter(Boolean));
 
             // Load configuration.
-            let config = {
+            const config = {
                 base: base.path,
                 port: options.port,
                 directory: options.directory === true,
@@ -67,26 +66,26 @@ module.exports = (program) => {
                 };
             }
 
-            let server = new LiveReloadServer(config);
+            const server = new LiveReloadServer(config);
 
             await server.listen();
 
             if (options.watch) {
                 // Configure watch.
-                let watcher = new Watcher(base, {
-                    ignore: '**/*.map',
-                });
-
-                await watcher.watch((file) => {
+                base.watch({
+                    ignore: [/\.git/, /\.map$/],
+                }, (eventType, file) => {
                     // File updated: notify BrowserSync so that it can be reloaded.
                     server.reload(base.relative(file));
-                    if (file.exists()) {
+                    if (eventType !== 'unlink') {
                         app.logger.info(`${file.localPath} injected`);
+                    } else {
+                        app.logger.info(`${file.localPath} removed`);
                     }
                 });
             }
 
-            let { url, tunnel } = server.address;
+            const { url, tunnel } = server.address;
             app.logger.success(`server started at ${url}${tunnel ? ` / ${tunnel}` : ''}`);
 
             process.on('exit', async () => {
