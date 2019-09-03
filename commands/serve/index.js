@@ -87,6 +87,7 @@ module.exports = (program) => {
 
             const { url, tunnel } = server.address;
             app.logger.success(`server started at ${url}${tunnel ? ` / ${tunnel}` : ''}`);
+            app.logger.newline();
 
             process.on('exit', async () => {
                 await server.close();

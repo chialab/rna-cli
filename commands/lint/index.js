@@ -71,23 +71,28 @@ module.exports = (program) => {
             if (options.watch) {
                 let requested = false;
                 let running = false;
+                let timeout;
 
-                const reLint = async (app, options) => {
+                const reLint = async (isRequest) => {
+                    if (running && isRequest) {
+                        requested = true;
+                        return;
+                    } else if (!requested) {
+                        return;
+                    }
                     requested = false;
                     running = true;
                     await lint(app, options);
                     running = false;
-                    if (requested) {
-                        reLint(app, options);
-                    }
+                    reLint();
                 };
 
                 project.watch(() => {
-                    if (running) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => {
                         requested = true;
-                        return;
-                    }
-                    reLint(app, options);
+                        reLint(true);
+                    }, 200);
                 });
             }
         });

@@ -125,51 +125,69 @@ module.exports = (program) => {
             let runners = await runTests(app, project, files, options, taskEnvironments);
 
             if (options.watch) {
-                // setup a runners priority chain.
-                const PriorityQueues = require('../../lib/PriorityQueues');
-                const queue = new PriorityQueues();
+                const collectedFiles = [];
+                const statuses = new WeakMap();
                 let promise = Promise.resolve();
+                let timeout;
+
+                const reRun = async (runner, requested) => {
+                    const status = statuses.get(runner) || {};
+                    if (requested) {
+                        status.requested = true;
+                    }
+                    if (status.running) {
+                        statuses.set(runner, status);
+                        return;
+                    }
+                    if (!status.requested) {
+                        return;
+                    }
+                    status.requested = false;
+                    status.running = true;
+                    statuses.set(runner, status);
+                    promise = promise
+                        .then(async () => {
+                            try {
+                                await runner.run(files);
+                            } catch (err) {
+                                if (err) {
+                                    app.logger.error(err);
+                                }
+                            }
+                        });
+                    await promise;
+                    status.running = false;
+                    statuses.set(runner, status);
+                    reRun(runner);
+                };
+
                 // start the watch task
                 project.watch({
-                    ignore: (file) => !filterChangedRunners(runners, file).length,
+                    ignore: (file) => !filterChangedRunners(runners, [file]).length,
                 }, async (eventType, file) => {
                     if (eventType === 'unlink') {
-                        app.logger.info(`\n${file.localPath} removed\n`);
+                        app.logger.info(`${file.localPath} removed`);
                     } else {
-                        app.logger.info(`\n${file.localPath} changed\n`);
+                        app.logger.info(`${file.localPath} changed`);
                     }
 
-                    await promise;
+                    collectedFiles.push(file);
+                    clearTimeout(timeout);
 
-                    const runnersWithChanges = filterChangedRunners(runners, file.path);
-                    if (runnersWithChanges.length === 0) {
-                        return true;
-                    }
+                    timeout = setTimeout(async () => {
+                        const files = collectedFiles.slice(0);
+                        collectedFiles.splice(0, collectedFiles.length);
+                        await promise;
 
-                    try {
-                        const ticks = await Promise.all(
-                            // find out manifests with changed file dependency.
-                            runnersWithChanges.map((runner) => queue.tick(runner, 100))
-                        );
-
-                        for (let i = 0; i < ticks.length; i++) {
-                            if (!ticks[i]) {
-                                continue;
-                            }
-                            const runner = runnersWithChanges[i];
-                            promise = promise.then(async () => {
-                                try {
-                                    await runner.run(files);
-                                } catch (err) {
-                                    if (err) {
-                                        app.logger.error(err);
-                                    }
-                                }
-                            });
+                        const runnersWithChanges = filterChangedRunners(runners, files);
+                        if (runnersWithChanges.length === 0) {
+                            return true;
                         }
-                    } catch (err) {
-                        //
-                    }
+
+                        for (let i = 0; i < runnersWithChanges.length; i++) {
+                            reRun(runnersWithChanges[i], true);
+                        }
+                    }, 200);
                 });
             }
         });
@@ -246,11 +264,11 @@ async function runTests(app, project, files, options, environments = []) {
     return runners;
 }
 
-function filterChangedRunners(runners, file) {
+function filterChangedRunners(runners, files) {
     return runners
         .filter((runner) => {
-            let runnerFiles = runner.files || [];
-            return runnerFiles.includes(file);
+            const runnerFiles = runner.files || [];
+            return files.some((file) => runnerFiles.includes(file.path));
         });
 }
 

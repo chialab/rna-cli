@@ -64,6 +64,7 @@ module.exports = (program) => {
 
                 if (entry instanceof Project) {
                     app.logger.heading(`\nbuilding project ${entry.get('name')}:`);
+                    app.logger.newline();
 
                     const libFile = entry.get('lib') && entry.file(entry.get('lib'));
                     const moduleFile = entry.get('module') && entry.file(entry.get('module'));
@@ -179,57 +180,69 @@ module.exports = (program) => {
                 }
             }
 
-            app.logger.newline();
-
             // once bundles are generated, check for watch option.
             if (options.watch) {
-                // setup a bundles priority chain.
-                const PriorityQueues = require('../../lib/PriorityQueues');
-                const queue = new PriorityQueues();
+                const statuses = new WeakMap();
+                const collectedFiles = [];
                 let promise = Promise.resolve();
+                let timeout;
+
+                const reBuild = async (bundle, files) => {
+                    const status = statuses.get(bundle) || {};
+                    if (files) {
+                        status.invalidate = files;
+                    }
+                    statuses.set(bundle, status);
+                    if (status.running && !status.invalidate || status.invalidate.length === 0) {
+                        return;
+                    }
+                    const invalidate = status.invalidate;
+                    status.invalidate = [];
+                    status.running = true;
+                    statuses.set(bundle, status);
+                    promise = promise
+                        .then(async () => {
+                            try {
+                                await bundle.build(...invalidate);
+                                await bundle.write();
+                            } catch (err) {
+                                if (err) {
+                                    app.logger.error(err);
+                                }
+                            }
+                        });
+                    await promise;
+                    status.running = false;
+                    statuses.set(bundle, status);
+                    reBuild(bundle);
+                };
 
                 project.watch({
-                    ignore: (file) => !filterChangedBundles(bundles, file).length,
+                    ignore: (file) => !filterChangedBundles(bundles, [file]).length,
                 }, async (eventType, file) => {
                     if (eventType === 'unlink') {
-                        app.logger.info(`\n${file.path} removed\n`);
+                        app.logger.info(`${file.path} removed`);
                     } else {
-                        app.logger.info(`\n${file.localPath} changed\n`);
+                        app.logger.info(`${file.localPath} changed`);
                     }
+                    collectedFiles.push(file);
+                    clearTimeout(timeout);
 
-                    await promise;
+                    timeout = setTimeout(async () => {
+                        const files = collectedFiles.slice(0);
+                        collectedFiles.splice(0, collectedFiles.length);
+                        await promise;
 
-                    const bundlesWithChanges = filterChangedBundles(bundles, file.path);
-                    if (bundlesWithChanges.length === 0) {
-                        return true;
-                    }
-
-                    try {
-                        const ticks = await Promise.all(
-                            // find out manifests with changed file dependency.
-                            bundlesWithChanges.map((bundle) => queue.tick(bundle, 100))
-                        );
-
-                        for (let i = 0; i < ticks.length; i++) {
-                            if (!ticks[i]) {
-                                continue;
-                            }
-
-                            const bundle = bundlesWithChanges[i];
-                            promise = promise.then(async () => {
-                                try {
-                                    await bundle.build(file.path);
-                                    await bundle.write();
-                                } catch (err) {
-                                    if (err) {
-                                        app.logger.error(err);
-                                    }
-                                }
-                            });
+                        const bundlesWithChanges = filterChangedBundles(bundles, files);
+                        if (bundlesWithChanges.length === 0) {
+                            return true;
                         }
-                    } catch (err) {
-                        //
-                    }
+
+                        app.logger.newline();
+                        for (let i = 0; i < bundlesWithChanges.length; i++) {
+                            reBuild(bundlesWithChanges[i], files);
+                        }
+                    }, 200);
                 });
             }
             // resolve build task with the list of generated manifests.
@@ -237,11 +250,11 @@ module.exports = (program) => {
         });
 };
 
-function filterChangedBundles(bundles, file) {
+function filterChangedBundles(bundles, files) {
     return bundles
         .filter((bundle) => {
             const bundleFiles = bundle.files || [];
-            return bundleFiles.includes(file);
+            return files.some((file) => bundleFiles.includes(file.path));
         });
 }
 
@@ -293,7 +306,6 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(ScriptBundler.BUILD_END, (input, code, child) => {
             app.logger.stop();
             if (!child) {
-                app.logger.newline();
                 app.logger.success(`${bundlerToType(bundler)} ready`);
             } else if (buildStarted) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, code ? 'inline' : input.localPath);
@@ -330,6 +342,8 @@ async function buildEntry(app, project, entry, output, options) {
             app.logger.stop();
             if (child) {
                 app.logger.play(`writing ${bundlerToType(bundler)}...`);
+            } else {
+                app.logger.newline();
             }
         });
         await bundler.setup({
@@ -371,7 +385,6 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(StyleBundler.BUILD_END, (input, code, child) => {
             app.logger.stop();
             if (!child) {
-                app.logger.newline();
                 app.logger.success(`${bundlerToType(bundler)} ready`);
             } else if (buildStarted) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
@@ -402,6 +415,8 @@ async function buildEntry(app, project, entry, output, options) {
             app.logger.stop();
             if (child) {
                 app.logger.play(`writing ${bundlerToType(bundler)}...`);
+            } else {
+                app.logger.newline();
             }
         });
         await bundler.setup({
@@ -431,7 +446,6 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(HTMLBundler.BUILD_END, (input, code, child) => {
             app.logger.stop();
             if (!child) {
-                app.logger.newline();
                 app.logger.success(`${bundlerToType(bundler)} ready`);
             } else if (buildStarted) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
@@ -462,6 +476,8 @@ async function buildEntry(app, project, entry, output, options) {
             app.logger.stop();
             if (child) {
                 app.logger.play(`writing ${bundlerToType(bundler)}...`);
+            } else {
+                app.logger.newline();
             }
         });
         await bundler.setup({
@@ -504,7 +520,6 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(WebManifestBundler.BUILD_END, (input, code, child) => {
             app.logger.stop();
             if (!child) {
-                app.logger.newline();
                 app.logger.success(`${bundlerToType(bundler)} ready`);
             } else if (buildStarted) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
@@ -527,6 +542,8 @@ async function buildEntry(app, project, entry, output, options) {
             app.logger.stop();
             if (child) {
                 app.logger.play(`writing ${bundlerToType(bundler)}...`);
+            } else {
+                app.logger.newline();
             }
         });
         await bundler.setup({
