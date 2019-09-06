@@ -25,9 +25,9 @@ module.exports = (program) => {
             const cwd = process.cwd();
             const project = new Project(cwd);
 
-            let root = project.directory(options.arguments[0]);
-            let output = options.output && project.file(options.output);
-            let bundler = new ServiceWorkerBundler(app, project);
+            const root = project.directory(options.arguments[0]);
+            const output = options.output && project.file(options.output);
+            const bundler = new ServiceWorkerBundler(app, project);
 
             await bundler.setup({
                 root,
@@ -35,7 +35,7 @@ module.exports = (program) => {
                 exclude: options.exclude,
             });
 
-            let res = await bundler.build();
+            const result = await bundler.build();
             await bundler.write();
 
             if (options.watch) {
@@ -53,6 +53,6 @@ module.exports = (program) => {
                 });
             }
 
-            return res;
+            return result;
         });
 };
