@@ -755,10 +755,10 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@chialab/babel-preset@^2.6.2":
-  version "2.6.2"
-  resolved "https://registry.npmjs.org/@chialab/babel-preset/-/babel-preset-2.6.2.tgz#0532df41424fac3109b9f8268f407d5014ec3f40"
-  integrity sha512-lFTKqJGZBtqoM+MvAx8UKqvbxexFEf/qRoLX6kNEbB3/VychMKzz92bYUS1ctgRlFFNf3mD7Qe5AeY3Qg70o4A==
+"@chialab/babel-preset@^2.6.3":
+  version "2.6.3"
+  resolved "https://registry.npmjs.org/@chialab/babel-preset/-/babel-preset-2.6.3.tgz#5c2172c73cd44ea455118b9fd6d00ca026e498f6"
+  integrity sha512-4Vt2y6NA1YTj5xtif4qCnqM4Q0vLL+PS3P0CNvDY3l7zjJGsSQyRFJ6wc3HlJq1wgi1Q5QEeZjFXIx1Boxp8CA==
   dependencies:
     "@babel/plugin-proposal-class-properties" "^7.5.5"
     "@babel/plugin-proposal-decorators" "^7.4.4"
