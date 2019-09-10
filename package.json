@@ -22,7 +22,7 @@
   "dependencies": {
     "@babel/core": "^7.6.0",
     "@babel/helper-module-imports": "^7.0.0",
-    "@chialab/babel-preset": "^2.6.3",
+    "@chialab/babel-preset": "^2.6.4",
     "@chialab/proteins": "^3.0.2",
     "acorn-walk": "^7.0.0",
     "autoprefixer": "^9.6.1",
@@ -69,7 +69,7 @@
     "marked": "^0.7.0",
     "marked-terminal": "^3.3.0",
     "mocha": "^6.2.0",
-    "polyfill-library": "^3.39.0",
+    "polyfill-library": "^3.40.0",
     "postcss": "^7.0.18",
     "postcss-all-unset": "^1.1.0",
     "postcss-focus-visible": "^4.0.0",
@@ -78,7 +78,7 @@
     "postcss-scss": "^2.0.0",
     "promise-polyfill": "^8.1.3",
     "resolve": "^1.12.0",
-    "rollup": "^1.21.0",
+    "rollup": "^1.21.2",
     "rollup-plugin-analyzer": "^3.1.2",
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^5.2.0",
@@ -94,7 +94,7 @@
     "stylelint": "^10.1.0",
     "stylelint-order": "^3.1.0",
     "systemjs": "^5.0.0",
-    "terser": "^4.3.0",
+    "terser": "^4.3.1",
     "typescript": "^3.6.2",
     "workbox-build": "^4.3.1"
   }
