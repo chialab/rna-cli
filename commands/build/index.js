@@ -31,6 +31,7 @@ module.exports = (program) => {
 
             const cwd = process.cwd();
             const project = new Project(cwd);
+            const workspaces = project.workspaces;
 
             if (options.production && !Object.prototype.hasOwnProperty.call(process.env, 'NODE_ENV')) {
                 // Set NODE_ENV environment variable if `--production` flag is set.
@@ -42,14 +43,29 @@ module.exports = (program) => {
             let outputRelative = false;
             if (options.arguments.length) {
                 outputRelative = options.arguments.length > 1 || options.arguments[0].includes('*');
-                entries = project.resolve(options.arguments);
+
+                const isProjectInList = function(list, project) {
+                    return !!list.find((entry) => entry instanceof Project && entry.get('name') === project.get('name'));
+                };
+
+                entries = project.resolve(options.arguments)
+                    .reduce((list, entry) => {
+                        if (!(entry instanceof Project)) {
+                            list.push(entry);
+                            return list;
+                        }
+                        if (!isProjectInList(list, entry)) {
+                            project.getWorkspaceDependencies(entry)
+                                .filter((dep) => !isProjectInList(list, dep))
+                                .forEach((dep) => {
+                                    list.push(dep);
+                                });
+                            list.push(entry);
+                        }
+                        return list;
+                    }, []);
             } else {
-                let workspaces = project.workspaces;
-                if (workspaces) {
-                    entries = workspaces;
-                } else {
-                    entries = [project];
-                }
+                entries = workspaces || [project];
             }
 
             if (!entries.length) {
