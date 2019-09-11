@@ -71,6 +71,7 @@ module.exports = (program) => {
                     const mainFile = entry.get('main') && entry.file(entry.get('main'));
                     const browserFile = entry.get('browser') && entry.file(entry.get('browser'));
                     const styleFile = entry.get('style') && entry.file(entry.get('style'));
+
                     let typingsFile;
                     if (typeof options.typings === 'string') {
                         typingsFile = entry.file(options.typings);
@@ -97,26 +98,49 @@ module.exports = (program) => {
                         let bundler;
                         if (output) {
                             bundler = await buildEntry(app, entry, libFile, output, Object.assign({}, options, { targets: options.targets || entry.browserslist, typings: typingsFile || !!options.typings }));
+                            if (bundler && options.watch) {
+                                bundles.push(bundler);
+                            }
                         } else {
                             if (mainFile) {
                                 bundler = await buildEntry(app, entry, libFile, mainFile, Object.assign({}, options, { targets: options.targets || entry.browserslist, format: 'cjs', typings: typingsFile || !!options.typings }));
+                                if (bundler && options.watch) {
+                                    bundles.push(bundler);
+                                }
                             }
                             if (moduleFile) {
                                 bundler = await buildEntry(app, entry, libFile, moduleFile, Object.assign({}, options, { targets: 'esmodules', format: 'esm', lint: !mainFile && options.lint, typings: !mainFile && (typingsFile || !!options.typings) }));
+                                if (bundler && options.watch) {
+                                    bundles.push(bundler);
+                                }
                             }
                             if (browserFile) {
                                 bundler = await buildEntry(app, entry, libFile, browserFile, Object.assign({}, options, { targets: options.targets || entry.browserslist, format: 'umd', typings: typingsFile || !!options.typings }));
+                                if (bundler && options.watch) {
+                                    bundles.push(bundler);
+                                }
                             }
-                            if (!mainFile && !moduleFile && !browserFile && entry.directories.public) {
-                                // maybe a web app?
-                                bundler = await buildEntry(app, entry, libFile, entry.directories.public, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
+                            if (styleFile && entry.directories.lib) {
+                                const styleOutput = entry.directories.lib.file(
+                                    (mainFile && `${mainFile.basename}.css`) ||
+                                    (moduleFile && `${moduleFile.basename}.css`) ||
+                                    (browserFile && `${browserFile.basename}.css`) ||
+                                    `${project.scopeName}.css`,
+                                );
+                                bundler = await buildEntry(app, entry, styleFile, styleOutput, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
+                                if (bundler && options.watch) {
+                                    bundles.push(bundler);
+                                }
+                            }
+                            if (libFile.extname === '.html' && (entry.directories.public || entry.directories.lib)) {
+                                bundler = await buildEntry(app, entry, libFile, entry.directories.public || entry.directories.lib, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
+                                if (bundler && options.watch) {
+                                    bundles.push(bundler);
+                                }
                             }
                         }
                         if (!bundler) {
                             throw new Error(`missing "input" option for project ${entry.path}`);
-                        } else if (options.watch) {
-                            // collect the generated Bundle.
-                            bundles.push(bundler);
                         }
                     } else if (moduleFile || styleFile) {
                         if (!output && mainFile) {
@@ -127,8 +151,8 @@ module.exports = (program) => {
                         // retrocompatibility with RNA 2.0
 
                         if (moduleFile) {
-                            let moduleOutput = mainFile ? mainFile : output;
-                            let bundler = await buildEntry(app, entry, moduleFile, moduleOutput, Object.assign({ bundle: true }, options, { targets: options.targets || entry.browserslist }));
+                            const moduleOutput = mainFile ? mainFile : output;
+                            const bundler = await buildEntry(app, entry, moduleFile, moduleOutput, Object.assign({ bundle: true }, options, { targets: options.targets || entry.browserslist }));
                             if (bundler && options.watch) {
                                 // collect the generated Bundle.
                                 bundles.push(bundler);
@@ -136,11 +160,11 @@ module.exports = (program) => {
                         }
 
                         if (styleFile) {
-                            let styleOutput = mainFile ?
+                            const styleOutput = mainFile ?
                                 mainFile.parent.file(`${mainFile.basename}.css`) :
                                 output;
 
-                            let bundler = await buildEntry(app, entry, styleFile, styleOutput, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
+                            const bundler = await buildEntry(app, entry, styleFile, styleOutput, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
                             if (bundler && options.watch) {
                                 // collect the generated Bundle.
                                 bundles.push(bundler);

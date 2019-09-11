@@ -96,6 +96,13 @@ module.exports = async function npmTask(app, options, project, templates) {
         },
         {
             type: 'input',
+            name: 'lib',
+            message: formatQuestion('base dist path'),
+            default: project.get('directories.lib'),
+            when: (answers) => !answers.workspaces && (answers.module || answers.main || answers.browser),
+        },
+        {
+            type: 'input',
             name: 'types',
             message: formatQuestion('types entry point'),
             default: project.get('types'),
