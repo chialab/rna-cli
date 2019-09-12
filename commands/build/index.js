@@ -291,10 +291,12 @@ module.exports = (program) => {
 };
 
 function filterChangedBundles(bundles, files) {
+    const fs = require('fs');
+    files = files.map((file) => fs.realpathSync(file.path));
     return bundles
         .filter((bundle) => {
             const bundleFiles = bundle.files || [];
-            return files.some((file) => bundleFiles.includes(file.path));
+            return files.some((file) => bundleFiles.includes(file));
         });
 }
 
