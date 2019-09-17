@@ -823,6 +823,7 @@ rules:
       - mixin
       - include
       - extend
+      - each
       severity: error
 
   # https://stylelint.io/user-guide/rules/at-rule-no-vendor-prefix
