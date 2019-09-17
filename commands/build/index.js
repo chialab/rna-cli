@@ -20,6 +20,7 @@ module.exports = (program) => {
         .option('[--watch]', 'Watch sources and rebuild on files changes.')
         .option('[--no-map]', 'Do not produce source map.')
         .option('[--no-lint]', 'Do not lint files before build.')
+        .option('[--recursive]', 'Recursively build monorepo packages.')
         .option('[--jsx.pragma]', 'The JSX pragma to use.')
         .option('[--jsx.pragmaFrag]', 'The JSX pragma fragment to use.')
         .option('[--jsx.module]', 'The module to auto import for JSX pragma.')
@@ -55,11 +56,13 @@ module.exports = (program) => {
                             return list;
                         }
                         if (!isProjectInList(list, entry)) {
-                            project.getWorkspaceDependencies(entry)
-                                .filter((dep) => !isProjectInList(list, dep))
-                                .forEach((dep) => {
-                                    list.push(dep);
-                                });
+                            if (options.recursive) {
+                                project.getWorkspaceDependencies(entry)
+                                    .filter((dep) => !isProjectInList(list, dep))
+                                    .forEach((dep) => {
+                                        list.push(dep);
+                                    });
+                            }
                             list.push(entry);
                         }
                         return list;
