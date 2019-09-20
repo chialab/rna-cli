@@ -19,7 +19,7 @@ module.exports = (program) => {
                 throw new Error('missing input files');
             }
 
-            const ServiceWorkerBundler = require('../../lib/Bundlers/ServiceWorkerBundler');
+            const ScriptBundler = require('../../lib/Bundlers/ScriptBundler');
             const { Project } = require('../../lib/File');
 
             const cwd = process.cwd();
@@ -27,12 +27,16 @@ module.exports = (program) => {
 
             const root = project.directory(options.arguments[0]);
             const output = options.output && project.file(options.output);
-            const bundler = new ServiceWorkerBundler(app, project);
+            const bundler = new ScriptBundler(app, project);
 
             await bundler.setup({
+                code: output.exists() ? output.read() : '',
                 root,
                 output,
-                exclude: options.exclude,
+                sw: {
+                    root: root.path,
+                    exclude: options.exclude,
+                },
             });
 
             const result = await bundler.build();
@@ -48,7 +52,7 @@ module.exports = (program) => {
                             return;
                         }
                     }
-                    await bundler.build();
+                    await bundler.build(file);
                     await bundler.write();
                 });
             }

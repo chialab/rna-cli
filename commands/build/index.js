@@ -315,8 +315,6 @@ function bundlerToType(bundler) {
             return 'webmanifest';
         case 'IconBundler':
             return 'icon';
-        case 'ServiceWorkerBundler':
-            return 'sw';
         case 'CopyBundler':
             return 'asset';
     }
