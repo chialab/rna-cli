@@ -62,8 +62,15 @@ module.exports = async function npmTask(app, options, project, templates) {
         {
             type: 'input',
             name: 'lib',
-            message: formatQuestion('source file entry'),
+            message: formatQuestion('source entry point'),
             default: project.get('lib'),
+            when: (answers) => !answers.workspaces,
+        },
+        {
+            type: 'input',
+            name: 'style',
+            message: formatQuestion('style entry point'),
+            default: project.get('style'),
             when: (answers) => !answers.workspaces,
         },
         {
@@ -96,7 +103,7 @@ module.exports = async function npmTask(app, options, project, templates) {
         },
         {
             type: 'input',
-            name: 'lib',
+            name: 'dist',
             message: formatQuestion('base dist path'),
             default: project.get('directories.lib'),
             when: (answers) => !answers.workspaces && (answers.module || answers.main || answers.browser),
@@ -148,6 +155,11 @@ module.exports = async function npmTask(app, options, project, templates) {
     } else {
         project.unset('lib');
     }
+    if (answers.style) {
+        project.set('style', answers.style);
+    } else {
+        project.unset('style');
+    }
     if (answers.public) {
         project.set('directories.public', answers.public);
         project.set('private', true);
@@ -158,6 +170,11 @@ module.exports = async function npmTask(app, options, project, templates) {
         project.set('directories.test', answers.test);
     } else {
         project.unset('directories.test');
+    }
+    if (answers.test) {
+        project.set('directories.dist', answers.dist);
+    } else {
+        project.unset('directories.dist');
     }
     if (answers.module) {
         project.set('module', answers.module);
