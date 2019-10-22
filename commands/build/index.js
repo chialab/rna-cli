@@ -25,7 +25,7 @@ module.exports = (program) => {
         .option('[--jsx.pragmaFrag]', 'The JSX pragma fragment to use.')
         .option('[--jsx.module]', 'The module to auto import for JSX pragma.')
         .option('[--typings [file]', 'Generate typescript declarations.')
-        .option('[--analyze <file>]', 'Print analytic report for script size.')
+        .option('[--analyze]', 'Print analytic report for script size.')
         .action(async (app, options = {}) => {
             const path = require('path');
             const { Project } = require('../../lib/File');
@@ -359,7 +359,7 @@ async function buildEntry(app, project, entry, output, options) {
                 app.logger.log(Linter.format(bundler.linter.result));
             }
             if (analysis) {
-                app.logger.info(analysis);
+                app.logger.log(ScriptBundler.formatBundleAnalysis(analysis));
             }
         });
         bundler.on(ScriptBundler.ERROR_EVENT, () => {
