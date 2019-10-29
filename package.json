@@ -22,6 +22,7 @@
   "dependencies": {
     "@babel/core": "^7.6.2",
     "@babel/helper-module-imports": "^7.0.0",
+    "@babel/plugin-transform-flow-strip-types": "^7.6.3",
     "@babel/runtime": "^7.6.3",
     "@chialab/babel-preset": "^2.6.4",
     "@chialab/proteins": "^3.0.2",
