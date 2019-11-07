@@ -9,13 +9,26 @@ module.exports = (program) => {
         .command('config')
         .readme(`${__dirname}/README.md`)
         .description('Set RNA cli configiration.')
-        .option('<key> <value>', 'The key/value pair to set.')
+        .option('[key] [value]', 'The key/value pair to set.')
+        .option('--delete', 'Remove the key.')
         .action(async (app, options) => {
-            if (options.arguments.length !== 2) {
-                throw new Error('you must provide a key/value pair to set');
+            const config = app.store.toJSON();
+            if (options.arguments.length === 0) {
+                app.logger.log(JSON.stringify(config, null, 4));
+                return;
             }
 
-            let key = options.arguments[0];
+            const key = options.arguments[0];
+            if (options.arguments.length === 1) {
+                if (options.delete) {
+                    app.store.remove(key);
+                    app.logger.diff(config, app.store.toJSON());
+                    return;
+                }
+                app.logger.log(JSON.stringify(app.store.get(key), null, 4));
+                return;
+            }
+
             let value = options.arguments[1];
             try {
                 value = JSON.parse(value);
@@ -28,5 +41,6 @@ module.exports = (program) => {
             } else {
                 app.store.set(key, value);
             }
+            app.logger.diff(config, app.store.toJSON());
         });
 };
