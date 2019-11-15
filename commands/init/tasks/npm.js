@@ -105,7 +105,7 @@ module.exports = async function npmTask(app, options, project, templates) {
             type: 'input',
             name: 'dist',
             message: formatQuestion('base dist path'),
-            default: project.get('directories.lib'),
+            default: project.get('directories.dist'),
             when: (answers) => !answers.workspaces && (answers.module || answers.main || answers.browser),
         },
         {
