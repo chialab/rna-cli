@@ -20,6 +20,7 @@ module.exports = (program) => {
         .option('[--watch]', 'Watch sources and rebuild on files changes.')
         .option('[--no-map]', 'Do not produce source map.')
         .option('[--no-lint]', 'Do not lint files before build.')
+        .option('[--no-cache]', 'Should not cache global dependencies for memory optimizations.')
         .option('[--recursive]', 'Recursively build monorepo packages.')
         .option('[--jsx.pragma]', 'The JSX pragma to use.')
         .option('[--jsx.pragmaFrag]', 'The JSX pragma fragment to use.')
@@ -28,6 +29,7 @@ module.exports = (program) => {
         .option('[--analyze]', 'Print analytic report for script size.')
         .action(async (app, options = {}) => {
             const path = require('path');
+            const Targets = require('../../lib/Targets');
             const { Project } = require('../../lib/File');
 
             const cwd = process.cwd();
@@ -128,7 +130,7 @@ module.exports = (program) => {
                                 }
                             }
                             if (moduleFile) {
-                                bundler = await buildEntry(app, entry, libFile, moduleFile, Object.assign({}, options, { targets: 'esmodules', format: 'esm', lint: !mainFile && options.lint, typings: !mainFile && (typingsFile || !!options.typings) }));
+                                bundler = await buildEntry(app, entry, libFile, moduleFile, Object.assign({}, options, { targets: Targets.fromFeatures('module', 'async').toQuery(), format: 'esm', lint: !mainFile && options.lint, typings: !mainFile && (typingsFile || !!options.typings) }));
                                 if (bundler && options.watch) {
                                     bundles.push(bundler);
                                 }
@@ -399,6 +401,7 @@ async function buildEntry(app, project, entry, output, options) {
             production: options.production,
             map: options.map,
             lint: options.lint !== false,
+            cache: options.cache !== false,
             analyze: options.analyze,
             typings: options.typings,
             jsx: {
