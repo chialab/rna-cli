@@ -5,17 +5,17 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/chialab/rna-cli.git"
+    "url": "git+https://github.com/chialab/rna-cli.git"
   },
   "author": "Chialab <dev@chialab.io> (https://www.chialab.it)",
   "license": "MIT",
   "bugs": {
-    "url": "https://gitlab.com/chialab/rna-cli/issues"
+    "url": "https://github.com/chialab/rna-cli/issues"
   },
   "bin": {
     "rna": "index.js"
   },
-  "homepage": "https://gitlab.com/chialab/rna-cli#README",
+  "homepage": "https://www.chialab.io/p/rna-cli",
   "engines": {
     "node": ">=8.9.0"
   },
