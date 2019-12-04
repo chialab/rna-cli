@@ -122,44 +122,11 @@ module.exports = (program) => {
                 options.context = project.file(options.context);
             }
 
-            let runners = await runTests(app, project, files, options, taskEnvironments);
+            const { runners, exitCode } = await runTests(app, project, files, options, taskEnvironments);
 
             if (options.watch) {
                 const collectedFiles = [];
-                const statuses = new WeakMap();
-                let promise = Promise.resolve();
                 let timeout;
-
-                const reRun = async (runner, requested) => {
-                    const status = statuses.get(runner) || {};
-                    if (requested) {
-                        status.requested = true;
-                    }
-                    if (status.running) {
-                        statuses.set(runner, status);
-                        return;
-                    }
-                    if (!status.requested) {
-                        return;
-                    }
-                    status.requested = false;
-                    status.running = true;
-                    statuses.set(runner, status);
-                    promise = promise
-                        .then(async () => {
-                            try {
-                                await runner.run(files);
-                            } catch (err) {
-                                if (err) {
-                                    app.logger.error(err);
-                                }
-                            }
-                        });
-                    await promise;
-                    status.running = false;
-                    statuses.set(runner, status);
-                    reRun(runner);
-                };
 
                 // start the watch task
                 project.watch({
@@ -177,21 +144,52 @@ module.exports = (program) => {
                     timeout = setTimeout(async () => {
                         const files = collectedFiles.slice(0);
                         collectedFiles.splice(0, collectedFiles.length);
-                        await promise;
 
                         const runnersWithChanges = filterChangedRunners(runners, files);
                         if (runnersWithChanges.length === 0) {
                             return true;
                         }
 
-                        for (let i = 0; i < runnersWithChanges.length; i++) {
-                            reRun(runnersWithChanges[i], true);
+                        try {
+                            await startRunners(app, runnersWithChanges, files);
+                        } catch (err) {
+                            if (err) {
+                                app.logger.error(err);
+                            }
                         }
                     }, 200);
                 });
+                return;
             }
+
+            return exitCode;
         });
 };
+
+async function startRunners(app, runners, files) {
+    const coverageMap = require('istanbul-lib-coverage').createCoverageMap({});
+    let finalExitCode = 0, printCoverage = false;
+
+    for (let i = 0; i < runners.length; i++) {
+        const runner = runners[i];
+        const { exitCode, coverage } = await runner.run(files);
+        if (coverage) {
+            printCoverage = true;
+            coverageMap.merge(coverage);
+        }
+        if (exitCode !== 0) {
+            finalExitCode = exitCode;
+        }
+    }
+
+    app.logger.newline();
+
+    if (printCoverage) {
+        printCoverageReport(app, coverageMap);
+    }
+
+    return { runners, coverage: coverageMap, exitCode: finalExitCode };
+}
 
 /**
  * Exec tests across multiple environments.
@@ -203,10 +201,8 @@ module.exports = (program) => {
  * @return {Promise<TestRunner[]>}
  */
 async function runTests(app, project, files, options, environments = []) {
-    const coverageMap = require('istanbul-lib-coverage').createCoverageMap({});
 
     let runners = [];
-    let finalExitCode = 0;
     // Test built sources.
     for (let i = 0; i < environments.length; i++) {
         let taskEnvName = environments[i];
@@ -223,13 +219,9 @@ async function runTests(app, project, files, options, environments = []) {
             runner.on(NodeTestRunner.PREPARE_END_EVENT, () => {
                 app.logger.stop();
             });
-            let { exitCode, coverage } = await runner.run(files);
-            if (coverage) {
-                coverageMap.merge(coverage);
-            }
-            if (exitCode !== 0) {
-                finalExitCode = exitCode;
-            }
+            runner.on(NodeTestRunner.STOP_EVENT, () => {
+                app.logger.stop();
+            });
         } else if (taskEnvName === 'browser' || taskEnvName === 'saucelabs') {
             const BrowserTestRunner = require('../../lib/TestRunners/BrowserTestRunner');
             const runner = new BrowserTestRunner();
@@ -241,27 +233,13 @@ async function runTests(app, project, files, options, environments = []) {
             runner.on(BrowserTestRunner.PREPARE_END_EVENT, () => {
                 app.logger.stop();
             });
-            let { exitCode, coverage } = await runner.run(files);
-            if (coverage) {
-                coverageMap.merge(coverage);
-            }
-            if (exitCode !== 0) {
-                finalExitCode = exitCode;
-            }
+            runner.on(BrowserTestRunner.STOP_EVENT, () => {
+                app.logger.stop();
+            });
         }
     }
 
-    app.logger.newline();
-
-    if (options.coverage) {
-        printCoverageReport(app, coverageMap);
-    }
-
-    if (finalExitCode) {
-        throw new Error('some tests have failed');
-    }
-
-    return runners;
+    return startRunners(app, runners, files);
 }
 
 function filterChangedRunners(runners, files) {
@@ -298,6 +276,7 @@ function printCoverageReport(app, report) {
     printLine('branches');
     printLine('functions');
     printLine('lines');
+    app.logger.newline();
 }
 
 function lineForKey(summary, key) {

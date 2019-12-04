@@ -66,7 +66,7 @@
     "karma-ie-launcher": "^1.0.0",
     "karma-mocha": "^1.3.0",
     "karma-opera-launcher": "^1.0.0",
-    "karma-sourcemap-loader": "^0.3.7",
+    "karma-source-map-support": "^1.4.0",
     "lerna": "^3.19.0",
     "localtunnel": "^1.9.2",
     "lodash": "^4.17.15",
