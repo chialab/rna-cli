@@ -141,8 +141,9 @@ module.exports = (program) => {
                                     bundles.push(bundler);
                                 }
                             }
-                            if (styleFile && entry.directories.dist) {
-                                const styleOutput = entry.directories.dist.file(
+                            const distDir = entry.directories.dist || entry.directories.lib;
+                            if (styleFile && distDir) {
+                                const styleOutput = distDir.file(
                                     (mainFile && `${mainFile.basename}.css`) ||
                                     (moduleFile && `${moduleFile.basename}.css`) ||
                                     (browserFile && `${browserFile.basename}.css`) ||
