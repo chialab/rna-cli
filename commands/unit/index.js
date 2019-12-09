@@ -168,13 +168,12 @@ module.exports = (program) => {
 
 async function startRunners(app, runners, files) {
     const coverageMap = require('istanbul-lib-coverage').createCoverageMap({});
-    let finalExitCode = 0, printCoverage = false;
+    let finalExitCode = 0;
 
     for (let i = 0; i < runners.length; i++) {
         const runner = runners[i];
         const { exitCode, coverage } = await runner.run(files);
         if (coverage) {
-            printCoverage = true;
             coverageMap.merge(coverage);
         }
         if (exitCode !== 0) {
@@ -183,9 +182,13 @@ async function startRunners(app, runners, files) {
     }
 
     app.logger.newline();
-
-    if (printCoverage) {
-        printCoverageReport(app, coverageMap);
+    const summary = coverageMap.getCoverageSummary();
+    if (summary.data &&
+        (summary.data.lines.pct !== 'Unknown' ||
+        summary.data.statements.pct !== 'Unknown' ||
+        summary.data.functions.pct !== 'Unknown' ||
+        summary.data.branches.pct !== 'Unknown')) {
+        printCoverageReport(app, summary);
     }
 
     return { runners, coverage: coverageMap, exitCode: finalExitCode };
@@ -253,12 +256,11 @@ function filterChangedRunners(runners, files) {
 /**
  * Printe the coverage report in console.
  * @param {CLI} app The cli instance.
- * @param {Object} report The report to print.
+ * @param {Object} summary The report to print.
  * @return {void}
  */
-function printCoverageReport(app, report) {
+function printCoverageReport(app, summary) {
     const colors = require('colors/safe');
-    const summary = report.getCoverageSummary();
     const printLine = function(key) {
         const str = lineForKey(summary, key);
         let type = 'warn';
