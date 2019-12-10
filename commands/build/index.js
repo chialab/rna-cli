@@ -324,6 +324,15 @@ function bundlerToType(bundler) {
     return '';
 }
 
+function formatTime(millis) {
+    let minutes = Math.floor(millis / 60000);
+    let seconds = ((millis % 60000) / 1000).toFixed(0);
+    if (!minutes) {
+        return `${seconds}s`;
+    }
+    return `${minutes}:${`${seconds}`.padStart(2, '0')}m`;
+}
+
 async function buildEntry(app, project, entry, output, options) {
     const { isJSFile, isStyleFile, isHTMLFile, isWebManifestFile } = require('../../lib/extensions');
     const Linter = require('../../lib/Linters/Linter');
@@ -344,7 +353,7 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(ScriptBundler.BUILD_START, (input, code, child) => {
             if (!child) {
                 app.logger.play(`generating ${bundlerToType(bundler)}`, code ? 'inline' : input.localPath);
-                buildStarted = true;
+                buildStarted = Date.now();
             } else {
                 app.logger.play(`generating ${bundlerToType(bundler)} > ${bundlerToType(child)}`, code ? 'inline' : input.localPath);
             }
@@ -352,7 +361,7 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(ScriptBundler.BUILD_END, (input, code, child) => {
             app.logger.stop();
             if (!child) {
-                app.logger.success(`${bundlerToType(bundler)} ready`);
+                app.logger.success(`${bundlerToType(bundler)} ready`, formatTime(Date.now() - buildStarted));
             } else if (buildStarted) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, code ? 'inline' : input.localPath);
             }
@@ -424,7 +433,7 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(StyleBundler.BUILD_START, (input, code, child) => {
             if (!child) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
-                buildStarted = true;
+                buildStarted = Date.now();
             } else {
                 app.logger.play(`generating ${bundlerToType(bundler)} > ${bundlerToType(child)}...`, code ? 'inline' : input.localPath);
             }
@@ -432,7 +441,7 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(StyleBundler.BUILD_END, (input, code, child) => {
             app.logger.stop();
             if (!child) {
-                app.logger.success(`${bundlerToType(bundler)} ready`);
+                app.logger.success(`${bundlerToType(bundler)} ready`, formatTime(Date.now() - buildStarted));
             } else if (buildStarted) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
             }
@@ -485,7 +494,7 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(HTMLBundler.BUILD_START, (input, code, child) => {
             if (!child) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
-                buildStarted = true;
+                buildStarted = Date.now();
             } else {
                 app.logger.play(`generating ${bundlerToType(bundler)} > ${bundlerToType(child)}...`, code ? 'inline' : input.localPath);
             }
@@ -493,7 +502,7 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(HTMLBundler.BUILD_END, (input, code, child) => {
             app.logger.stop();
             if (!child) {
-                app.logger.success(`${bundlerToType(bundler)} ready`);
+                app.logger.success(`${bundlerToType(bundler)} ready`, formatTime(Date.now() - buildStarted));
             } else if (buildStarted) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
             }
@@ -559,7 +568,7 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(WebManifestBundler.BUILD_START, (input, code, child) => {
             if (!child) {
                 app.logger.play('generating webmanifest...', !code ? input.localPath : '');
-                buildStarted = true;
+                buildStarted = Date.now();
             } else {
                 app.logger.play(`generating ${bundlerToType(bundler)} > ${bundlerToType(child)}...`, code ? 'inline' : input.localPath);
             }
@@ -567,7 +576,7 @@ async function buildEntry(app, project, entry, output, options) {
         bundler.on(WebManifestBundler.BUILD_END, (input, code, child) => {
             app.logger.stop();
             if (!child) {
-                app.logger.success(`${bundlerToType(bundler)} ready`);
+                app.logger.success(`${bundlerToType(bundler)} ready`, formatTime(Date.now() - buildStarted));
             } else if (buildStarted) {
                 app.logger.play(`generating ${bundlerToType(bundler)}...`, !code ? input.localPath : '');
             }
