@@ -77,7 +77,7 @@ module.exports = (program) => {
                 throw new Error('missing files to build');
             }
 
-            let bundles = [];
+            const bundles = [];
 
             // Process entries.
             for (let i = 0; i < entries.length; i++) {
@@ -318,12 +318,14 @@ module.exports = (program) => {
 };
 
 function filterChangedBundles(bundles, files) {
-    const fs = require('fs');
-    files = files.map((file) => fs.realpathSync(file.path));
+    const { realpathSync } = require('fs');
+    files = files.map((file) => realpathSync(file.path));
     return bundles
         .filter((bundle) => {
-            const bundleFiles = bundle.files || [];
-            return files.some((file) => bundleFiles.includes(file));
+            if (!bundle.files) {
+                return [];
+            }
+            return files.some((file) => bundle.files.includes(file));
         });
 }
 
@@ -355,7 +357,7 @@ function formatTime(millis) {
 }
 
 async function buildEntry(app, project, entry, output, options) {
-    const { isJSFile, isStyleFile, isHTMLFile, isWebManifestFile } = require('../../lib/extensions');
+    const { isJSFile, isStyleFile, isHTMLFile, isWebManifestFile } = require('../../lib/File');
     const Linter = require('../../lib/Linters/Linter');
 
     function logFile(output) {

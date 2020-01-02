@@ -13,8 +13,7 @@ module.exports = (program) => {
         .option('[--fix]', 'Should autofix warnings.')
         .option('[--watch]', 'Watch files and re-lint on changes.')
         .action(async function lint(app, options) {
-            const { Project } = require('../../lib/File');
-            const { isJSFile, isStyleFile } = require('../../lib/extensions');
+            const { isJSFile, isStyleFile, Project } = require('../../lib/File');
 
             const cwd = process.cwd();
             const project = new Project(cwd);
