@@ -1,6 +1,10 @@
 const colors = require('colors/safe');
 const inquirer = require('inquirer');
-const configurator = require('../../../lib/configurator.js');
+const { configurator } = require('../utils/index.js');
+
+function formatQuestion(msg) {
+    return `${colors.cyan('package')} > ${msg}:`;
+}
 
 /**
  * Ensure package is ready for the wonderful world of NPM.
@@ -13,8 +17,6 @@ const configurator = require('../../../lib/configurator.js');
  */
 module.exports = async function npmTask(app, options, project, templates) {
     const remote = project.get('repository.url') || (project.git.check() && await project.git.getRemote());
-
-    const formatQuestion = (msg) => `${colors.cyan('package')} > ${msg}:`;
     const prompt = inquirer.createPromptModule();
 
     // Ask user a shitload of questions about its new package.

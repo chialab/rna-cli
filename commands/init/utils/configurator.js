@@ -11,7 +11,7 @@ module.exports = (file, content, delimiter) => {
     if (file.exists()) {
         prevContent = file.read();
     }
-    let splitted = prevContent.split(delimiter);
+    let splitted = prevContent.split(new RegExp(`\n?${delimiter}\n?`));
     splitted[1] = `${delimiter}\n${content}\n${delimiter}`; // Why arbitrarily at index 1? ~~fquffio
     prevContent = splitted.join('\n');
     file.write(prevContent.trim());

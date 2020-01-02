@@ -19,14 +19,12 @@ module.exports = (program) => {
             const { promises: { mkdir } } = require('fs');
             const path = require('path');
             const { Directory, Project } = require('../../lib/File');
+            const tasks = require('./tasks/index.js');
 
             // Detect directory to use as project root, and ensure it is present.
-            let cwd;
-            if (options.arguments.length) {
-                cwd = path.resolve(process.cwd(), options.arguments[0]);
-            } else {
-                cwd = process.cwd();
-            }
+            const cwd = options.arguments.length ?
+                path.resolve(process.cwd(), options.arguments[0]) :
+                process.cwd();
 
             await mkdir(cwd, { recursive: true });
 
@@ -42,13 +40,13 @@ module.exports = (program) => {
                 });
             }
 
-            options.npm && await require('./tasks/npm.js')(app, options, project, templates);
-            !parentProject && options.git && await require('./tasks/git.js')(app, options, project, templates);
-            await require('./tasks/directories.js')(app, options, project, templates);
-            !parentProject && (options.lint === true || options.lint === 'editorconfig') && await require('./tasks/config.js')(app, options, project, templates);
-            !parentProject && (options.lint === true || options.lint === 'eslint') && await require('./tasks/eslint.js')(app, options, project, templates);
-            !parentProject && (options.lint === true || options.lint === 'styelint') && await require('./tasks/stylelint.js')(app, options, project, templates);
-            options.license && await require('./tasks/license.js')(app, options, project, templates);
-            options.readme && await require('./tasks/readme.js')(app, options, project, templates);
+            options.npm && await tasks.npm(app, options, project, templates);
+            !parentProject && options.git && await tasks.git(app, options, project, templates);
+            await tasks.directories(app, options, project, templates);
+            !parentProject && (options.lint === true || options.lint === 'editorconfig') && await tasks.config(app, options, project, templates);
+            !parentProject && (options.lint === true || options.lint === 'eslint') && await tasks.eslint(app, options, project, templates);
+            !parentProject && (options.lint === true || options.lint === 'styelint') && await tasks.stylelint(app, options, project, templates);
+            options.license && await tasks.license(app, options, project, templates);
+            options.readme && await tasks.readme(app, options, project, templates);
         });
 };

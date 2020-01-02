@@ -1,5 +1,5 @@
+const { configurator } = require('../utils/index.js');
 const PackageManager = require('../../../lib/PackageManager.js');
-const configurator = require('../../../lib/configurator.js');
 
 /**
  * Ensure ESLint configuration file is present.

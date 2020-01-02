@@ -1,6 +1,6 @@
 const colors = require('colors/safe');
 const inquirer = require('inquirer');
-const configurator = require('../../../lib/configurator.js');
+const { configurator } = require('../utils/index.js');
 
 /**
  * Ensure project is a Git repository.
@@ -19,14 +19,13 @@ module.exports = async function gitTask(app, options, project, templates) {
 
     let remote = (await project.git.getRemote()) || project.get('repository.url');
     if (!remote) {
-        let prompt = inquirer.createPromptModule();
+        const prompt = inquirer.createPromptModule();
         // Ask user if they already have a remote ready for their repo.
-        let opts = {
+        const answers = await prompt([{
             type: 'input',
             name: 'repository',
             message: `${colors.cyan('git')} > remote repository:`,
-        };
-        let answers = await prompt([opts]);
+        }]);
         remote = answers.repository;
     }
 

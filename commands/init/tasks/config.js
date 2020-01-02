@@ -1,4 +1,4 @@
-const configurator = require('../../../lib/configurator.js');
+const { configurator } = require('../utils/index.js');
 
 /**
  * Ensure EditorConfig configuration file is present.

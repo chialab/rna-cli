@@ -1,5 +1,5 @@
 const PackageManager = require('../../../lib/PackageManager.js');
-const configurator = require('../../../lib/configurator.js');
+const { configurator } = require('../utils/index.js');
 
 /**
  * Ensure stylelint configuration file is present.
