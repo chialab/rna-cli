@@ -19,7 +19,7 @@ module.exports = (program) => {
             const { promises: { mkdir } } = require('fs');
             const path = require('path');
             const { Directory, Project } = require('../../lib/File');
-            const tasks = require('./tasks/index.js');
+            const tasks = require('./tasks');
 
             // Detect directory to use as project root, and ensure it is present.
             const cwd = options.arguments.length ?

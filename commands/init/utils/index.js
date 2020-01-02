@@ -1,1 +1,1 @@
-module.exports.configurator = require('./configurator.js');
+module.exports.configurator = require('./configurator');

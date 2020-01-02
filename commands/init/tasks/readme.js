@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const { configurator } = require('../utils/index.js');
+const { configurator } = require('../utils');
 
 /**
  * Ensure README file is present.

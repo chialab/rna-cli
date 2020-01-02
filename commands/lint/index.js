@@ -105,7 +105,7 @@ module.exports = (program) => {
  * @param {Array<string>} files The list of files to lint.
  */
 async function eslint(app, project, options, files) {
-    const ESLint = require('../../lib/Linters/ESLint.js');
+    const ESLint = require('../../lib/Linters/ESLint');
     app.logger.play('running ESLint...');
 
     try {
@@ -134,7 +134,7 @@ async function eslint(app, project, options, files) {
  * @param {Array<string>} files The list of files to lint.
  */
 async function stylelint(app, project, options, files) {
-    const Stylelint = require('../../lib/Linters/Stylelint.js');
+    const Stylelint = require('../../lib/Linters/Stylelint');
     app.logger.play('running stylelint...');
 
     try {

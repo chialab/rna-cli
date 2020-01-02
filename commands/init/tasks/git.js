@@ -1,6 +1,6 @@
 const colors = require('colors/safe');
 const inquirer = require('inquirer');
-const { configurator } = require('../utils/index.js');
+const { configurator } = require('../utils');
 
 /**
  * Ensure project is a Git repository.
