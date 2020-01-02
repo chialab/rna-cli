@@ -16,7 +16,7 @@ module.exports = (program) => {
         .option('[--license]', 'License files.')
         .option('[--readme]', 'README generation.')
         .action(async (app, options) => {
-            const fs = require('fs-extra');
+            const { promises: { mkdir } } = require('fs');
             const path = require('path');
             const { Directory, Project } = require('../../lib/File');
 
@@ -27,7 +27,8 @@ module.exports = (program) => {
             } else {
                 cwd = process.cwd();
             }
-            fs.ensureDirSync(cwd);
+
+            await mkdir(cwd, { recursive: true });
 
             const project = new Project(cwd);
             const parentProject = project.parent;
