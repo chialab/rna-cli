@@ -10,6 +10,7 @@ module.exports = (program) => {
         .description('Setup a new project.')
         .readme(`${__dirname}/README.md`)
         .option('<dir>', 'The project root to create.')
+        .option('[--fs]', 'File system setup.')
         .option('[--git]', 'Git setup.')
         .option('[--npm]', 'Package.json setup.')
         .option('[--lint] [editorconfig|eslint|stylelint]', 'Lint config files.')
@@ -41,11 +42,11 @@ module.exports = (program) => {
             }
 
             options.npm && await tasks.npm(app, options, project, templates);
-            !parentProject && options.git && await tasks.git(app, options, project, templates);
-            await tasks.directories(app, options, project, templates);
+            options.git && !parentProject && await tasks.git(app, options, project, templates);
+            options.fs && await tasks.directories(app, options, project, templates);
             !parentProject && (options.lint === true || options.lint === 'editorconfig') && await tasks.config(app, options, project, templates);
             !parentProject && (options.lint === true || options.lint === 'eslint') && await tasks.eslint(app, options, project, templates);
-            !parentProject && (options.lint === true || options.lint === 'styelint') && await tasks.stylelint(app, options, project, templates);
+            !parentProject && (options.lint === true || options.lint === 'stylelint') && await tasks.stylelint(app, options, project, templates);
             options.license && await tasks.license(app, options, project, templates);
             options.readme && await tasks.readme(app, options, project, templates);
         });
