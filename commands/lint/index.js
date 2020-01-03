@@ -51,19 +51,18 @@ module.exports = (program) => {
                 .filter((entry) => isStyleFile(entry.path))
                 .map((entry) => entry.path);
 
+            let exitCode = 0;
             if (jsFiles.length) {
-                if (await eslint(app, project, {
-                    fix: options.fix,
-                }, jsFiles)) {
-                    throw new Error('ESLint found some errors.');
+                const report = await eslint(app, project, { fix: options.fix }, jsFiles);
+                if (report) {
+                    exitCode = 1;
                 }
             }
 
             if (styleFiles.length) {
-                if (await stylelint(app, project, {
-                    fix: options.fix,
-                }, styleFiles)) {
-                    throw new Error('Stylelint found some errors');
+                const report = await stylelint(app, project, { fix: options.fix }, styleFiles);
+                if (report) {
+                    exitCode = 1;
                 }
             }
 
@@ -94,6 +93,8 @@ module.exports = (program) => {
                     }, 200);
                 });
             }
+
+            return exitCode;
         });
 };
 
