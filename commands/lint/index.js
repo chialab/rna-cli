@@ -92,6 +92,12 @@ module.exports = (program) => {
                         reLint(true);
                     }, 200);
                 });
+
+                return;
+            }
+
+            if (exitCode === 0) {
+                app.logger.success('everything is fine');
             }
 
             return exitCode;

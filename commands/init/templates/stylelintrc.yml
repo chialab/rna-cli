@@ -221,6 +221,11 @@ rules:
       - -webkit-overflow-scrolling
       - -webkit-tap-highlight-color
       - -webkit-line-clamp
+      - composes
+      - compose-with
+      ignoreSelectors:
+      - :export
+      - /^:import/
       severity: error
 
   # https://stylelint.io/user-guide/rules/shorthand-property-no-redundant-values
@@ -502,6 +507,11 @@ rules:
     - true
     - ignorePseudoClasses:
       - focus-visible
+      - export
+      - import
+      - global
+      - local
+      - external
       severity: error
 
   # https://stylelint.io/user-guide/rules/selector-pseudo-element-no-unknown
@@ -824,6 +834,7 @@ rules:
       - include
       - extend
       - each
+      - value
       severity: error
 
   # https://stylelint.io/user-guide/rules/at-rule-no-vendor-prefix

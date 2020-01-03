@@ -24,6 +24,9 @@ module.exports = async function stylelintTask(app, options, project, templates) 
     // "Append" configuration to `.eslintignore`.
     configurator(stylelintIgnore, ignoreTemplate.read(), '# RNA');
 
-    await manager.dev('stylelint', 'stylelint-order');
+    await manager.dev(
+        'stylelint',
+        'stylelint-order'
+    );
     app.logger.success('.stylelintrc updated', stylelintConfig.localPath);
 };
