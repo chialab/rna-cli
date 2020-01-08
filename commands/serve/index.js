@@ -10,8 +10,8 @@ module.exports = (program) => {
         .description('Setup a server for your project.')
         .readme(`${__dirname}/README.md`)
         .option('<path>', 'The server directory.')
-        .option('[--port]', 'The server port.')
         .option('[--watch]', 'Should watch server directory.')
+        .option('[--port]', 'The server port.')
         .option('[--tunnel]', 'Create a tunnel for the server.')
         .option('[--directory]', 'Should list directories.')
         .option('[--https]', 'Start a server using SSL.')
@@ -19,34 +19,34 @@ module.exports = (program) => {
         .action(async (app, options = {}) => {
             const { mix } = require('@chialab/proteins');
             const { Project } = require('../../lib/File');
-            const Server = require('../../lib/Servers/Server');
+            const { Base, Static, HTML5, Tunnel, LiveReload } = require('../../lib/Servers');
 
             const cwd = process.cwd();
             const project = new Project(cwd);
 
             // Load directory to be served.
-            let base;
+            let directory;
             if (options.arguments.length) {
-                base = project.directory(options.arguments[0]);
+                directory = project.directory(options.arguments[0]);
             } else {
                 let publicPath = project.directories.public;
                 if (publicPath) {
-                    base = publicPath;
+                    directory = publicPath;
                 } else {
-                    base = project;
+                    directory = project;
                 }
             }
 
-            const LiveReloadServer = mix(Server).with(...[
-                options.watch && require('../../lib/Servers/LiveReload'),
-                require('../../lib/Servers/Static'),
-                require('../../lib/Servers/Html5'),
-                options.tunnel && require('../../lib/Servers/Tunnel'),
-            ].filter(Boolean));
+            const mixins = [
+                options.watch && LiveReload,
+                Static,
+                HTML5,
+                options.tunnel && Tunnel,
+            ].filter(Boolean);
+            const Server = mix(Base).with(...mixins);
 
-            // Load configuration.
-            const config = {
-                base: base.path,
+            const server = new Server({
+                base: directory.path,
                 port: options.port,
                 directory: options.directory === true,
                 static: [
@@ -55,28 +55,23 @@ module.exports = (program) => {
                         dir: 'node_modules',
                     },
                 ],
-                tunnel: options.tunnel,
-                compress: options.compress,
-            };
-
-            if (options.https === true) {
-                config.https = {
+                https: options.https ? {
                     key: app.store.file('https/https.key').path,
                     cert: app.store.file('https/https.pem').path,
-                };
-            }
-
-            const server = new LiveReloadServer(config);
+                } : false,
+                tunnel: options.tunnel,
+                compress: options.compress,
+            });
 
             await server.listen();
 
             if (options.watch) {
                 // Configure watch.
-                base.watch({
+                directory.watch({
                     ignore: [/\.git/, /\.map$/],
                 }, (eventType, file) => {
                     // File updated: notify BrowserSync so that it can be reloaded.
-                    server.reload(base.relative(file));
+                    server.reload(directory.relative(file));
                     if (eventType === 'unlink') {
                         app.logger.info(`${file.path} removed`);
                     } else {

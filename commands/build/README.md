@@ -16,13 +16,13 @@ rna build <input> [...options]
 
 ### Options
 
-* `--output <file|dir>` Specify the output file or directory for the build.
+* `--watch` Watch sources and rebuild on files changes.
+* `--output <file|directory>` Specify the output file or directory for the build.
 * `--targets` Set specific targets for the build using a [Browserslist](https://github.com/browserslist/browserslist). This query is used by Babel and PostCSS to transpile JavaScript and CSS files in order to be compatible with the specified browsers. Use `--no-targets` to prevent code transpiling.
 * `--name` For JavaScript builds, you can specify the name of the global variable to use for the bundle.
 * `--format` Specify the format of the JavaScript bundle. Available formats are `es`, `umd`, `iife` and `cjs`.
 * `--bundle` Should bundle dependencies along the source files.
 * `--production` Minify the output of the JavaScript and CSS bundles.
-* `--watch` Watch sources and rebuild on files changes.
 * `--no-map` Do not produce source map.
 * `--no-lint` Do not lint files before build.
 * `--jsx.pragma` The JSX pragma to use.
@@ -30,6 +30,11 @@ rna build <input> [...options]
 * `--jsx.module` The module to auto import for JSX pragma.
 * `--typings [file]` Generate typescript declarations.
 * `--analyze` Print analytic report for script size.
+* `--serve <directory>` Run a Web server with livereload.
+* `--port` The Web server port to listen (default 3000).
+* `--tunnel` Create a tunnel with localtunnel.
+* `--directory` Enable directory mode for file system navigation.
+* `--https` Should start the server using HTTPS.
 
 ### See also
 

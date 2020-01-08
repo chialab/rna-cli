@@ -11,13 +11,13 @@ module.exports = (program) => {
         .readme(`${__dirname}/README.md`)
         .option('<file>', 'The file to build.')
         .option('<package1> <package2> <package3>', 'The packages to build.')
-        .option('--output <file|dir>', 'The destination file.')
+        .option('--output <file|directory>', 'The destination file.')
+        .option('[--watch]', 'Watch sources and rebuild on files changes.')
         .option('[--targets]', 'Set specific targets for the build using a [Browserslist](https://github.com/browserslist/browserslist). This query is used by Babel and PostCSS to transpile JavaScript and CSS files in order to be compatible with the specified browsers. Use `--no-targets` to prevent code transpiling.')
         .option('[--name]', 'For JavaScript builds, you can specify the name of the global variable to use for the bundle.')
         .option('[--format]', 'Specify the format of the JavaScript bundle. Available formats are `es`, `umd`, `iife` and `cjs`.')
         .option('[--bundle]', 'Should bundle dependencies along the source files.')
-        .option('[--production]', 'Minify script.')
-        .option('[--watch]', 'Watch sources and rebuild on files changes.')
+        .option('[--production]', 'Prepare output for production env.')
         .option('[--no-map]', 'Do not produce source map.')
         .option('[--no-lint]', 'Do not lint files before build.')
         .option('[--no-cache]', 'Should not cache global dependencies for memory optimizations.')
@@ -27,6 +27,12 @@ module.exports = (program) => {
         .option('[--jsx.module]', 'The module to auto import for JSX pragma.')
         .option('[--typings [file]', 'Generate typescript declarations.')
         .option('[--analyze]', 'Print analytic report for script size.')
+        .option('[--serve]', 'Should serve the output folder with livereload.')
+        .option('[--port]', 'The server port.')
+        .option('[--tunnel]', 'Create a tunnel for the server.')
+        .option('[--directory]', 'Should list directories.')
+        .option('[--https]', 'Start a server using SSL.')
+        .option('[--compress]', 'Activate gzip compression on static files.')
         .action(async (app, options = {}) => {
             const path = require('path');
             const Targets = require('../../lib/Targets');
@@ -312,6 +318,14 @@ module.exports = (program) => {
                     }, 200);
                 });
             }
+
+            if (options.watch && options.serve) {
+                app.exec('serve', {
+                    ...options,
+                    arguments: typeof options.serve === 'string' ? [options.serve] : options.arguments,
+                });
+            }
+
             // resolve build task with the list of generated manifests.
             return bundles;
         });

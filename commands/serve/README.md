@@ -6,8 +6,8 @@ In order to correctly use HTTPS you should place a valid SSL `https.pem` and `ht
 
 ### Options
 
-* `--port` The web server port to listen (default 3000).
 * `--watch` Enable livereload of JavaScript and CSS files.
+* `--port` The web server port to listen (default 3000).
 * `--tunnel` Create a tunnel with localtunnel.
 * `--directory` Enable directory mode for file system navigation.
 * `--https` Should start the server using HTTPS.
