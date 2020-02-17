@@ -135,7 +135,7 @@ module.exports = (program) => {
                     if (eventType === 'unlink') {
                         app.logger.info(`${file.path} removed`);
                     } else {
-                        app.logger.info(`${file.localPath} changed`);
+                        app.logger.info(`${project.relative(file)} changed`);
                     }
 
                     collectedFiles.push(file);

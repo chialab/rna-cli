@@ -60,14 +60,14 @@ module.exports = (program) => {
                     if (!output.extname) {
                         output = project.directory(options.output).file(`${input.basename}.md`);
                     }
-                    await generate(app, input, output, options);
+                    await generate(app, project, input, output, options);
                 } else {
                     // process file
                     let output = project.file(options.output);
                     if (!output.extname) {
                         output = project.directory(options.output).file(`${entry.basename}.md`);
                     }
-                    await generate(app, entry, output, options);
+                    await generate(app, project, entry, output, options);
                 }
             }
         });
@@ -77,20 +77,21 @@ module.exports = (program) => {
  * Generate the API reference file.
  *
  * @param {CLI} app The CLI intance.
+ * @param {Project} project The current project.
  * @param {Entry} input An input code file.
  * @param {Entry} output The output file name.
  * @param {Object} options Template options.
  * @return {Promise}
  */
-async function generate(app, input, output, options) {
-    app.logger.play(`generating API references... (${output.localPath})`);
+async function generate(app, project, input, output, options) {
+    app.logger.play(`generating API references... (${project.relative(output)})`);
     // start the `documentation` task.
     try {
         const sourceFile = bundle(input.path);
         const template = templates.markdown;
         template(sourceFile, Object.assign({}, options, { out: output.path }));
         app.logger.stop();
-        app.logger.success('documentation created', output.localPath);
+        app.logger.success('documentation created', project.relative(output));
     } catch(err) {
         // ops.
         app.logger.stop();

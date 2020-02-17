@@ -28,5 +28,5 @@ module.exports = async function stylelintTask(app, options, project, templates) 
         'stylelint',
         'stylelint-order'
     );
-    app.logger.success('.stylelintrc updated', stylelintConfig.localPath);
+    app.logger.success('.stylelintrc updated', project.relative(stylelintConfig));
 };

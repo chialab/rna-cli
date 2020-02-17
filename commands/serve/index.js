@@ -75,7 +75,7 @@ module.exports = (program) => {
                     if (eventType === 'unlink') {
                         app.logger.info(`${file.path} removed`);
                     } else {
-                        app.logger.info(`${file.localPath} injected`);
+                        app.logger.info(`${project.relative(file)} injected`);
                     }
                 });
             }

@@ -35,7 +35,7 @@ module.exports = (program) => {
             let htmlBundler;
             manifestBundler.on(WebManifestBundler.BUILD_START, (input, code, child) => {
                 if (!child) {
-                    app.logger.play('generating webmanifest...', input.localPath);
+                    app.logger.play('generating webmanifest...', project.relative(input));
                 }
             });
             manifestBundler.on(WebManifestBundler.BUILD_END, (input, code, child) => {
@@ -81,7 +81,7 @@ module.exports = (program) => {
                 htmlBundler = new HTMLBundler();
                 htmlBundler.on(HTMLBundler.BUILD_START, (input, code, child) => {
                     if (!child) {
-                        app.logger.play('generating html...', input.localPath);
+                        app.logger.play('generating html...', project.relative(input));
                     }
                 });
                 htmlBundler.on(HTMLBundler.BUILD_END, (input, code, child) => {
@@ -121,7 +121,7 @@ module.exports = (program) => {
             const result = await manifestBundler.build();
             const outputFile = await manifestBundler.write();
             const { size, zipped } = outputFile.size;
-            app.logger.info(outputFile.localPath, `${size}, ${zipped} zipped`);
+            app.logger.info(project.relative(outputFile), `${size}, ${zipped} zipped`);
 
             if (htmlBundler) {
                 htmlOptions.webmanifest = manifestOptions.output;
@@ -129,7 +129,7 @@ module.exports = (program) => {
                 await htmlBundler.build();
                 const outputFile = await htmlBundler.write();
                 const { size, zipped } = outputFile.size;
-                app.logger.info(outputFile.localPath, `${size}, ${zipped} zipped`);
+                app.logger.info(project.relative(outputFile), `${size}, ${zipped} zipped`);
             }
 
             return result;

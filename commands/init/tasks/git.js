@@ -45,5 +45,5 @@ module.exports = async function gitTask(app, options, project, templates) {
     // "Append" configuration to `.gitignore`.
     configurator(gitIgnore, ignoreTemplate.read(), '# RNA');
 
-    app.logger.success('git project updated', project.localPath);
+    app.logger.success('git project updated', project.relative(project));
 };

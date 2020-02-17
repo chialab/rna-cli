@@ -16,5 +16,5 @@ module.exports = (app, options, project, templates) => {
     // "Append" configuration to `.editorconfig`.
     configurator(editorConfig, template.read(), '# RNA');
 
-    app.logger.success('.editorconfig updated', editorConfig.localPath);
+    app.logger.success('.editorconfig updated', project.relative(editorConfig));
 };

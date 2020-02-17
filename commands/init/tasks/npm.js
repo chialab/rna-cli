@@ -254,5 +254,5 @@ module.exports = async function npmTask(app, options, project, templates) {
         }
     }
 
-    app.logger.success('package.json updated', project.localPath);
+    app.logger.success('package.json updated');
 };
