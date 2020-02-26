@@ -2627,6 +2627,13 @@ babel-plugin-dynamic-import-node@^2.3.0:
   dependencies:
     object.assign "^4.1.0"
 
+babel-plugin-htm@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.npmjs.org/babel-plugin-htm/-/babel-plugin-htm-3.0.0.tgz#74f6688df5887066383ab1502edf51297ba9b114"
+  integrity sha512-liW2CNTK/6p1fdySX0b/wfc+7sZqF2iO3NLi9ylU6p5+SSk/0qs5M6UOUQ5r4RaC/nYgbM4XlAJF8VLJjX13OQ==
+  dependencies:
+    htm "^3.0.0"
+
 babel-plugin-istanbul@^6.0.0:
   version "6.0.0"
   resolved "https://registry.npmjs.org/babel-plugin-istanbul/-/babel-plugin-istanbul-6.0.0.tgz#e159ccdc9af95e0b570c75b4573b7c34d671d765"
@@ -5425,6 +5432,11 @@ hsla-regex@^1.0.0:
   version "1.0.0"
   resolved "https://registry.npmjs.org/hsla-regex/-/hsla-regex-1.0.0.tgz#c1ce7a3168c8c6614033a4b5f7877f3b225f9c38"
   integrity sha1-wc56MWjIxmFAM6S194d/OyJfnDg=
+
+htm@^3.0.0:
+  version "3.0.3"
+  resolved "https://registry.npmjs.org/htm/-/htm-3.0.3.tgz#376163975363b3101dc9154046b1200f87790fcc"
+  integrity sha512-+LZu7FSZJNo/mGhF5zOgyLdcYTQ8brOqwJFXwP/F/Q9IyvBp3HcYT1tk5A6rf67NEW0VEV+2Y8O4pMGmBIci/w==
 
 html-comment-regex@^1.1.0:
   version "1.1.2"
