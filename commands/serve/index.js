@@ -76,6 +76,7 @@ module.exports = (program) => {
                         app.logger.info(`${file.path} removed`);
                     } else {
                         app.logger.info(`${project.relative(file)} injected`);
+                        app.logger.newline();
                     }
                 });
             }

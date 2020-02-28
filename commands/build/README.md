@@ -30,6 +30,7 @@ rna build <input> [...options]
 * `--jsx.module` The module to auto import for JSX pragma.
 * `--typings [file]` Generate typescript declarations.
 * `--analyze` Print analytic report for script size.
+* `--link <package1,package2|pattern>` Symlinked dependencies to build along the main bundle.
 * `--serve <directory>` Run a Web server with livereload.
 * `--port` The Web server port to listen (default 3000).
 * `--tunnel` Create a tunnel with localtunnel.

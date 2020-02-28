@@ -27,6 +27,7 @@ module.exports = (program) => {
         .option('[--jsx.module]', 'The module to auto import for JSX pragma.')
         .option('[--typings [file]', 'Generate typescript declarations.')
         .option('[--analyze]', 'Print analytic report for script size.')
+        .option('[--link] <package1,package2|pattern>', 'Symlinked dependencies to build along the main bundle.')
         .option('[--serve]', 'Should serve the output folder with livereload.')
         .option('[--port]', 'The server port.')
         .option('[--tunnel]', 'Create a tunnel for the server.')
@@ -81,6 +82,16 @@ module.exports = (program) => {
 
             if (!entries.length) {
                 throw new Error('missing files to build');
+            }
+
+            if (options.link) {
+                const linkedFilter = options.link.split(',').map((pattern) => new RegExp(pattern.replace(/\//, '\\/')));
+                const linked = project.getLinkedDependencies()
+                    .filter((pkg) =>
+                        linkedFilter.some((regex) => pkg.get('name').match(regex))
+                    );
+
+                entries.unshift(...linked);
             }
 
             const bundles = [];
