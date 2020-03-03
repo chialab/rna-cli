@@ -99,6 +99,9 @@ module.exports = (program) => {
                     return results;
                 };
                 const { list } = Project.sort(filterLinkedDependencies(project));
+                list.forEach((pkg) => {
+                    pkg.linked = true;
+                });
                 entries.unshift(...list);
             }
 
@@ -151,15 +154,6 @@ module.exports = (program) => {
                                 bundles.push(bundler);
                             }
                         } else {
-                            if (mainFile) {
-                                bundler = await buildEntry(app, entry, libFile, mainFile, Object.assign({}, options, {
-                                    targets: options.targets || entry.browserslist, format: 'cjs',
-                                    typings: typingsFile || !!options.typings,
-                                }));
-                                if (bundler && options.watch) {
-                                    bundles.push(bundler);
-                                }
-                            }
                             if (moduleFile) {
                                 bundler = await buildEntry(app, entry, libFile, moduleFile, Object.assign({}, options, {
                                     targets: Targets.fromFeatures('module', 'async').toQuery(),
@@ -170,13 +164,26 @@ module.exports = (program) => {
                                     bundles.push(bundler);
                                 }
                             }
-                            if (browserFile) {
-                                bundler = await buildEntry(app, entry, libFile, browserFile, Object.assign({}, options, {
-                                    targets: options.targets || entry.browserslist,
-                                    format: 'umd', typings: typingsFile || !!options.typings,
-                                }));
-                                if (bundler && options.watch) {
-                                    bundles.push(bundler);
+                            if (!entry.linked || !moduleFile) {
+                                if (mainFile) {
+                                    bundler = await buildEntry(app, entry, libFile, mainFile, Object.assign({}, options, {
+                                        targets: options.targets || entry.browserslist, format: 'cjs',
+                                        typings: typingsFile || !!options.typings,
+                                    }));
+                                    if (bundler && options.watch) {
+                                        bundles.push(bundler);
+                                    }
+                                }
+                            }
+                            if (!entry.linked || !(mainFile || moduleFile)) {
+                                if (browserFile) {
+                                    bundler = await buildEntry(app, entry, libFile, browserFile, Object.assign({}, options, {
+                                        targets: options.targets || entry.browserslist,
+                                        format: 'umd', typings: typingsFile || !!options.typings,
+                                    }));
+                                    if (bundler && options.watch) {
+                                        bundles.push(bundler);
+                                    }
                                 }
                             }
                             const distDir = entry.directories.dist || entry.directories.lib;
