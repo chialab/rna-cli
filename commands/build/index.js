@@ -86,12 +86,20 @@ module.exports = (program) => {
 
             if (options.link) {
                 const linkedFilter = options.link.split(',').map((pattern) => new RegExp(pattern.replace(/\//, '\\/')));
-                const linked = project.getLinkedDependencies()
-                    .filter((pkg) =>
-                        linkedFilter.some((regex) => pkg.get('name').match(regex))
-                    );
-
-                entries.unshift(...linked);
+                const filterLinkedDependencies = (project, results = []) => {
+                    const dependencies = project.getLinkedDependencies();
+                    dependencies
+                        .filter((pkg) => linkedFilter.some((regex) => pkg.get('name').match(regex)))
+                        .forEach((pkg) => {
+                            if (!results.find((p) => p.get('name') === pkg.get('name'))) {
+                                results.push(pkg);
+                                filterLinkedDependencies(pkg, results);
+                            }
+                        });
+                    return results;
+                };
+                const { list } = Project.sort(filterLinkedDependencies(project));
+                entries.unshift(...list);
             }
 
             const bundles = [];
@@ -195,12 +203,14 @@ module.exports = (program) => {
                             throw new Error(`missing "input" option for project ${entry.path}`);
                         }
                     } else if (moduleFile || styleFile) {
-                        if (!output && mainFile) {
-                            output = project.directory(mainFile.dirname);
-                        } else {
-                            throw new Error('missing "output" option');
-                        }
                         // retrocompatibility with RNA 2.0
+                        if (!output) {
+                            if (mainFile) {
+                                output = project.directory(mainFile.dirname);
+                            } else {
+                                throw new Error('missing "output" option');
+                            }
+                        }
 
                         if (moduleFile) {
                             const moduleOutput = mainFile ? mainFile : output;
