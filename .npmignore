@@ -2,3 +2,5 @@
 *.tgz
 yarn-error.log
 Dockerfile
+!.eslintrc.yml
+!.stylelintrc.yml
