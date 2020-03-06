@@ -16,6 +16,7 @@ module.exports = (program) => {
         .option('[--coverage]', 'Generate a code coverage report.')
         .option('[--concurrency]', 'Set concurrency level for tests.')
         .option('[--context]', 'Use a specific HTML document for tests.')
+        .option('[--headless]', 'Run browsers in headless mode.')
         .option('[--timeout]', 'Set the tests timeout.')
         .option('[--watch]', 'Watch test files.')
         .action(async (app, options = {}) => {
