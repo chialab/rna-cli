@@ -10,6 +10,8 @@ Run unit and e2e tests in Node and Browser environments, using [Mocha](https://m
 * `--coverage` Generate a code coverage report.
 * `--concurrency` Set concurrency level for tests.
 * `--context` Use a specific HTML document for tests.
+* `--headless` Run browsers in headless mode.
+* `--loglevel` Log level for tests. Valid values are DISABLE, INFO, DEBUG, WARN, ERROR.
 * `--timeout` Set the tests timeout.
 * `--watch` Watch test files.
 

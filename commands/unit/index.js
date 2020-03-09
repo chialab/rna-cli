@@ -17,6 +17,7 @@ module.exports = (program) => {
         .option('[--concurrency]', 'Set concurrency level for tests.')
         .option('[--context]', 'Use a specific HTML document for tests.')
         .option('[--headless]', 'Run browsers in headless mode.')
+        .option('[--loglevel]', 'Log level for tests. Valid values are DISABLE, INFO, DEBUG, WARN, ERROR.')
         .option('[--timeout]', 'Set the tests timeout.')
         .option('[--watch]', 'Watch test files.')
         .action(async (app, options = {}) => {
@@ -205,7 +206,6 @@ async function startRunners(app, runners, files) {
  * @return {Promise<TestRunner[]>}
  */
 async function runTests(app, project, files, options, environments = []) {
-
     let runners = [];
     // Test built sources.
     for (let i = 0; i < environments.length; i++) {
