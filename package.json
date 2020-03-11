@@ -84,7 +84,7 @@
     "karma-opera-launcher": "^1.0.0",
     "karma-source-map-support": "^1.4.0",
     "lerna": "^3.20.2",
-    "localtunnel": "^1.9.2",
+    "localtunnel": "^2.0.0",
     "lodash": "^4.17.15",
     "magic-string": "^0.25.6",
     "marked": "^0.7.0",
