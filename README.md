@@ -51,3 +51,9 @@ $ docker run chialab/rna-cli rna --version
 * [**publish**](./commands/publish) - Publish to NPM.
 * [**documentate**](./commands/documentate) - Generate API references.
 * [**config**](./commands/config) - Set RNA cli configuration.
+
+---
+
+## License
+
+RNA is released under the [MIT](https://github.com/chialab/rna-cli/blob/master/LICENSE) license.
