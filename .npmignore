@@ -5,3 +5,4 @@ Dockerfile
 !.eslintrc.yml
 !.stylelintrc.yml
 logo.svg
+docs
