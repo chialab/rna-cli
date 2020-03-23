@@ -215,7 +215,6 @@ module.exports = async function npmTask(app, options, project, templates) {
         };
         if (project.get('directories.public')) {
             scripts.watch += ' + serve --watch';
-            scripts.start += ' + serve --watch';
             scripts.serve = 'rna serve';
         }
         project.set('scripts', scripts);
