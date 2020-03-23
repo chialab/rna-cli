@@ -1,4 +1,4 @@
-Setup a development server with JavaScript and CSS livereload, external tunnel through [localtunnel](https://github.com/localtunnel/localtunnel) and HTTPS support.
+Setup a development server with JavaScript and CSS livereload, external tunnel through [ngrok](https://ngrok.com/) and HTTPS support.
 
 For example, you can setup a build step and livereload server for your application development.
 
@@ -8,7 +8,7 @@ In order to correctly use HTTPS you should place a valid SSL `https.pem` and `ht
 
 * `--watch` Enable livereload of JavaScript and CSS files.
 * `--port` The web server port to listen (default 3000).
-* `--tunnel` Create a tunnel with localtunnel.
+* `--tunnel` Create a tunnel with ngrok.
 * `--directory` Enable directory mode for file system navigation.
 * `--https` Should start the server using HTTPS.
 
@@ -16,7 +16,7 @@ In order to correctly use HTTPS you should place a valid SSL `https.pem` and `ht
 ```sh
 # Serve your application.
 $ rna serve public/ --port 8080 --tunnel 'the-dark-knight'
-server started at http://dev.local:8080 / https://the-dark-knight.localtunnel.me
+server started at http://dev.local:8080 / https://the-dark-knight.ngrok.io
 
 # Start a development server with build
 $ rna build --watch + serve public/ --watch
