@@ -214,8 +214,8 @@ module.exports = async function npmTask(app, options, project, templates) {
             prepublish: 'yarn run build',
         };
         if (project.get('directories.public')) {
-            scripts.watch += ' + serve --watch';
-            scripts.serve = 'rna serve';
+            scripts.watch += ` --serve ${project.get('directories.public')}`;
+            scripts.serve = `rna serve ${project.get('directories.public')}`;
         }
         project.set('scripts', scripts);
     }

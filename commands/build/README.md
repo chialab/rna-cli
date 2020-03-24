@@ -33,7 +33,7 @@ rna build <input> [...options]
 * `--link <package1,package2|pattern>` Symlinked dependencies to build along the main bundle.
 * `--serve <directory>` Run a Web server with livereload.
 * `--port` The Web server port to listen (default 3000).
-* `--tunnel` Create a tunnel with ngrok.
+* `--tunnel [subdomain]` Create a tunnel with localtunnel.
 * `--directory` Enable directory mode for file system navigation.
 * `--https` Should start the server using HTTPS.
 
