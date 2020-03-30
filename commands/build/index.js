@@ -89,6 +89,7 @@ module.exports = (program) => {
                 const filterLinkedDependencies = (project, results = []) => {
                     const dependencies = project.getLinkedDependencies();
                     dependencies
+                        .concat(project.workspaces || [])
                         .filter((pkg) => linkedFilter.some((regex) => pkg.get('name').match(regex)))
                         .forEach((pkg) => {
                             if (!results.find((p) => p.get('name') === pkg.get('name'))) {
@@ -145,7 +146,7 @@ module.exports = (program) => {
 
                     if (libFile) {
                         let bundler;
-                        if (output) {
+                        if (output && !entry.linked) {
                             bundler = await buildEntry(app, entry, libFile, output, Object.assign({}, options, {
                                 targets: options.targets || entry.browserslist,
                                 typings: typingsFile || !!options.typings,
