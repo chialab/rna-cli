@@ -484,6 +484,7 @@ async function buildEntry(app, project, entry, output, options) {
                 module: options['jsx.module'],
                 pragma: options['jsx.pragma'],
                 pragmaFrag: options['jsx.pragmaFrag'],
+                pragmaDefault: options['jsx.pragmaDefault'],
             },
         });
         await bundler.build();
@@ -621,6 +622,7 @@ async function buildEntry(app, project, entry, output, options) {
                 module: options['jsx.module'],
                 pragma: options['jsx.pragma'],
                 pragmaFrag: options['jsx.pragmaFrag'],
+                pragmaDefault: options['jsx.pragmaDefault'],
             },
         });
         await bundler.build();
