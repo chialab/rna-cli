@@ -122,15 +122,6 @@ module.exports = (program) => {
                     const browserFile = entry.get('browser') && entry.file(entry.get('browser'));
                     const styleFile = entry.get('style') && entry.file(entry.get('style'));
 
-                    let typingsFile;
-                    if (typeof options.typings === 'string') {
-                        typingsFile = entry.file(options.typings);
-                    } else if (options.typings !== false) {
-                        if (entry.get('types')) {
-                            typingsFile = entry.file(entry.get('types'));
-                        }
-                    }
-
                     let output;
                     if (options.output) {
                         if (outputRelative) {
@@ -149,7 +140,7 @@ module.exports = (program) => {
                         if (output && !entry.linked) {
                             bundler = await buildEntry(app, entry, libFile, output, Object.assign({}, options, {
                                 targets: options.targets || entry.browserslist,
-                                typings: typingsFile || !!options.typings,
+                                typings: options.typings === true,
                             }));
                             if (bundler && options.watch) {
                                 bundles.push(bundler);
@@ -159,7 +150,7 @@ module.exports = (program) => {
                                 bundler = await buildEntry(app, entry, libFile, moduleFile, Object.assign({}, options, {
                                     targets: Targets.fromFeatures('module', 'async').toQuery(),
                                     format: 'esm', lint: !mainFile && options.lint,
-                                    typings: !mainFile && (typingsFile || !!options.typings),
+                                    typings: options.typings === true,
                                 }));
                                 if (bundler && options.watch) {
                                     bundles.push(bundler);
@@ -169,7 +160,7 @@ module.exports = (program) => {
                                 if (mainFile) {
                                     bundler = await buildEntry(app, entry, libFile, mainFile, Object.assign({}, options, {
                                         targets: options.targets || entry.browserslist, format: 'cjs',
-                                        typings: typingsFile || !!options.typings,
+                                        typings: options.typings === true,
                                     }));
                                     if (bundler && options.watch) {
                                         bundles.push(bundler);
@@ -180,7 +171,8 @@ module.exports = (program) => {
                                 if (browserFile) {
                                     bundler = await buildEntry(app, entry, libFile, browserFile, Object.assign({}, options, {
                                         targets: options.targets || entry.browserslist,
-                                        format: 'umd', typings: typingsFile || !!options.typings,
+                                        format: 'umd',
+                                        typings: options.typings === true,
                                     }));
                                     if (bundler && options.watch) {
                                         bundles.push(bundler);
@@ -224,7 +216,7 @@ module.exports = (program) => {
                             const moduleOutput = mainFile ? mainFile : output;
                             const bundler = await buildEntry(app, entry, moduleFile, moduleOutput, Object.assign({ bundle: true }, options, {
                                 targets: options.targets || entry.browserslist,
-                                typings: typingsFile || !!options.typings,
+                                typings: options.typings === true,
                             }));
                             if (bundler && options.watch) {
                                 // collect the generated Bundle.
@@ -262,18 +254,9 @@ module.exports = (program) => {
                         throw new Error('missing `output` option');
                     }
 
-                    let typingsFile;
-                    if (typeof options.typings === 'string') {
-                        typingsFile = project.file(options.typings);
-                    } else if (options.typings) {
-                        if (entry.get('types')) {
-                            typingsFile = project.file(entry.get('types'));
-                        }
-                    }
-
                     let bundler = await buildEntry(app, project, entry, output, Object.assign({}, options, {
                         targets: options.targets || project.browserslist,
-                        typings: typingsFile || !!options.typings,
+                        typings: options.typings === true,
                     }));
                     if (bundler && options.watch) {
                         // collect the generated Bundle.
