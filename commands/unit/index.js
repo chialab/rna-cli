@@ -9,16 +9,18 @@ module.exports = (program) => {
         .command('unit')
         .description('Run project unit tests.')
         .readme(`${__dirname}/README.md`)
-        .option('[--targets]', 'A supported browserslist query.')
+        .option('[--targets <string>]', 'A supported browserslist query.')
         .option('[--node]', 'Run tests in node context.')
         .option('[--browser [browserName]]', 'Run tests in browser context.')
         .option('[--saucelabs]', 'Use SauceLabs as browsers provider.')
         .option('[--coverage]', 'Generate a code coverage report.')
-        .option('[--concurrency]', 'Set concurrency level for tests.')
-        .option('[--context]', 'Use a specific HTML document for tests.')
+        .option('[--concurrency <number>]', 'Set concurrency level for tests.')
+        .option('[--context <path>]', 'Use a specific HTML document for tests.')
         .option('[--headless]', 'Run browsers in headless mode.')
-        .option('[--loglevel]', 'Log level for tests. Valid values are DISABLE, INFO, DEBUG, WARN, ERROR.')
-        .option('[--timeout]', 'Set the tests timeout.')
+        .option('[--loglevel <DISABLE|INFO|DEBUG|WARN|ERROR>]', 'Log level for tests.')
+        .option('[--prepare]', 'Prepare tests build but skip run.')
+        .option('[--run]', 'Skip tests build.')
+        .option('[--timeout <number>]', 'Set the tests timeout.')
         .option('[--watch]', 'Watch test files.')
         .action(async (app, options = {}) => {
             const { Project } = require('../../lib/File');
@@ -52,6 +54,16 @@ module.exports = (program) => {
                 // Set NODE_ENV environment variable.
                 app.logger.info('--------------------------\nsetting "test" environment\n--------------------------');
                 process.env.NODE_ENV = 'test';
+            }
+
+            if (options.prepare) {
+                delete options.run;
+                delete options.watch;
+                app.logger.warn('--prepare mode, tests will not run');
+            }
+            if (options.run) {
+                delete options.watch;
+                app.logger.warn('--run mode, skipping tests build');
             }
 
             // Load options.
@@ -126,7 +138,7 @@ module.exports = (program) => {
 
             const { runners, exitCode } = await runTests(app, project, files, options, taskEnvironments);
 
-            if (options.watch) {
+            if (options.watch && !options.prepare) {
                 const collectedFiles = [];
                 let timeout;
 
@@ -153,7 +165,7 @@ module.exports = (program) => {
                         }
 
                         try {
-                            await startRunners(app, runnersWithChanges, files);
+                            await startRunners(app, runnersWithChanges, files, !options.run);
                         } catch (err) {
                             if (err) {
                                 app.logger.error(err);
@@ -168,29 +180,36 @@ module.exports = (program) => {
         });
 };
 
-async function startRunners(app, runners, files) {
+async function startRunners(app, runners, files, prepare = true, run = true) {
     const coverageMap = require('istanbul-lib-coverage').createCoverageMap({});
     let finalExitCode = 0;
 
     for (let i = 0; i < runners.length; i++) {
         const runner = runners[i];
-        const { exitCode, coverage } = await runner.run(files);
-        if (coverage) {
-            coverageMap.merge(coverage);
+        if (prepare) {
+            await runner.build(files);
         }
-        if (exitCode !== 0) {
-            finalExitCode = exitCode;
+        if (run) {
+            const { exitCode, coverage } = await runner.run(run);
+            if (coverage) {
+                coverageMap.merge(coverage);
+            }
+            if (exitCode !== 0) {
+                finalExitCode = exitCode;
+            }
         }
     }
 
-    app.logger.newline();
-    const summary = coverageMap.getCoverageSummary();
-    if (summary.data &&
-        (summary.data.lines.pct !== 'Unknown' ||
-        summary.data.statements.pct !== 'Unknown' ||
-        summary.data.functions.pct !== 'Unknown' ||
-        summary.data.branches.pct !== 'Unknown')) {
-        printCoverageReport(app, summary);
+    if (run) {
+        app.logger.newline();
+        const summary = coverageMap.getCoverageSummary();
+        if (summary.data &&
+            (summary.data.lines.pct !== 'Unknown' ||
+                summary.data.statements.pct !== 'Unknown' ||
+                summary.data.functions.pct !== 'Unknown' ||
+                summary.data.branches.pct !== 'Unknown')) {
+            printCoverageReport(app, summary);
+        }
     }
 
     return { runners, coverage: coverageMap, exitCode: finalExitCode };
@@ -222,6 +241,9 @@ async function runTests(app, project, files, options, environments = []) {
             });
             runner.on(NodeTestRunner.PREPARE_END_EVENT, () => {
                 app.logger.stop();
+                if (options.prepare) {
+                    app.logger.success(`${runner.name} ready`);
+                }
             });
             runner.on(NodeTestRunner.STOP_EVENT, () => {
                 app.logger.stop();
@@ -236,6 +258,9 @@ async function runTests(app, project, files, options, environments = []) {
             });
             runner.on(BrowserTestRunner.PREPARE_END_EVENT, () => {
                 app.logger.stop();
+                if (options.prepare) {
+                    app.logger.success(`${runner.name} ready`);
+                }
             });
             runner.on(BrowserTestRunner.STOP_EVENT, () => {
                 app.logger.stop();
@@ -243,7 +268,7 @@ async function runTests(app, project, files, options, environments = []) {
         }
     }
 
-    return startRunners(app, runners, files);
+    return startRunners(app, runners, files, !options.run, !options.prepare);
 }
 
 function filterChangedRunners(runners, files) {
