@@ -6592,6 +6592,13 @@ karma-coverage-istanbul-reporter@^2.1.1:
     istanbul-api "^2.1.6"
     minimatch "^3.0.4"
 
+karma-detect-browsers@^2.3.3:
+  version "2.3.3"
+  resolved "https://registry.npmjs.org/karma-detect-browsers/-/karma-detect-browsers-2.3.3.tgz#e0d8f9c1a1b0cc58d8668c245441eaf9d832c6ee"
+  integrity sha512-ltFVyA3ijThv9l9TQ+TKnccoMk6YAWn8OMaccL+n8pO2LGwMOcy6tUWy3Mnv9If29jqvVHDCWntj7wBQpPtv7Q==
+  dependencies:
+    which "^1.2.4"
+
 karma-firefox-launcher@^1.3.0:
   version "1.3.0"
   resolved "https://registry.npmjs.org/karma-firefox-launcher/-/karma-firefox-launcher-1.3.0.tgz#ebcbb1d1ddfada6be900eb8fae25bcf2dcdc8171"
@@ -11091,7 +11098,7 @@ which-module@^2.0.0:
   resolved "https://registry.npmjs.org/which-module/-/which-module-2.0.0.tgz#d9ef07dce77b9902b8a3a8fa4b31c3e3f7e6e87a"
   integrity sha1-2e8H3Od7mQK4o6j6SzHD4/fm6Ho=
 
-which@1.3.1, which@^1.2.1, which@^1.2.9, which@^1.3.1:
+which@1.3.1, which@^1.2.1, which@^1.2.4, which@^1.2.9, which@^1.3.1:
   version "1.3.1"
   resolved "https://registry.npmjs.org/which/-/which-1.3.1.tgz#a45043d54f5805316da8d62f9f50918d3da70b0a"
   integrity sha512-HxJdYWq1MTIQbJ3nw0cqssHoTNU267KlrDuGZ1WYlxDStUtKUhOaJmh112/TZmHxxUfuJqPXSOm7tDyas0OSIQ==
