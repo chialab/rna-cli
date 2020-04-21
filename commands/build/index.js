@@ -463,12 +463,12 @@ async function buildEntry(app, project, entry, output, options) {
             cache: options.cache !== false,
             analyze: options.analyze,
             typings: options.typings,
-            jsx: {
+            jsx: options.jsx !== false ? {
                 module: options['jsx.module'],
                 pragma: options['jsx.pragma'],
                 pragmaFrag: options['jsx.pragmaFrag'],
                 pragmaDefault: options['jsx.pragmaDefault'],
-            },
+            } : false,
         });
         await bundler.build();
         await bundler.write();
