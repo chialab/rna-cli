@@ -1,4 +1,4 @@
-FROM node
+FROM node:12
 
 COPY . /opt/rna
 RUN git -C /opt/rna clean -Xdf \
