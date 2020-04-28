@@ -80,7 +80,7 @@
     "karma-detect-browsers": "^2.3.3",
     "karma-firefox-launcher": "^1.3.0",
     "karma-ie-launcher": "^1.0.0",
-    "karma-mocha": "^1.3.0",
+    "karma-mocha": "^2.0.0",
     "karma-opera-launcher": "^1.0.0",
     "karma-source-map-support": "^1.4.0",
     "lerna": "^3.20.2",
