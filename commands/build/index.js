@@ -463,7 +463,7 @@ async function buildEntry(app, project, entry, output, options) {
             cache: options.cache !== false,
             analyze: options.analyze,
             typings: options.typings,
-            jsx: options.jsx !== false ? {
+            jsx: options.jsx != false ? {
                 module: options['jsx.module'],
                 pragma: options['jsx.pragma'],
                 pragmaFrag: options['jsx.pragmaFrag'],

@@ -136,6 +136,13 @@ module.exports = (program) => {
                 options.context = project.file(options.context);
             }
 
+            options.jsx = options.jsx != false ? {
+                module: options['jsx.module'],
+                pragma: options['jsx.pragma'],
+                pragmaFrag: options['jsx.pragmaFrag'],
+                pragmaDefault: options['jsx.pragmaDefault'],
+            } : false;
+
             const { runners, exitCode } = await runTests(app, project, files, options, taskEnvironments);
 
             if (options.watch && !options.prepare) {
