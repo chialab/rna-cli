@@ -5,7 +5,7 @@ Run unit and e2e tests in Node and Browser environments, using [Mocha](https://m
 ## Options
 * `--targets <string>` Set specific targets for the build using a [Browserslist](https://github.com/browserslist/browserslist). This query is used by Babel and postCSS to transpile JavaScript and CSS files in order to be compatible with the specified browsers. Use `--no-targets` to prevent code transpiling.
 * `--node` Run tests in node context.
-* `--browser [browserName]` Run tests in browser context. If no browser is specified, it runs on all browsers installed.
+* `--browser [browserName]` Run tests in browser context. If no browser is specified, it runs Chrome and Firefox.
 * `--saucelabs` Use SauceLabs as browsers provider.
 * `--coverage` Generate a code coverage report.
 * `--concurrency <number>` Set concurrency level for tests.
