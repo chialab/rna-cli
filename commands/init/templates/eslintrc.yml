@@ -1,5 +1,6 @@
 extends:
   - eslint:recommended
+  - plugin:jsx-a11y/recommended
 
 globals:
   globalThis: true
@@ -15,6 +16,7 @@ env:
 
 plugins:
   - babel
+  - jsx-a11y
 
 parser: babel-eslint
 
