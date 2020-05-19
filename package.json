@@ -115,7 +115,7 @@
     "stylelint": "^13.4.0",
     "stylelint-order": "^4.0.0",
     "systemjs": "^5.0.0",
-    "terser": "^4.6.11",
+    "terser": "^4.7.0",
     "tslib": "^2.0.0",
     "typescript": "^3.9.2",
     "workbox-build": "^4.3.1"
