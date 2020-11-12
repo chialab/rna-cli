@@ -22,7 +22,7 @@ module.exports = (program) => {
             const { Base, Static, HTML5, Tunnel, LiveReload } = require('../../lib/Servers');
 
             const cwd = process.cwd();
-            const project = new Project(cwd);
+            const project = await Project.init(cwd);
 
             // Load directory to be served.
             let directory;

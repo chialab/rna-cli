@@ -19,52 +19,54 @@ module.exports = async function directoriesTask(app, otpions, project, templates
     const mainFile = project.get('main') && project.file(project.get('main'));
 
     for (let dir in directories) {
-        directories[dir].ensure();
+        await directories[dir].ensure();
     }
 
     // Ensure path specified in `package.json` "main" key is present.
     if (publicDir) {
         // Using a simple HTML file as main entrypoint.
         let indexFile = srcDir.file('index.html');
-        if (!indexFile.exists()) {
-            let template = _.template(templates.file('index.html').read());
-            indexFile.write(template({
+        if (await indexFile.isNew()) {
+            let template = _.template(await templates.file('index.html').read());
+            await indexFile.write(template({
                 project,
             }));
-            if (!srcDir.file('index.js').exists()) {
-                srcDir.file('index.js').write('');
+            if (await srcDir.file('index.js').isNew()) {
+                await srcDir.file('index.js').write('');
             }
-            if (!srcDir.file('index.css').exists()) {
-                srcDir.file('index.css').write('');
+            if (await srcDir.file('index.css').isNew()) {
+                await srcDir.file('index.css').write('');
             }
         }
     }
 
     if (moduleFile) {
         // Ensure path specified in `package.json` "module" exists.
-        if (!moduleFile.exists()) {
-            moduleFile.write('');
+        if (await moduleFile.isNew()) {
+            await moduleFile.write('');
         }
     }
 
     if (mainFile) {
         // Ensure path specified in `package.json` "main" exists.
-        if (!mainFile.exists()) {
-            mainFile.write('');
+        if (await mainFile.isNew()) {
+            await mainFile.write('');
         }
     }
 
     if (styleFile) {
         // Ensure path specified in `package.json` "style" exists.
-        if (!styleFile.exists()) {
-            styleFile.write('');
+        if (await styleFile.isNew()) {
+            await styleFile.write('');
         }
     }
 
     if (project.get('workspaces')) {
         // Ensure paths listed as workspaces are present.
-        project.get('workspaces').forEach((ws) => {
-            project.directory(path.dirname(ws)).ensure();
-        });
+        await Promise.all(
+            project.get('workspaces').map((ws) =>
+                project.directory(path.dirname(ws)).ensure()
+            )
+        );
     }
 };

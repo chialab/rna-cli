@@ -23,14 +23,14 @@ module.exports = (program) => {
             const { Project } = require('../../lib/File');
 
             const cwd = process.cwd();
-            const project = new Project(cwd);
+            const project = await Project.init(cwd);
 
             const root = project.directory(options.arguments[0]);
             const output = options.output && project.file(options.output);
             const bundler = new ScriptBundler(app, project);
 
             await bundler.setup({
-                code: output.exists() ? output.read() : '',
+                code: await output.exists() ? await output.read() : '',
                 root,
                 output,
                 sw: {
@@ -47,7 +47,7 @@ module.exports = (program) => {
                     ignore: [/\.git/, /\.map$/],
                 }, async (eventType, file) => {
                     if (file.path === output.path) {
-                        const content = output.read();
+                        let content = await output.read();
                         if (!content.match(/\.(precache|precacheAndRoute)\(\[\]\)/)) {
                             return;
                         }

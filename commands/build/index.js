@@ -42,7 +42,7 @@ module.exports = (program) => {
             const Linter = require('../../lib/Linters/Linter');
 
             const cwd = process.cwd();
-            const project = new Project(cwd);
+            const project = await Project.init(cwd);
             const workspaces = project.workspaces;
 
             if (options.production && !Object.prototype.hasOwnProperty.call(process.env, 'NODE_ENV')) {
@@ -60,7 +60,7 @@ module.exports = (program) => {
                     return !!list.find((entry) => entry instanceof Project && entry.get('name') === project.get('name'));
                 };
 
-                entries = project.resolve(options.arguments)
+                entries = (await project.resolve(options.arguments))
                     .reduce((list, entry) => {
                         if (!(entry instanceof Project)) {
                             list.push(entry);
@@ -88,20 +88,25 @@ module.exports = (program) => {
 
             if (options.link) {
                 const linkedFilter = options.link.split(',').map((pattern) => new RegExp(pattern.replace(/\//, '\\/')));
-                const filterLinkedDependencies = (project, results = []) => {
-                    const dependencies = project.getLinkedDependencies();
-                    dependencies
-                        .concat(project.workspaces || [])
-                        .filter((pkg) => linkedFilter.some((regex) => pkg.get('name').match(regex)))
-                        .forEach((pkg) => {
-                            if (!results.find((p) => p.get('name') === pkg.get('name'))) {
-                                results.push(pkg);
-                                filterLinkedDependencies(pkg, results);
-                            }
-                        });
+                const filterLinkedDependencies = async (project, results = []) => {
+                    let dependencies = await project.getLinkedDependencies();
+                    await Promise.all(
+                        dependencies
+                            .concat(project.workspaces || [])
+                            .filter((pkg) => linkedFilter.some((regex) => pkg.get('name').match(regex)))
+                            .map(async (pkg) => {
+                                if (!results.find((p) => p.get('name') === pkg.get('name'))) {
+                                    results.push(pkg);
+                                    await filterLinkedDependencies(pkg, results);
+                                }
+                            })
+                    );
+
                     return results;
                 };
-                const { list } = Project.sort(filterLinkedDependencies(project));
+
+                let dependencies = await filterLinkedDependencies(project);
+                let { list } = Project.sort(dependencies);
                 list.forEach((pkg) => {
                     pkg.linked = true;
                 });
@@ -118,11 +123,11 @@ module.exports = (program) => {
                     app.logger.heading(`\nbuilding project ${entry.get('name')}:`);
                     app.logger.newline();
 
-                    const libFile = entry.get('lib') && entry.file(entry.get('lib'));
-                    const moduleFile = entry.get('module') && entry.file(entry.get('module'));
-                    const mainFile = entry.get('main') && entry.file(entry.get('main'));
-                    const browserFile = entry.get('browser') && entry.file(entry.get('browser'));
-                    const styleFile = entry.get('style') && entry.file(entry.get('style'));
+                    let libFile = entry.get('lib') && entry.file(entry.get('lib'));
+                    let moduleFile = entry.get('module') && entry.file(entry.get('module'));
+                    let mainFile = entry.get('main') && entry.file(entry.get('main'));
+                    let browserFile = entry.get('browser') && entry.file(entry.get('browser'));
+                    let styleFile = entry.get('style') && entry.file(entry.get('style'));
 
                     let output;
                     if (options.output) {
@@ -140,7 +145,7 @@ module.exports = (program) => {
                     if (libFile) {
                         if (output && !entry.linked) {
                             let bundler = buildEntry(app, entry, libFile, output, Object.assign({}, options, {
-                                targets: options.targets || entry.browserslist,
+                                targets: options.targets || await entry.browserslist(),
                                 typings: options.typings === true,
                             }));
                             bundlers.push(bundler);
@@ -156,7 +161,7 @@ module.exports = (program) => {
                             if (!entry.linked || !moduleFile) {
                                 if (mainFile) {
                                     let bundler = buildEntry(app, entry, libFile, mainFile, Object.assign({}, options, {
-                                        targets: options.targets || entry.browserslist, format: 'cjs',
+                                        targets: options.targets || await entry.browserslist(), format: 'cjs',
                                         typings: options.typings === true,
                                     }));
                                     bundlers.push(bundler);
@@ -165,7 +170,7 @@ module.exports = (program) => {
                             if (!entry.linked || !(mainFile || moduleFile)) {
                                 if (browserFile) {
                                     let bundler = buildEntry(app, entry, libFile, browserFile, Object.assign({}, options, {
-                                        targets: options.targets || entry.browserslist,
+                                        targets: options.targets || await entry.browserslist(),
                                         format: 'umd',
                                         typings: options.typings === true,
                                     }));
@@ -180,11 +185,11 @@ module.exports = (program) => {
                                     (browserFile && `${browserFile.basename}.css`) ||
                                     `${project.scopeName}.css`,
                                 );
-                                let bundler = buildEntry(app, entry, styleFile, styleOutput, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
+                                let bundler = buildEntry(app, entry, styleFile, styleOutput, Object.assign({}, options, { targets: options.targets || await entry.browserslist() }));
                                 bundlers.push(bundler);
                             }
                             if (libFile.extname === '.html' && (entry.directories.public || entry.directories.lib)) {
-                                let bundler = buildEntry(app, entry, libFile, entry.directories.public || entry.directories.lib, Object.assign({}, options, { targets: options.targets || entry.browserslist }));
+                                let bundler = buildEntry(app, entry, libFile, entry.directories.public || entry.directories.lib, Object.assign({}, options, { targets: options.targets || await entry.browserslist() }));
                                 bundlers.push(bundler);
                             }
                         }
@@ -204,7 +209,7 @@ module.exports = (program) => {
                         if (moduleFile) {
                             let moduleOutput = mainFile ? mainFile : output;
                             let bundler = buildEntry(app, entry, moduleFile, moduleOutput, Object.assign({ bundle: true }, options, {
-                                targets: options.targets || entry.browserslist,
+                                targets: options.targets || await entry.browserslist(),
                                 typings: options.typings === true,
                             }));
                             bundlers.push(bundler);
@@ -213,7 +218,7 @@ module.exports = (program) => {
                         if (styleFile) {
                             let styleOutput = mainFile ? mainFile.parent.file(`${mainFile.basename}.css`) : output;
                             let bundler = buildEntry(app, entry, styleFile, styleOutput, Object.assign({}, options, {
-                                targets: options.targets || entry.browserslist,
+                                targets: options.targets || await entry.browserslist(),
                             }));
                             bundlers.push(bundler);
                         }
@@ -235,7 +240,7 @@ module.exports = (program) => {
                     }
 
                     let bundler = buildEntry(app, project, entry, output, Object.assign({}, options, {
-                        targets: options.targets || project.browserslist,
+                        targets: options.targets || await project.browserslist(),
                         typings: options.typings === true,
                     }));
                     bundlers.push(bundler);
@@ -243,12 +248,11 @@ module.exports = (program) => {
             }
 
             bundlers.forEach((bundler) => {
-                let buildStarted, analysis;
+                let buildStarted = Date.now(), analysis;
 
                 bundler.on(Bundler.BUILD_START, (input, code, child) => {
                     if (!child) {
                         app.logger.play(`generating ${bundlerToType(bundler)}`, code ? 'inline' : project.relative(input));
-                        buildStarted = Date.now();
                     } else {
                         app.logger.play(`generating ${bundlerToType(bundler)} > ${bundlerToType(child)}`, code ? 'inline' : project.relative(input));
                     }
@@ -257,7 +261,7 @@ module.exports = (program) => {
                     app.logger.stop();
                     if (!child) {
                         app.logger.success(`${bundlerToType(bundler)} ready`, formatTime(Date.now() - buildStarted));
-                    } else if (buildStarted) {
+                    } else {
                         app.logger.play(`generating ${bundlerToType(bundler)}`, code ? 'inline' : project.relative(input));
                     }
                 });
@@ -312,7 +316,7 @@ module.exports = (program) => {
                 let timeout;
 
                 const reBuild = async (bundle, files) => {
-                    const status = statuses.get(bundle) || {};
+                    let status = statuses.get(bundle) || {};
                     if (files) {
                         status.invalidate = files;
                     }
@@ -320,7 +324,7 @@ module.exports = (program) => {
                     if (status.running && !status.invalidate || status.invalidate.length === 0) {
                         return;
                     }
-                    const invalidate = status.invalidate;
+                    let invalidate = status.invalidate;
                     status.invalidate = [];
                     status.running = true;
                     statuses.set(bundle, status);
@@ -421,9 +425,9 @@ function formatTime(millis) {
     return `${minutes}:${`${seconds}`.padStart(2, '0')}m`;
 }
 
-function logFile(app, project, output) {
+async function logFile(app, project, output) {
     if (output) {
-        const { size, zipped } = output.size;
+        let { size, zipped } = await output.size();
         app.logger.info(project.relative(output), `${size}, ${zipped} zipped`);
     }
 }

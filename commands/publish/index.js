@@ -21,7 +21,7 @@ module.exports = (program) => {
         .action(async (app, options) => {
             const { Project } = require('../../lib/File');
             const cwd = process.cwd();
-            const project = new Project(cwd);
+            const project = await Project.init(cwd);
 
             let version;
             if (options.arguments.length) {

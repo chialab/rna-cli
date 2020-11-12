@@ -29,8 +29,8 @@ module.exports = (program) => {
 
             await mkdir(cwd, { recursive: true });
 
-            const project = new Project(cwd);
-            const parentProject = project.parent;
+            const project = await Project.init(cwd);
+            const parentProject = await project.getParent();
             const templates = new Directory(__dirname).directory('templates');
 
             // active all flags if none is selected

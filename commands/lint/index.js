@@ -16,26 +16,32 @@ module.exports = (program) => {
             const { isJSFile, isStyleFile, Project } = require('../../lib/File');
 
             const cwd = process.cwd();
-            const project = new Project(cwd);
+            const project = await Project.init(cwd);
 
             let entries = [];
             if (options.arguments.length) {
-                entries = project.resolve(options.arguments);
+                entries = await project.resolve(options.arguments);
             } else {
                 const workspaces = project.workspaces;
                 if (workspaces) {
-                    workspaces.forEach((ws) => {
-                        let srcDirectory = ws.directories.src;
-                        if (srcDirectory && srcDirectory.exists()) {
-                            entries.push(...srcDirectory.resolve('**/*'));
-                        } else if (ws.directory('src').exists()) {
-                            entries.push(...ws.directory('src').resolve('**/*'));
-                        }
-                    });
+                    await Promise.all(
+                        workspaces.map(async (ws) => {
+                            let srcDirectory = ws.directories.src;
+                            if (srcDirectory && await srcDirectory.exists()) {
+                                let subEntries = await srcDirectory.resolve('**/*');
+                                entries.push(...subEntries);
+                            } else if (await ws.directory('src').exists()) {
+                                let subEntries = await ws.directory('src').resolve('**/*');
+                                entries.push(...subEntries);
+                            }
+                        })
+                    );
                 } else if (project.directories.src) {
-                    entries.push(...project.directories.src.resolve('**/*'));
-                } else if (project.directory('src').exists()) {
-                    entries.push(...project.directory('src').resolve('**/*'));
+                    let subEntries = await project.directories.src.resolve('**/*');
+                    entries.push(...subEntries);
+                } else if (await project.directory('src').exists()) {
+                    let subEntries = await project.directory('src').resolve('**/*');
+                    entries.push(...subEntries);
                 }
             }
 

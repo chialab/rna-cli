@@ -13,7 +13,7 @@ module.exports = (program) => {
         .action(async (app) => {
             const { Project } = require('../../lib/File');
             const cwd = process.cwd();
-            const project = new Project(cwd);
+            const project = await Project.init(cwd);
 
             // Run `yarn install`.
             await project.packageManager.install();

@@ -22,7 +22,7 @@ module.exports = (program) => {
             const WebManifestBundler = require('../../lib/Bundlers/WebManifestBundler');
 
             const cwd = process.cwd();
-            const project = new Project(cwd);
+            const project = await Project.init(cwd);
 
             let root;
             if (options.arguments.length) {
@@ -120,7 +120,7 @@ module.exports = (program) => {
             await manifestBundler.setup(manifestOptions);
             const result = await manifestBundler.build();
             const outputFile = await manifestBundler.write();
-            const { size, zipped } = outputFile.size;
+            const { size, zipped } = await outputFile.size();
             app.logger.info(project.relative(outputFile), `${size}, ${zipped} zipped`);
 
             if (htmlBundler) {
@@ -128,7 +128,7 @@ module.exports = (program) => {
                 await htmlBundler.setup(htmlOptions);
                 await htmlBundler.build();
                 const outputFile = await htmlBundler.write();
-                const { size, zipped } = outputFile.size;
+                const { size, zipped } = await outputFile.size();
                 app.logger.info(project.relative(outputFile), `${size}, ${zipped} zipped`);
             }
 

@@ -26,7 +26,7 @@ module.exports = (program) => {
             const { Project } = require('../../lib/File');
 
             const cwd = process.cwd();
-            const project = new Project(cwd);
+            const project = await Project.init(cwd);
 
             // check sauce values
             if (options.saucelabs) {
@@ -68,7 +68,7 @@ module.exports = (program) => {
 
             // Load options.
             options = Object.assign({}, options, {
-                targets: options.targets || project.browserslist,
+                targets: options.targets || await project.browserslist(),
                 root: project.directories.test || project.directory('test'),
                 project,
             });
@@ -77,21 +77,25 @@ module.exports = (program) => {
             let files = [];
 
             if (options.arguments.length) {
-                files = project.resolve(options.arguments)
-                    .reduce((list, file) => {
-                        if (!(file instanceof Project)) {
-                            list.push(file);
-                            return list;
-                        }
-                        let testDir = file.directories.test;
-                        if (!testDir) {
-                            testDir = file.directory('test');
-                        }
-                        if (testDir.exists()) {
-                            list.push(...testDir.resolve('**/*.js'));
-                        }
-                        return list;
-                    }, []);
+                files = [];
+
+                let list = await project.resolve(options.arguments);
+                for (let i = 0; i < list.length; i++) {
+                    let file = list[i];
+                    if (!(file instanceof Project)) {
+                        files.push(file);
+                        continue;
+                    }
+
+                    let testDir = file.directories.test;
+                    if (!testDir) {
+                        testDir = file.directory('test');
+                    }
+                    if (await testDir.exists()) {
+                        let subEntries = await testDir.resolve('**/*.js');
+                        list.push(...subEntries);
+                    }
+                }
             } else {
                 let testDirs = [];
                 let workspaces = project.workspaces;
@@ -110,13 +114,14 @@ module.exports = (program) => {
                     }
                     testDirs.push(testDir);
                 }
-                files = testDirs
-                    .reduce((list, directory) => {
-                        if (directory.exists()) {
-                            list.push(...directory.resolve('**/*.js'));
-                        }
-                        return list;
-                    }, []);
+                files = [];
+                for (let i = 0; i < testDirs.length; i++) {
+                    let directory = testDirs[i];
+                    if (await directory.exists()) {
+                        let subEntries = await directory.resolve('**/*.js');
+                        files.push(...subEntries);
+                    }
+                }
             }
 
             if (!files.length) {

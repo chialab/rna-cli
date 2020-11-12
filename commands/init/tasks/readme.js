@@ -19,31 +19,26 @@ module.exports = async function readmeTask(app, options, project, templates) {
     const workspacesPlaceholder = '<!-- RNA-WORKSPACES -->';
     const devPlaceholder = '<!-- RNA-DEV -->';
 
-
-    const isNew = !readmeFile.exists();
-    const content = isNew ? '' : readmeFile.read();
+    let isNew = await readmeFile.isNew();
+    let content = isNew ? '' : await readmeFile.read();
 
     if (isNew || content.includes(headerPlaceholder)) {
-        const template = _.template(headerTemplate.read().trim());
-        configurator(readmeFile, template({
-            project,
-        }), headerPlaceholder);
+        let template = _.template((await headerTemplate.read()).trim());
+        await configurator(readmeFile, template({ project }), headerPlaceholder);
     }
 
     if (isNew || content.includes(workspacesPlaceholder)) {
         if (project.get('workspaces')) {
-            const template = _.template(workspacesTemplate.read().trim());
-            configurator(readmeFile, template({
-                project,
-            }), workspacesPlaceholder);
+            let template = _.template((await workspacesTemplate.read()).trim());
+            await configurator(readmeFile, template({ project }), workspacesPlaceholder);
         } else {
-            configurator(readmeFile, '', workspacesPlaceholder);
+            await configurator(readmeFile, '', workspacesPlaceholder);
         }
     }
 
     if (isNew || content.includes(devPlaceholder)) {
-        const template = _.template(devTemplate.read().trim());
-        configurator(readmeFile, template({
+        let template = _.template((await devTemplate.read()).trim());
+        await configurator(readmeFile, template({
             project,
         }), devPlaceholder);
     }

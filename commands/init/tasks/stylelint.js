@@ -12,21 +12,22 @@ const { configurator } = require('../utils');
  */
 module.exports = async function stylelintTask(app, options, project, templates) {
     const manager = new PackageManager(project.path);
-    const stylelintConfig = project.file('.stylelintrc.yml');
-    const stylelintIgnore = project.file('.stylelintignore');
+    let stylelintConfig = project.file('.stylelintrc.yml');
+    let stylelintIgnore = project.file('.stylelintignore');
 
-    const stylelintTemplate = templates.file('stylelintrc.yml');
-    const ignoreTemplate = templates.file('stylelintignore');
+    let stylelintTemplate = templates.file('stylelintrc.yml');
+    let ignoreTemplate = templates.file('stylelintignore');
 
     // "Append" configuration to `.stylelintrc`.
-    configurator(stylelintConfig, stylelintTemplate.read(), '# RNA');
+    await configurator(stylelintConfig, await stylelintTemplate.read(), '# RNA');
 
-    // "Append" configuration to `.eslintignore`.
-    configurator(stylelintIgnore, ignoreTemplate.read(), '# RNA');
+    // "Append" configuration to `.stylelintignore`.
+    await configurator(stylelintIgnore, await ignoreTemplate.read(), '# RNA');
 
     await manager.dev(
         'stylelint',
         'stylelint-order'
     );
+
     app.logger.success('.stylelintrc updated', project.relative(stylelintConfig));
 };

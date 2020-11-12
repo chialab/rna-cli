@@ -52,7 +52,7 @@ module.exports = async function npmTask(app, options, project, templates) {
             name: 'workspaces',
             message: formatQuestion('workspaces'),
             default: project.get('workspaces') && project.get('workspaces').join(', '),
-            when: () => !project.parent,
+            when: async () => !(await project.getParent()),
         },
         {
             type: 'input',
@@ -139,70 +139,70 @@ module.exports = async function npmTask(app, options, project, templates) {
     ]);
 
     // User answered all questions. Are we done here? Not quite yet…
-    project.set({
+    await project.set({
         name: answers.name,
         version: answers.version,
         description: answers.description,
     });
     if (!project.get('directories')) {
-        project.set('directories', {});
+        await project.set('directories', {});
     }
     if (answers.src) {
-        project.set('directories.src', answers.src);
+        await project.set('directories.src', answers.src);
     } else {
-        project.unset('directories.src');
+        await project.unset('directories.src');
     }
     if (answers.lib) {
-        project.set('lib', answers.lib);
+        await project.set('lib', answers.lib);
     } else {
-        project.unset('lib');
+        await project.unset('lib');
     }
     if (answers.style) {
-        project.set('style', answers.style);
+        await project.set('style', answers.style);
     } else {
-        project.unset('style');
+        await project.unset('style');
     }
     if (answers.public) {
-        project.set('directories.public', answers.public);
-        project.set('private', true);
+        await project.set('directories.public', answers.public);
+        await project.set('private', true);
     } else {
-        project.unset('directories.public');
+        await project.unset('directories.public');
     }
     if (answers.test) {
-        project.set('directories.test', answers.test);
+        await project.set('directories.test', answers.test);
     } else {
-        project.unset('directories.test');
+        await project.unset('directories.test');
     }
     if (answers.test) {
-        project.set('directories.dist', answers.dist);
+        await project.set('directories.dist', answers.dist);
     } else {
-        project.unset('directories.dist');
+        await project.unset('directories.dist');
     }
     if (answers.module) {
-        project.set('module', answers.module);
+        await project.set('module', answers.module);
     } else {
-        project.unset('module');
+        await project.unset('module');
     }
     if (answers.main) {
-        project.set('main', answers.main);
+        await project.set('main', answers.main);
     } else {
-        project.unset('main');
+        await project.unset('main');
     }
     if (answers.browser) {
-        project.set('browser', answers.browser);
+        await project.set('browser', answers.browser);
     } else {
-        project.unset('browser');
+        await project.unset('browser');
     }
     if (answers.types) {
-        project.set('types', answers.types);
+        await project.set('types', answers.types);
     } else {
-        project.unset('types');
+        await project.unset('types');
     }
     if (answers.workspaces) {
-        project.set('workspaces', answers.workspaces.split(/,\s*/));
-        project.set('private', true);
+        await project.set('workspaces', answers.workspaces.split(/,\s*/));
+        await project.set('private', true);
     } else {
-        project.unset('workspaces');
+        await project.unset('workspaces');
     }
     if (!project.get('scripts')) {
         let scripts = {
@@ -217,34 +217,34 @@ module.exports = async function npmTask(app, options, project, templates) {
             scripts.watch += ` --serve ${project.get('directories.public')}`;
             scripts.serve = `rna serve ${project.get('directories.public')}`;
         }
-        project.set('scripts', scripts);
+        await project.set('scripts', scripts);
     }
-    project.set({
+    await project.set({
         license: answers.license,
         author: answers.author,
     });
 
     if (answers.repository || remote) {
-        project.setRepository(answers.repository || remote);
+        await project.setRepository(answers.repository || remote);
     }
 
     // Write `package.json`.
-    project.save();
+    await project.save();
 
     if (!project.get('private')) {
         // NPMIGNORE
-        const ignoreFile = project.file('.npmignore');
-        const ignoreTemplate = templates.file('npmignore');
+        let ignoreFile = project.file('.npmignore');
+        let ignoreTemplate = templates.file('npmignore');
 
         // "Append" configuration to `.npmignore`.
-        configurator(ignoreFile, ignoreTemplate.read(), '# RNA');
+        await configurator(ignoreFile, await ignoreTemplate.read(), '# RNA');
     }
 
     if (project.get('workspaces')) {
-        const lernaJson = project.file('lerna.json');
-        if (!lernaJson.exists()) {
-            const lernaPackage = require('lerna/package.json');
-            lernaJson.writeJson({
+        let lernaJson = project.file('lerna.json');
+        if (await lernaJson.isNew()) {
+            let lernaPackage = require('lerna/package.json');
+            await lernaJson.writeJson({
                 lerna: lernaPackage.version,
                 version: project.get('version') || '0.0.0',
                 npmClient: 'yarn',

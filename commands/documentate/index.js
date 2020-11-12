@@ -24,11 +24,11 @@ module.exports = (program) => {
             }
 
             const cwd = process.cwd();
-            const project = new Project(cwd);
+            const project = await Project.init(cwd);
 
             let entries;
             if (options.arguments.length) {
-                entries = project.resolve(options.arguments);
+                entries = await project.resolve(options.arguments);
             } else {
                 // use cwd sources.
                 const workspaces = project.workspaces;

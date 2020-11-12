@@ -12,17 +12,17 @@ const PackageManager = require('../../../lib/PackageManager');
  */
 module.exports = async function eslintTask(app, options, project, templates) {
     const manager = new PackageManager(project.path);
-    const eslintConfig = project.file('.eslintrc.yml');
-    const eslintIgnore = project.file('.eslintignore');
+    let eslintConfig = project.file('.eslintrc.yml');
+    let eslintIgnore = project.file('.eslintignore');
 
-    const configTemplate = templates.file('eslintrc.yml');
-    const ignoreTemplate = templates.file('eslintignore');
+    let configTemplate = templates.file('eslintrc.yml');
+    let ignoreTemplate = templates.file('eslintignore');
 
     // "Append" configuration to `.eslintrc.yml`.
-    configurator(eslintConfig, configTemplate.read(), '# RNA');
+    await configurator(eslintConfig, await configTemplate.read(), '# RNA');
 
     // "Append" configuration to `.eslintignore`.
-    configurator(eslintIgnore, ignoreTemplate.read(), '# RNA');
+    await configurator(eslintIgnore, await ignoreTemplate.read(), '# RNA');
 
     await manager.dev(
         'eslint',
@@ -32,5 +32,6 @@ module.exports = async function eslintTask(app, options, project, templates) {
         'eslint-plugin-babel',
         'eslint-plugin-jsx-a11y'
     );
+
     app.logger.success('.eslintrc.yml updated', project.relative(eslintConfig));
 };

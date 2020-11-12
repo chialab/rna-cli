@@ -16,7 +16,7 @@ module.exports = (program) => {
             const { Project } = require('../../lib/File');
 
             const cwd = process.cwd();
-            const project = new Project(cwd);
+            const project = await Project.init(cwd);
 
             // Add requested packages.
             if (options.dev) {

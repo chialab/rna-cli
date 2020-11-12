@@ -13,8 +13,8 @@ module.exports = async function licenseTask(app, options, project) {
 
     if (licenseCode === 'unlicensed') {
         // Package is unlicensed.
-        if (licenseFile.exists()) {
-            licenseFile.unlink();
+        if (await licenseFile.exists()) {
+            await licenseFile.unlink();
         }
         app.logger.warn('no license found');
         return;
@@ -33,7 +33,7 @@ module.exports = async function licenseTask(app, options, project) {
     }
 
     // Replace placeholders with actual values.
-    const text = licenses[licenseCode]
+    let text = licenses[licenseCode]
         .replace(/<year>/gi, (new Date()).getFullYear())
         .replace(/<(owner|author|copyright\sholders)>/gi, () => {
             if (project.get('author')) {
@@ -41,6 +41,6 @@ module.exports = async function licenseTask(app, options, project) {
             }
         });
 
-    licenseFile.write(text);
+    await licenseFile.write(text);
     app.logger.success('license updated', project.relative(licenseFile));
 };

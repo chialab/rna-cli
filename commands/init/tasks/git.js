@@ -35,7 +35,7 @@ module.exports = async function gitTask(app, options, project, templates) {
         // Configure remote.
         await project.git.addRemote(remote);
         project.setRepository(remote);
-        project.save();
+        await project.save();
     }
 
     // Write contents to `.gitignore`.
@@ -43,7 +43,7 @@ module.exports = async function gitTask(app, options, project, templates) {
     let ignoreTemplate = templates.file('gitignore');
 
     // "Append" configuration to `.gitignore`.
-    configurator(gitIgnore, ignoreTemplate.read(), '# RNA');
+    await configurator(gitIgnore, await ignoreTemplate.read(), '# RNA');
 
     app.logger.success('git project updated', project.relative(project));
 };
