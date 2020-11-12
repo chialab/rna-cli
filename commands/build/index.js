@@ -251,9 +251,8 @@ module.exports = (program) => {
 
                 let tasksList = [], analysis;
                 let warnings = [];
-                bundlersList.push(...bundlers);
                 bundlers.forEach((bundler) => {
-                    let writerTask;
+                    let bundlerTask, writerTask;
                     let { output } = bundler.options;
                     let files = [];
 
@@ -264,6 +263,7 @@ module.exports = (program) => {
 
                         bundler.on(Bundler.BUILD_END, (input, code, child) => {
                             if (!child) {
+                                bundlerTask.output = '';
                                 observer.complete();
                             }
                         });
@@ -296,7 +296,7 @@ module.exports = (program) => {
                                 let outputFiles = await Promise.all(
                                     files.map(async (file) => {
                                         let { size, zipped } = await file.size();
-                                        return `${project.relative(output)} (${size}, ${zipped} zipped)`;
+                                        return `${project.relative(file)} (${size}, ${zipped} zipped)`;
                                     })
                                 );
                                 writerTask.output = outputFiles.join('\n');
@@ -319,7 +319,10 @@ module.exports = (program) => {
                         task: () => new Listr([
                             {
                                 title: 'Build',
-                                task: () => bundleObserver,
+                                task: (ctx, task) => {
+                                    bundlerTask = task;
+                                    return bundleObserver;
+                                },
                             },
                             {
                                 title: 'Write',
@@ -359,6 +362,10 @@ module.exports = (program) => {
                 }
 
                 app.logger.newline();
+
+                if (options.watch) {
+                    bundlersList.push(...bundlers);
+                }
             }
 
             // once bundles are generated, check for watch option.
