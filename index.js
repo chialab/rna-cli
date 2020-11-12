@@ -15,14 +15,6 @@ CLI.init('rna', packageJson.name, packageJson.version)
         require('./commands/publish')(program);
         require('./commands/documentate')(program);
         require('./commands/config')(program);
-        require('./commands/manifest')(program);
-        require('./commands/sw')(program);
-        require('./commands/start')(program);
-        require('./commands/test')(program);
-        require('./commands/add')(program);
-        require('./commands/remove')(program);
-        require('./commands/install')(program);
-        require('./commands/run')(program);
 
         (async () => {
             try {
