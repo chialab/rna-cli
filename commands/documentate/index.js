@@ -31,7 +31,7 @@ module.exports = (program) => {
                 entries = await project.resolve(options.arguments);
             } else {
                 // use cwd sources.
-                const workspaces = project.workspaces;
+                let workspaces = await project.getWorkspaces();
                 if (workspaces) {
                     entries = workspaces;
                 } else {

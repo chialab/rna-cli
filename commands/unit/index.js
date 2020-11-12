@@ -98,7 +98,7 @@ module.exports = (program) => {
                 }
             } else {
                 let testDirs = [];
-                let workspaces = project.workspaces;
+                let workspaces = await project.getWorkspaces();
                 if (workspaces) {
                     workspaces.forEach((entry) => {
                         let testDir = entry.directories.test;

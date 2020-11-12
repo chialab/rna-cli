@@ -59,70 +59,70 @@ module.exports = async function npmTask(app, options, project, templates) {
             name: 'src',
             message: formatQuestion('base src path'),
             default: project.get('directories.src'),
-            when: (answers) => !answers.workspaces,
+            when: (answers) => !answers.get('workspaces'),
         },
         {
             type: 'input',
             name: 'lib',
             message: formatQuestion('source entry point'),
             default: project.get('lib'),
-            when: (answers) => !answers.workspaces,
+            when: (answers) => !answers.get('workspaces'),
         },
         {
             type: 'input',
             name: 'style',
             message: formatQuestion('style entry point'),
             default: project.get('style'),
-            when: (answers) => !answers.workspaces,
+            when: (answers) => !answers.get('workspaces'),
         },
         {
             type: 'input',
             name: 'test',
             message: formatQuestion('base test path'),
             default: project.get('directories.test'),
-            when: (answers) => !answers.workspaces,
+            when: (answers) => !answers.get('workspaces'),
         },
         {
             type: 'input',
             name: 'module',
             message: formatQuestion('es module entry point'),
             default: project.get('module'),
-            when: (answers) => !answers.workspaces,
+            when: (answers) => !answers.get('workspaces'),
         },
         {
             type: 'input',
             name: 'main',
             message: formatQuestion('cjs module entry point'),
             default: project.get('main'),
-            when: (answers) => !answers.workspaces,
+            when: (answers) => !answers.get('workspaces'),
         },
         {
             type: 'input',
             name: 'browser',
             message: formatQuestion('browser module entry point'),
             default: project.get('browser'),
-            when: (answers) => !answers.workspaces,
+            when: (answers) => !answers.get('workspaces'),
         },
         {
             type: 'input',
             name: 'dist',
             message: formatQuestion('base dist path'),
             default: project.get('directories.dist'),
-            when: (answers) => !answers.workspaces && (answers.module || answers.main || answers.browser),
+            when: (answers) => !answers.get('workspaces') && (answers.module || answers.main || answers.browser),
         },
         {
             type: 'input',
             name: 'types',
             message: formatQuestion('types entry point'),
             default: project.get('types'),
-            when: (answers) => !answers.workspaces && (answers.module || answers.main || answers.browser),
+            when: (answers) => !answers.get('workspaces') && (answers.module || answers.main || answers.browser),
         },
         {
             type: 'input',
             name: 'public',
             message: formatQuestion('public path'),
             default: project.get('directories.public'),
-            when: (answers) => !answers.workspaces && !answers.module && !answers.main && !answers.browser,
+            when: (answers) => !answers.get('workspaces') && !answers.module && !answers.main && !answers.browser,
         },
         {
             type: 'input',
@@ -139,70 +139,70 @@ module.exports = async function npmTask(app, options, project, templates) {
     ]);
 
     // User answered all questions. Are we done here? Not quite yet…
-    await project.set({
+    project.set({
         name: answers.name,
         version: answers.version,
         description: answers.description,
     });
     if (!project.get('directories')) {
-        await project.set('directories', {});
+        project.set('directories', {});
     }
     if (answers.src) {
-        await project.set('directories.src', answers.src);
+        project.set('directories.src', answers.src);
     } else {
-        await project.unset('directories.src');
+        project.unset('directories.src');
     }
     if (answers.lib) {
-        await project.set('lib', answers.lib);
+        project.set('lib', answers.lib);
     } else {
-        await project.unset('lib');
+        project.unset('lib');
     }
     if (answers.style) {
-        await project.set('style', answers.style);
+        project.set('style', answers.style);
     } else {
-        await project.unset('style');
+        project.unset('style');
     }
     if (answers.public) {
-        await project.set('directories.public', answers.public);
-        await project.set('private', true);
+        project.set('directories.public', answers.public);
+        project.set('private', true);
     } else {
-        await project.unset('directories.public');
+        project.unset('directories.public');
     }
     if (answers.test) {
-        await project.set('directories.test', answers.test);
+        project.set('directories.test', answers.test);
     } else {
-        await project.unset('directories.test');
+        project.unset('directories.test');
     }
     if (answers.test) {
-        await project.set('directories.dist', answers.dist);
+        project.set('directories.dist', answers.dist);
     } else {
-        await project.unset('directories.dist');
+        project.unset('directories.dist');
     }
     if (answers.module) {
-        await project.set('module', answers.module);
+        project.set('module', answers.module);
     } else {
-        await project.unset('module');
+        project.unset('module');
     }
     if (answers.main) {
-        await project.set('main', answers.main);
+        project.set('main', answers.main);
     } else {
-        await project.unset('main');
+        project.unset('main');
     }
     if (answers.browser) {
-        await project.set('browser', answers.browser);
+        project.set('browser', answers.browser);
     } else {
-        await project.unset('browser');
+        project.unset('browser');
     }
     if (answers.types) {
-        await project.set('types', answers.types);
+        project.set('types', answers.types);
     } else {
-        await project.unset('types');
+        project.unset('types');
     }
     if (answers.workspaces) {
-        await project.set('workspaces', answers.workspaces.split(/,\s*/));
-        await project.set('private', true);
+        project.set('workspaces', answers.workspaces.split(/,\s*/));
+        project.set('private', true);
     } else {
-        await project.unset('workspaces');
+        project.unset('workspaces');
     }
     if (!project.get('scripts')) {
         let scripts = {
@@ -217,15 +217,15 @@ module.exports = async function npmTask(app, options, project, templates) {
             scripts.watch += ` --serve ${project.get('directories.public')}`;
             scripts.serve = `rna serve ${project.get('directories.public')}`;
         }
-        await project.set('scripts', scripts);
+        project.set('scripts', scripts);
     }
-    await project.set({
+    project.set({
         license: answers.license,
         author: answers.author,
     });
 
     if (answers.repository || remote) {
-        await project.setRepository(answers.repository || remote);
+        project.setRepository(answers.repository || remote);
     }
 
     // Write `package.json`.

@@ -30,7 +30,8 @@ module.exports = async function readmeTask(app, options, project, templates) {
     if (isNew || content.includes(workspacesPlaceholder)) {
         if (project.get('workspaces')) {
             let template = _.template((await workspacesTemplate.read()).trim());
-            await configurator(readmeFile, template({ project }), workspacesPlaceholder);
+            let workspaces = await project.getWorkspaces();
+            await configurator(readmeFile, template({ project, workspaces }), workspacesPlaceholder);
         } else {
             await configurator(readmeFile, '', workspacesPlaceholder);
         }

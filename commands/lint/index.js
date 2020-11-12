@@ -22,7 +22,7 @@ module.exports = (program) => {
             if (options.arguments.length) {
                 entries = await project.resolve(options.arguments);
             } else {
-                const workspaces = project.workspaces;
+                let workspaces = await project.getWorkspaces();
                 if (workspaces) {
                     await Promise.all(
                         workspaces.map(async (ws) => {
