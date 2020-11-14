@@ -151,14 +151,29 @@ module.exports = (program) => {
                                 typings: options.typings === true,
                             }));
                             bundlers.push(bundler);
+                            if (options.typings) {
+                                let bundler = await buildEntry(app, entry, libFile, output.ext('.d.ts'), Object.assign({}, options, {
+                                    format: 'esm',
+                                    typings: true,
+                                }));
+                                bundlers.push(bundler);
+                            }
                         } else {
                             if (moduleFile) {
                                 let bundler = await buildEntry(app, entry, libFile, moduleFile, Object.assign({}, options, {
                                     targets: Targets.fromFeatures('module', 'async').toQuery(),
-                                    format: 'esm', lint: !mainFile && options.lint,
+                                    format: 'esm',
+                                    lint: !mainFile && options.lint,
                                     typings: options.typings === true,
                                 }));
                                 bundlers.push(bundler);
+                                if (options.typings) {
+                                    let bundler = await buildEntry(app, entry, libFile, moduleFile.ext('.d.ts'), Object.assign({}, options, {
+                                        format: 'esm',
+                                        typings: true,
+                                    }));
+                                    bundlers.push(bundler);
+                                }
                             }
                             if (!entry.linked || !moduleFile) {
                                 if (mainFile) {
@@ -167,6 +182,13 @@ module.exports = (program) => {
                                         typings: options.typings === true,
                                     }));
                                     bundlers.push(bundler);
+                                    if (options.typings) {
+                                        let bundler = await buildEntry(app, entry, libFile, mainFile.ext('.d.ts'), Object.assign({}, options, {
+                                            format: 'esm',
+                                            typings: true,
+                                        }));
+                                        bundlers.push(bundler);
+                                    }
                                 }
                             }
                             if (!entry.linked || !(mainFile || moduleFile)) {
@@ -177,6 +199,13 @@ module.exports = (program) => {
                                         typings: options.typings === true,
                                     }));
                                     bundlers.push(bundler);
+                                    if (options.typings) {
+                                        let bundler = await buildEntry(app, entry, libFile, browserFile.ext('.d.ts'), Object.assign({}, options, {
+                                            format: 'esm',
+                                            typings: true,
+                                        }));
+                                        bundlers.push(bundler);
+                                    }
                                 }
                             }
 
@@ -216,6 +245,13 @@ module.exports = (program) => {
                                 typings: options.typings === true,
                             }));
                             bundlers.push(bundler);
+                            if (options.typings) {
+                                let bundler = await buildEntry(app, entry, libFile, moduleOutput.ext('.d.ts'), Object.assign({}, options, {
+                                    format: 'esm',
+                                    typings: true,
+                                }));
+                                bundlers.push(bundler);
+                            }
                         }
 
                         if (styleFile) {
@@ -247,6 +283,13 @@ module.exports = (program) => {
                         typings: options.typings === true,
                     }));
                     bundlers.push(bundler);
+                    if (options.typings) {
+                        let bundler = await buildEntry(app, project, entry, output.ext('.d.ts'), Object.assign({}, options, {
+                            format: 'esm',
+                            typings: true,
+                        }));
+                        bundlers.push(bundler);
+                    }
                 }
 
                 let tasksList = [], analysis;
