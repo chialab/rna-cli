@@ -301,7 +301,7 @@ module.exports = (program) => {
 
                     let bundleObserver = new Observable((observer) => {
                         bundler.on(Bundler.BUILD_START, (input, code) => {
-                            observer.next(`bundling${code ? ' code' : ` (${project.relative(input)})`}...`);
+                            observer.next(`bundling${code ? ' inline code' : ` (${project.relative(input)})`}...`);
                         });
 
                         bundler.on(Bundler.BUILD_END, (input, code, child) => {
