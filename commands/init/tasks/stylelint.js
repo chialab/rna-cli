@@ -1,5 +1,4 @@
 const PackageManager = require('../../../lib/PackageManager');
-const { configurator } = require('../utils');
 
 /**
  * Ensure stylelint configuration file is present.
@@ -13,21 +12,16 @@ const { configurator } = require('../utils');
 module.exports = async function stylelintTask(app, options, project, templates) {
     const manager = new PackageManager(project.path);
     let stylelintConfig = project.file('.stylelintrc.yml');
-    let stylelintIgnore = project.file('.stylelintignore');
-
     let stylelintTemplate = templates.file('stylelintrc.yml');
-    let ignoreTemplate = templates.file('stylelintignore');
 
     // "Append" configuration to `.stylelintrc`.
-    await configurator(stylelintConfig, await stylelintTemplate.read(), '# RNA');
-
-    // "Append" configuration to `.stylelintignore`.
-    await configurator(stylelintIgnore, await ignoreTemplate.read(), '# RNA');
+    if (await stylelintConfig.isNew()) {
+        await stylelintConfig.write(await stylelintTemplate.read());
+        app.logger.success('.stylelintrc created', project.relative(stylelintConfig));
+    }
 
     await manager.dev(
         'stylelint',
-        'stylelint-order'
+        '@chialab/stylelint-config'
     );
-
-    app.logger.success('.stylelintrc updated', project.relative(stylelintConfig));
 };

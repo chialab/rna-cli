@@ -115,6 +115,7 @@
   },
   "devDependencies": {
     "@chialab/eslint-config": "^1.0.1",
+    "@chialab/stylelint-config": "^1.0.0",
     "@types/node": "^14.0.1"
   }
 }

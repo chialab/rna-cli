@@ -923,6 +923,13 @@
   resolved "https://registry.npmjs.org/@chialab/proteins/-/proteins-3.2.6.tgz#9ae94421779cfefec5bc07b5580e99df26ba677a"
   integrity sha512-hitFnEPmYETloQTVrTgK1l0YxGqWrZBiECgBF85Cgm+b5wEKsVoMFxFow74cWdEf1Lg8WS+P3V8vNSfR3TdS+w==
 
+"@chialab/stylelint-config@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.npmjs.org/@chialab/stylelint-config/-/stylelint-config-1.0.0.tgz#2da64d0cee46e797f151f9110bfef30bea5a0092"
+  integrity sha512-H9iw7QLPQznze14HqNzRP2IJ+/xwv1XE6aS9YOeDye2g/1B6YRF+B1SDCizqsYktFkyl0Fv/22a/o3DiM7h/ug==
+  dependencies:
+    stylelint-order "^4.1.0"
+
 "@cureapp/babel-plugin-flow-to-typescript@^0.3.7":
   version "0.3.8"
   resolved "https://registry.npmjs.org/@cureapp/babel-plugin-flow-to-typescript/-/babel-plugin-flow-to-typescript-0.3.8.tgz#72f876b972ddd444de295bb362b5cbcd01bab8c8"
