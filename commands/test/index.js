@@ -7,6 +7,7 @@
 module.exports = (program) => {
     program
         .command('test')
+        .alias('unit')
         .description('Run project tests.')
         .readme(`${__dirname}/README.md`)
         .option('[--targets <string>]', 'A supported browserslist query.')
