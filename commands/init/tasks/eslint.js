@@ -1,4 +1,3 @@
-const { configurator } = require('../utils');
 const PackageManager = require('../../../lib/PackageManager');
 
 /**
@@ -13,25 +12,16 @@ const PackageManager = require('../../../lib/PackageManager');
 module.exports = async function eslintTask(app, options, project, templates) {
     const manager = new PackageManager(project.path);
     let eslintConfig = project.file('.eslintrc.yml');
-    let eslintIgnore = project.file('.eslintignore');
-
     let configTemplate = templates.file('eslintrc.yml');
-    let ignoreTemplate = templates.file('eslintignore');
 
     // "Append" configuration to `.eslintrc.yml`.
-    await configurator(eslintConfig, await configTemplate.read(), '# RNA');
-
-    // "Append" configuration to `.eslintignore`.
-    await configurator(eslintIgnore, await ignoreTemplate.read(), '# RNA');
+    if (await eslintConfig.isNew()) {
+        await eslintConfig.write(await configTemplate.read());
+        app.logger.success('.eslintrc.yml created', project.relative(eslintConfig));
+    }
 
     await manager.dev(
         'eslint',
-        'eslint-plugin-mocha',
-        'eslint-plugin-mocha-no-only',
-        'babel-eslint',
-        'eslint-plugin-babel',
-        'eslint-plugin-jsx-a11y'
+        '@chialab/eslint-config'
     );
-
-    app.logger.success('.eslintrc.yml updated', project.relative(eslintConfig));
 };
