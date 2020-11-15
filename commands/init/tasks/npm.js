@@ -208,7 +208,7 @@ module.exports = async function npmTask(app, options, project, templates) {
         let scripts = {
             build: 'rna build --production',
             watch: 'rna build --watch',
-            test: 'rna lint + unit',
+            test: 'rna lint && rna test',
             lint: 'rna lint',
             start: 'yarn install --ignore-scripts && yarn watch',
             prepublish: 'yarn run build',

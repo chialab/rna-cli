@@ -6,8 +6,8 @@
  */
 module.exports = (program) => {
     program
-        .command('unit')
-        .description('Run project unit tests.')
+        .command('test')
+        .description('Run project tests.')
         .readme(`${__dirname}/README.md`)
         .option('[--targets <string>]', 'A supported browserslist query.')
         .option('[--node]', 'Run tests in node context.')
@@ -125,7 +125,7 @@ module.exports = (program) => {
             }
 
             if (!files.length) {
-                app.logger.warn('no unit tests found.');
+                app.logger.warn('no test specs found.');
                 return;
             }
 

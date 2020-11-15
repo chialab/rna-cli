@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('init')
         .description('Setup a new project.')
+        .deprecate('4.0.0', 'Use GitHub templates.')
         .readme(`${__dirname}/README.md`)
         .option('<dir>', 'The project root to create.')
         .option('[--fs]', 'File system setup.')

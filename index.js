@@ -11,7 +11,7 @@ CLI.init('rna', packageJson.name, packageJson.version)
         require('./commands/build')(program);
         require('./commands/serve')(program);
         require('./commands/lint')(program);
-        require('./commands/unit')(program);
+        require('./commands/test')(program);
         require('./commands/publish')(program);
         require('./commands/documentate')(program);
         require('./commands/config')(program);

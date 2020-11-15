@@ -1,4 +1,4 @@
-# Command: `unit`
+# Command: `test`
 
 Run unit and e2e tests in Node and Browser environments, using [Mocha](https://mochajs.org/) as test framework and [Chai](https://www.chaijs.com/) as assertion library. Tests in the browsers are launched by [Karma](https://karma-runner.github.io).
 

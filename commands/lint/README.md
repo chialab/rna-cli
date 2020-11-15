@@ -1,3 +1,7 @@
+⚠️  Deprecated in v4.0.0, please setup your project using the configuration presets.
+
+---
+
 It uses [ESLint](https://eslint.org/) for JavaScript files and [Stylelint](https://stylelint.io/) for CSS.
 
 Run lint tasks across the projects. It uses ESLint for JavaScript and TypeScript projects and StyleLint for CSS and SCSS files, looking for `.eslintrc.yml` and `.stylelintrc.yml` in the project root and fallbacking to RNA core config files missing. Configuration files and lint runners needs to be saved in the project, in order to provide integration with your IDE (eg VS Code).

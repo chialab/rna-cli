@@ -1,3 +1,7 @@
+⚠️  Deprecated in v4.0.0, please use Lerna or Standard Version tools.
+
+---
+
 It publishes modules of modules and monorepos NPM, creating a release tag for Git.
 
 If a `lerna.json` is found in the root of the project, it uses [lerna](https://github.com/lerna/lerna) to publish modules.

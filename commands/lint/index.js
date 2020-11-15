@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('lint')
         .description('Lint your source files.')
+        .deprecate('4.0.0', 'Use configuration presets.')
         .readme(`${__dirname}/README.md`)
         .option('<file|package>', 'The packages or the files to lint.')
         .option('[--fix]', 'Should autofix warnings.')
