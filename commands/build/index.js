@@ -36,14 +36,8 @@ module.exports = (program) => {
         .option('[--compress]', 'Activate gzip compression on static files.')
         .action(async (app, options = {}) => {
             const path = require('path');
-            const colors = require('colors/safe');
-            const Listr = require('listr');
-            const { Observable } = require('rxjs');
             const Targets = require('../../lib/Targets');
             const { Project } = require('../../lib/File');
-            const Bundler = require('../../lib/Bundlers/Bundler');
-            const Linter = require('../../lib/Linters/Linter');
-            const Renderer = require('../../lib/Cli/renderer');
 
             const cwd = process.cwd();
             const project = await Project.init(cwd);
@@ -292,119 +286,7 @@ module.exports = (program) => {
                     }
                 }
 
-                let tasksList = [], analysis;
-                let warnings = [];
-                bundlers.forEach((bundler) => {
-                    let bundlerTask, writerTask;
-                    let { output } = bundler.options;
-                    let files = [];
-
-                    let bundleObserver = new Observable((observer) => {
-                        bundler.on(Bundler.BUILD_START, (input, code) => {
-                            observer.next(`bundling${code ? ' inline code' : ` (${project.relative(input)})`}...`);
-                        });
-
-                        bundler.on(Bundler.BUILD_END, (input, code, child) => {
-                            if (!child) {
-                                bundlerTask.output = '';
-                                observer.complete();
-                            }
-                        });
-
-                        bundler.on(Bundler.ERROR_EVENT, (error) => {
-                            observer.error(error);
-                        });
-
-                        bundler.on(Bundler.WARN_EVENT, (message) => {
-                            warnings.push(message);
-                        });
-
-                        bundler.on(Bundler.ANALYSIS_EVENT, (result) => {
-                            if (!analysis) {
-                                analysis = result;
-                            }
-                        });
-                    });
-
-                    let writeObserver = new Observable((observer) => {
-                        bundler.on(Bundler.WRITE_PROGRESS, (file) => {
-                            observer.next(`writing ${project.relative(file)}...`);
-                            if (files.indexOf(file) === -1) {
-                                files.push(file);
-                            }
-                        });
-
-                        bundler.on(Bundler.WRITE_END, async (child) => {
-                            if (!child) {
-                                let outputFiles = await Promise.all(
-                                    files.map(async (file) => {
-                                        let { size, zipped } = await file.size();
-                                        return `${project.relative(file)} (${size}, ${zipped} zipped)`;
-                                    })
-                                );
-                                writerTask.output = outputFiles.join('\n');
-
-                                observer.complete();
-                            }
-                        });
-
-                        bundler.on(Bundler.ERROR_EVENT, (error) => {
-                            observer.error(error);
-                        });
-
-                        bundler.on(Bundler.WARN_EVENT, (message) => {
-                            warnings.push(message);
-                        });
-                    });
-
-                    tasksList.push({
-                        title: project.relative(output),
-                        task: () => new Listr([
-                            {
-                                title: 'Build',
-                                task: (ctx, task) => {
-                                    bundlerTask = task;
-                                    return bundleObserver;
-                                },
-                            },
-                            {
-                                title: 'Write',
-                                task: (ctx, task) => {
-                                    writerTask = task;
-                                    return writeObserver;
-                                },
-                            },
-                        ]),
-                    });
-                });
-
-                let list = new Listr(tasksList, {
-                    concurrent: true,
-                    renderer: Renderer,
-                }).run();
-
-                await Promise.all([
-                    list,
-                    ...bundlers
-                        .filter(Boolean)
-                        .map((bundler) => bundler.toPromise()),
-                ]);
-
-                if (warnings.length) {
-                    app.logger.newline();
-                    app.logger.log(warnings.map((warning) => colors.yellow(warning)).join('\n'));
-                }
-
-                let linterResults = bundlers.reduce((result, bundler) => Linter.merge(result, bundler.linter ? bundler.linter.result : {}), {});
-                if (linterResults.warningCount || linterResults.errorCount) {
-                    app.logger.log(Linter.format(linterResults));
-                }
-
-                if (analysis) {
-                    app.logger.log(Bundler.formatBundleAnalysis(analysis));
-                }
-
-                app.logger.newline();
+                await runBundlers(app, project, bundlers);
 
                 if (options.watch) {
                     bundlersList.push(...bundlers);
@@ -418,24 +300,23 @@ module.exports = (program) => {
                 let promise = Promise.resolve();
                 let timeout;
 
-                const reBuild = async (bundle, files) => {
-                    let status = statuses.get(bundle) || {};
+                const reBuild = async (bundler, files) => {
+                    let status = statuses.get(bundler) || {};
                     if (files) {
                         status.invalidate = files;
                     }
-                    statuses.set(bundle, status);
+                    statuses.set(bundler, status);
                     if (status.running && !status.invalidate || status.invalidate.length === 0) {
                         return;
                     }
                     let invalidate = status.invalidate;
                     status.invalidate = [];
                     status.running = true;
-                    statuses.set(bundle, status);
+                    statuses.set(bundler, status);
                     promise = promise
                         .then(async () => {
                             try {
-                                await bundle.build(...invalidate);
-                                await bundle.write();
+                                await runBundlers(app, project, [bundler], invalidate);
                             } catch (err) {
                                 if (err) {
                                     app.logger.error(err);
@@ -444,8 +325,8 @@ module.exports = (program) => {
                         });
                     await promise;
                     status.running = false;
-                    statuses.set(bundle, status);
-                    reBuild(bundle);
+                    statuses.set(bundler, status);
+                    reBuild(bundler);
                 };
 
                 project.watch({
@@ -500,6 +381,128 @@ function filterChangedBundles(bundles, files) {
             }
             return files.some((file) => bundle.files.includes(file));
         });
+}
+
+async function runBundlers(app, project, bundlers, invalidate = []) {
+    const colors = require('colors/safe');
+    const Listr = require('listr');
+    const Bundler = require('../../lib/Bundlers/Bundler');
+    const Renderer = require('../../lib/Cli/renderer');
+    const Linter = require('../../lib/Linters/Linter');
+
+    let warnings = [], analysis = [];
+    let list = new Listr(bundlers.map((bundler) => runBundler(project, bundler, invalidate, warnings, analysis)), {
+        concurrent: true,
+        renderer: Renderer,
+    });
+
+    await list.run();
+
+    if (warnings.length) {
+        app.logger.newline();
+        app.logger.log(warnings.map((warning) => colors.yellow(warning)).join('\n'));
+    }
+
+    let linterResults = bundlers.reduce((result, bundler) => Linter.merge(result, bundler.linter ? bundler.linter.result : {}), {});
+    if (linterResults.warningCount || linterResults.errorCount) {
+        app.logger.log(Linter.format(linterResults));
+    }
+
+    if (analysis.length) {
+        app.logger.log(Bundler.formatBundleAnalysis(analysis[0]));
+    }
+
+    app.logger.newline();
+}
+
+function runBundler(project, bundler, invalidate = [], warnings = [], analysis = []) {
+    const Listr = require('listr');
+    const Bundler = require('../../lib/Bundlers/Bundler');
+    const { Observable } = require('rxjs');
+
+    let bundlerTask, writerTask;
+    let { output } = bundler.options;
+
+    let bundleObserver = new Observable((observer) => {
+        bundler.build(invalidate);
+
+        bundler.on(Bundler.BUILD_START, (input, code) => {
+            observer.next(`bundling${code ? ' inline code' : ` (${project.relative(input)})`}...`);
+        });
+
+        bundler.on(Bundler.BUILD_END, (input, code, child) => {
+            if (!child) {
+                bundlerTask.output = '';
+                observer.complete();
+            }
+        });
+
+        bundler.on(Bundler.ERROR_EVENT, (error) => {
+            observer.error(error);
+        });
+
+        bundler.on(Bundler.WARN_EVENT, (message) => {
+            warnings.push(message);
+        });
+
+        bundler.on(Bundler.ANALYSIS_EVENT, (result) => {
+            analysis.push(result);
+        });
+    });
+
+    let writeObserver = new Observable((observer) => {
+        let files = [];
+        bundler.write();
+
+        bundler.on(Bundler.WRITE_PROGRESS, (file) => {
+            observer.next(`writing ${project.relative(file)}...`);
+            if (files.indexOf(file) === -1) {
+                files.push(file);
+            }
+        });
+
+        bundler.on(Bundler.WRITE_END, async (child) => {
+            if (!child) {
+                let outputFiles = await Promise.all(
+                    files.map(async (file) => {
+                        let { size, zipped } = await file.size();
+                        return `${project.relative(file)} (${size}, ${zipped} zipped)`;
+                    })
+                );
+                writerTask.output = outputFiles.join('\n');
+
+                observer.complete();
+            }
+        });
+
+        bundler.on(Bundler.ERROR_EVENT, (error) => {
+            observer.error(error);
+        });
+
+        bundler.on(Bundler.WARN_EVENT, (message) => {
+            warnings.push(message);
+        });
+    });
+
+    return {
+        title: project.relative(output),
+        task: () => new Listr([
+            {
+                title: 'Build',
+                task: (ctx, task) => {
+                    bundlerTask = task;
+                    return bundleObserver;
+                },
+            },
+            {
+                title: 'Write',
+                task: (ctx, task) => {
+                    writerTask = task;
+                    return writeObserver;
+                },
+            },
+        ]),
+    };
 }
 
 async function buildEntry(app, project, entry, output, options) {
