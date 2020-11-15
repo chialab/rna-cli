@@ -84,7 +84,6 @@ module.exports = (program) => {
  * @return {Promise}
  */
 async function generate(app, project, input, output, options) {
-    app.logger.play(`generating API references... (${project.relative(output)})`);
     // start the `documentation` task.
     try {
         const sourceFile = bundle(input.path);

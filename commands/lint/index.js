@@ -120,7 +120,6 @@ module.exports = (program) => {
  */
 async function eslint(app, project, options, files) {
     const ESLint = require('../../lib/Linters/ESLint');
-    app.logger.play('running ESLint...');
 
     try {
         const linter = new ESLint();
@@ -149,7 +148,6 @@ async function eslint(app, project, options, files) {
  */
 async function stylelint(app, project, options, files) {
     const Stylelint = require('../../lib/Linters/Stylelint');
-    app.logger.play('running stylelint...');
 
     try {
         const linter = new Stylelint();
