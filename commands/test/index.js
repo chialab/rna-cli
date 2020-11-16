@@ -54,11 +54,11 @@ module.exports = (program) => {
             if (options.prepare) {
                 delete options.run;
                 delete options.watch;
-                app.logger.warn('--prepare mode, tests will not run');
+                app.logger.warn('--prepare mode, specs will not run');
             }
             if (options.run) {
                 delete options.watch;
-                app.logger.warn('--run mode, skipping tests build');
+                app.logger.warn('--run mode, skipping specs build');
             }
 
             // Load options.
@@ -199,6 +199,10 @@ function runTest(project, runner, files, prepare, run, coverageMap, exitCodes = 
             observer.next('building specs...');
         });
 
+        runner.on(TestRunner.PREPARE_PROGRESS_EVENT, (file) => {
+            observer.next(`building ${project.relative(file)}...`);
+        });
+
         runner.on(TestRunner.PREPARE_END_EVENT, () => {
             prepareTask.output = '';
             observer.complete();
@@ -211,11 +215,15 @@ function runTest(project, runner, files, prepare, run, coverageMap, exitCodes = 
         let runTask;
 
         let runObserver = new Observable(async (observer) => {
-            runner.on(TestRunner.START_EVENT, () => {
+            runner.on(TestRunner.RUN_START_EVENT, () => {
                 observer.next('running tests...');
             });
 
-            runner.on(TestRunner.END_EVENT, ({ exitCode, reporter }) => {
+            runner.on(TestRunner.RUN_PROGRESS_EVENT, (title) => {
+                observer.next(`running ${title}...`);
+            });
+
+            runner.on(TestRunner.RUN_END_EVENT, ({ exitCode, reporter }) => {
                 let report = reporter.getReport();
                 coverageMap.merge(report.coverage);
                 if (exitCode !== 0) {
