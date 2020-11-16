@@ -424,8 +424,6 @@ function runBundler(project, bundler, invalidate = [], warnings = [], analysis =
     let { output } = bundler.options;
 
     let bundleObserver = new Observable((observer) => {
-        bundler.build(invalidate);
-
         bundler.on(Bundler.BUILD_START, (input, code) => {
             observer.next(`bundling${code ? ' inline code' : ` (${project.relative(input)})`}...`);
         });
@@ -448,11 +446,12 @@ function runBundler(project, bundler, invalidate = [], warnings = [], analysis =
         bundler.on(Bundler.ANALYSIS_EVENT, (result) => {
             analysis.push(result);
         });
+
+        bundler.build(invalidate);
     });
 
     let writeObserver = new Observable((observer) => {
         let files = [];
-        bundler.write();
 
         bundler.on(Bundler.WRITE_PROGRESS, (file) => {
             observer.next(`writing ${project.relative(file)}...`);
@@ -482,20 +481,22 @@ function runBundler(project, bundler, invalidate = [], warnings = [], analysis =
         bundler.on(Bundler.WARN_EVENT, (message) => {
             warnings.push(message);
         });
+
+        bundler.write();
     });
 
     return {
         title: project.relative(output),
         task: () => new Listr([
             {
-                title: 'Build',
+                title: 'build',
                 task: (ctx, task) => {
                     bundlerTask = task;
                     return bundleObserver;
                 },
             },
             {
-                title: 'Write',
+                title: 'write',
                 task: (ctx, task) => {
                     writerTask = task;
                     return writeObserver;

@@ -51,12 +51,6 @@ module.exports = (program) => {
                 }
             }
 
-            if (!Object.prototype.hasOwnProperty.call(process.env, 'NODE_ENV')) {
-                // Set NODE_ENV environment variable.
-                app.logger.info('--------------------------\nsetting "test" environment\n--------------------------');
-                process.env.NODE_ENV = 'test';
-            }
-
             if (options.prepare) {
                 delete options.run;
                 delete options.watch;
@@ -149,7 +143,8 @@ module.exports = (program) => {
                 pragmaDefault: options['jsx.pragmaDefault'],
             } : false;
 
-            const { runners, exitCode } = await runTests(app, project, files, options, taskEnvironments);
+            let runners = await getRunners(app, project, files, options, taskEnvironments);
+            let { exitCode } = await runTests(app, project, runners, files, !options.run, !options.prepare);
 
             if (options.watch && !options.prepare) {
                 const collectedFiles = [];
@@ -178,7 +173,7 @@ module.exports = (program) => {
                         }
 
                         try {
-                            await startRunners(app, runnersWithChanges, files, !options.run);
+                            await runTests(app, project, runnersWithChanges, files, !options.run);
                         } catch (err) {
                             if (err) {
                                 app.logger.error(err);
@@ -193,38 +188,105 @@ module.exports = (program) => {
         });
 };
 
-async function startRunners(app, runners, files, prepare = true, run = true) {
-    const coverageMap = require('istanbul-lib-coverage').createCoverageMap({});
-    let finalExitCode = 0;
+function runTest(project, runner, files, prepare, run, coverageMap, exitCodes = [], reporters = []) {
+    const Listr = require('listr');
+    const TestRunner = require('../../lib/TestRunners/TestRunner');
+    const { Observable } = require('rxjs');
 
-    for (let i = 0; i < runners.length; i++) {
-        const runner = runners[i];
-        if (prepare) {
-            await runner.build(files);
-        }
-        if (run) {
-            const { exitCode, coverage } = await runner.run(run);
-            if (coverage) {
-                coverageMap.merge(coverage);
-            }
-            if (exitCode !== 0) {
-                finalExitCode = exitCode;
-            }
-        }
-    }
+    let prepareTask;
+    let prepareObserver = new Observable((observer) => {
+        runner.on(TestRunner.PREPARE_START_EVENT, () => {
+            observer.next('building specs...');
+        });
+
+        runner.on(TestRunner.PREPARE_END_EVENT, () => {
+            prepareTask.output = '';
+            observer.complete();
+        });
+
+        runner.build(files);
+    });
+
+    let tasks = runner.environments.map((env) => {
+        let runTask;
+
+        let runObserver = new Observable(async (observer) => {
+            runner.on(TestRunner.START_EVENT, () => {
+                observer.next('running tests...');
+            });
+
+            runner.on(TestRunner.END_EVENT, ({ exitCode, reporter }) => {
+                let report = reporter.getReport();
+                coverageMap.merge(report.coverage);
+                if (exitCode !== 0) {
+                    exitCodes.push(exitCode);
+                }
+                reporters.push(report);
+                runTask.output = '';
+                observer.complete();
+            });
+
+            runner.run(run);
+        });
+
+        return {
+            title: env,
+            task: (ctx, task) => {
+                runTask = task;
+                return runObserver;
+            },
+        };
+    });
+
+    return {
+        title: `${runner.name} runner`,
+        task: () => new Listr([
+            {
+                title: 'prepare',
+                skip: () => !prepare,
+                task: (ctx, task) => {
+                    prepareTask = task;
+                    return prepareObserver;
+                },
+            },
+            {
+                title: 'run',
+                skip: () => !run,
+                task: () => new Listr(tasks),
+            },
+        ]),
+    };
+}
+
+async function runTests(app, project, runners, files, prepare = true, run = true) {
+    const Listr = require('listr');
+    const Renderer = require('../../lib/Cli/renderer');
+    const Reporter = require('../../lib/TestRunners/Reporter');
+
+    let exitCodes = [];
+    let reporters = [];
+    let coverageMap = require('istanbul-lib-coverage').createCoverageMap({});
+    let list = new Listr(runners.map((runner) => runTest(project, runner, files, prepare, run, coverageMap, exitCodes, reporters)), {
+        concurrent: true,
+        renderer: Renderer,
+    });
+
+    await list.run();
+
+    reporters.forEach((report) => {
+        app.logger.newline();
+        app.logger.log(Reporter.formatReport(report));
+    });
 
     if (run) {
-        app.logger.newline();
-        const summary = coverageMap.getCoverageSummary();
-        if (summary.data &&
-            (summary.data.lines.pct !== 'Unknown' ||
-                summary.data.statements.pct !== 'Unknown' ||
-                summary.data.functions.pct !== 'Unknown' ||
-                summary.data.branches.pct !== 'Unknown')) {
-            printCoverageReport(app, summary);
+        if (!Reporter.isEmptyCoverage(coverageMap)) {
+            app.logger.newline();
+            app.logger.log(Reporter.formatCoverage(coverageMap));
+            app.logger.newline();
         }
     }
 
+    let finalExitCode = Math.max(...exitCodes);
     return { runners, coverage: coverageMap, exitCode: finalExitCode };
 }
 
@@ -237,7 +299,7 @@ async function startRunners(app, runners, files, prepare = true, run = true) {
  * @param {Array<string>} environments A list of test environments.
  * @return {Promise<TestRunner[]>}
  */
-async function runTests(app, project, files, options, environments = []) {
+async function getRunners(app, project, files, options, environments = []) {
     let runners = [];
     // Test built sources.
     for (let i = 0; i < environments.length; i++) {
@@ -246,90 +308,24 @@ async function runTests(app, project, files, options, environments = []) {
         if (taskEnvName === 'node') {
             // Startup Mocha.
             const NodeTestRunner = require('../../lib/TestRunners/NodeTestRunner');
-            const runner = new NodeTestRunner();
-            runners.push(runner);
+            let runner = new NodeTestRunner();
             await runner.setup(options);
-            runner.on(NodeTestRunner.PREPARE_START_EVENT, () => {
-                app.logger.play('generating test...');
-            });
-            runner.on(NodeTestRunner.PREPARE_END_EVENT, () => {
-                app.logger.stop();
-                if (options.prepare) {
-                    app.logger.success(`${runner.name} ready`);
-                }
-            });
-            runner.on(NodeTestRunner.STOP_EVENT, () => {
-                app.logger.stop();
-            });
+            runners.push(runner);
         } else if (taskEnvName === 'browser' || taskEnvName === 'saucelabs') {
             const BrowserTestRunner = require('../../lib/TestRunners/BrowserTestRunner');
-            const runner = new BrowserTestRunner();
-            runners.push(runner);
+            let runner = new BrowserTestRunner();
             await runner.setup(options);
-            runner.on(BrowserTestRunner.PREPARE_START_EVENT, () => {
-                app.logger.play('generating test...');
-            });
-            runner.on(BrowserTestRunner.PREPARE_END_EVENT, () => {
-                app.logger.stop();
-                if (options.prepare) {
-                    app.logger.success(`${runner.name} ready`);
-                }
-            });
-            runner.on(BrowserTestRunner.STOP_EVENT, () => {
-                app.logger.stop();
-            });
+            runners.push(runner);
         }
     }
 
-    return startRunners(app, runners, files, !options.run, !options.prepare);
+    return runners;
 }
 
 function filterChangedRunners(runners, files) {
     return runners
         .filter((runner) => {
-            const runnerFiles = runner.files || [];
+            let runnerFiles = runner.files || [];
             return files.some((file) => runnerFiles.includes(file.path));
         });
-}
-
-/**
- * Printe the coverage report in console.
- * @param {CLI} app The cli instance.
- * @param {Object} summary The report to print.
- * @return {void}
- */
-function printCoverageReport(app, summary) {
-    const colors = require('colors/safe');
-    const printLine = function(key) {
-        const str = lineForKey(summary, key);
-        let type = 'warn';
-        if (summary[key].pct > 80) {
-            type = 'success';
-        } else if (!isNaN(summary[key].pct) && summary[key].pct < 50) {
-            type = 'error';
-        }
-        app.logger[type](str);
-    };
-
-    app.logger.newline();
-    app.logger.log(colors.underline('COVERAGE:'));
-    printLine('statements');
-    printLine('branches');
-    printLine('functions');
-    printLine('lines');
-    app.logger.newline();
-}
-
-function lineForKey(summary, key) {
-    const metrics = summary[key];
-    key = key.substring(0, 1).toUpperCase() + key.substring(1);
-    if (key.length < 12) {
-        key += '                   '.substring(0, 12 - key.length);
-    }
-    const result = `${key}: ${metrics.pct}% (${metrics.covered}/${metrics.total})`;
-    const skipped = metrics.skipped;
-    if (skipped > 0) {
-        return `${result}, ${skipped} ignored`;
-    }
-    return result;
 }
