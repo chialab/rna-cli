@@ -318,9 +318,7 @@ module.exports = (program) => {
                             try {
                                 await runBundlers(app, project, [bundler], invalidate);
                             } catch (err) {
-                                if (err) {
-                                    app.logger.error(err);
-                                }
+                                //
                             }
                         });
                     await promise;

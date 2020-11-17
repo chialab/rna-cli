@@ -18,7 +18,6 @@ module.exports = (program) => {
         .option('[--concurrency <number>]', 'Set concurrency level for tests.')
         .option('[--context <path>]', 'Use a specific HTML document for tests.')
         .option('[--headless]', 'Run browsers in headless mode.')
-        .option('[--loglevel <DISABLE|INFO|DEBUG|WARN|ERROR>]', 'Log level for tests.')
         .option('[--prepare]', 'Prepare tests build but skip run.')
         .option('[--run]', 'Skip tests build.')
         .option('[--timeout <number>]', 'Set the tests timeout.')
@@ -124,10 +123,10 @@ module.exports = (program) => {
                 return;
             }
 
-            let taskEnvironments = [options.node && 'node', options.browser && 'browser', options.saucelabs && 'saucelabs'].filter(Boolean);
-            if (!taskEnvironments.length) {
+            let environments = [options.node && 'node', options.browser && 'browser', options.saucelabs && 'saucelabs'].filter(Boolean);
+            if (!environments.length) {
                 // If test environment is not provide, use `browser` as default.
-                taskEnvironments.push('node', 'browser');
+                environments.push('node', 'browser');
                 options.node = true;
                 options.browser = true;
             }
@@ -143,8 +142,8 @@ module.exports = (program) => {
                 pragmaDefault: options['jsx.pragmaDefault'],
             } : false;
 
-            let runners = await getRunners(app, project, files, options, taskEnvironments);
-            let { exitCode } = await runTests(app, project, runners, files, !options.run, !options.prepare);
+            let runners = await getRunners(app, project, files, options, environments);
+            let result = await runTests(app, project, runners, files, !options.run, !options.prepare);
 
             if (options.watch && !options.prepare) {
                 const collectedFiles = [];
@@ -175,26 +174,29 @@ module.exports = (program) => {
                         try {
                             await runTests(app, project, runnersWithChanges, files, !options.run);
                         } catch (err) {
-                            if (err) {
-                                app.logger.error(err);
-                            }
+                            //
                         }
                     }, 200);
                 });
                 return;
             }
 
-            return exitCode;
+            if (result.reporter.failed.length) {
+                return 1;
+            }
+
+            return result;
         });
 };
 
-function runTest(project, runner, files, prepare, run, coverageMap, exitCodes = [], reporters = []) {
+function runTest(project, runner, files, prepare, run, coverageMap, reports = []) {
     const Listr = require('listr');
     const TestRunner = require('../../lib/TestRunners/TestRunner');
     const { Observable } = require('rxjs');
 
-    let prepareTask;
-    let prepareObserver = new Observable((observer) => {
+    let tasks = [];
+    let prepareSpecsTask, prepareRunnerTask, runPromise;
+    let prepareSpecsObserver = new Observable(async (observer) => {
         runner.on(TestRunner.PREPARE_START_EVENT, () => {
             observer.next('building specs...');
         });
@@ -204,63 +206,84 @@ function runTest(project, runner, files, prepare, run, coverageMap, exitCodes = 
         });
 
         runner.on(TestRunner.PREPARE_END_EVENT, () => {
-            prepareTask.output = '';
+            prepareSpecsTask.output = '';
             observer.complete();
         });
 
-        runner.build(files);
+        runner.build(files)
+            .catch((err) => observer.error(err));
     });
 
-    let tasks = runner.environments.map((env) => {
-        let runTask;
+    let prepareRunnerObserver = new Observable((observer) => {
+        runner.on(TestRunner.RUN_START_EVENT, (reporters) => {
+            tasks = reporters.map((reporter) => {
+                let runTask;
 
-        let runObserver = new Observable(async (observer) => {
-            runner.on(TestRunner.RUN_START_EVENT, () => {
-                observer.next('running tests...');
+                let runObserver = new Observable(async (observer) => {
+                    observer.next('running tests...');
+
+                    runner.on(TestRunner.RUN_PROGRESS_EVENT, (reporterInstance, title) => {
+                        if (reporter === reporterInstance) {
+                            observer.next(`running ${title}...`);
+                        }
+                    });
+
+                    runner.on(TestRunner.RUN_END_EVENT, (reporter) => {
+                        let report = reporter.getReport();
+                        coverageMap.merge(report.coverage);
+                        reports.push(report);
+                        runTask.output = '';
+                        observer.complete();
+                    });
+
+                    runPromise
+                        .catch((err) => observer.error(err));
+                });
+
+                return {
+                    title: reporter.name,
+                    task: (ctx, task) => {
+                        runTask = task;
+                        return runObserver;
+                    },
+                };
             });
 
-            runner.on(TestRunner.RUN_PROGRESS_EVENT, (title) => {
-                observer.next(`running ${title}...`);
-            });
-
-            runner.on(TestRunner.RUN_END_EVENT, ({ exitCode, reporter }) => {
-                let report = reporter.getReport();
-                coverageMap.merge(report.coverage);
-                if (exitCode !== 0) {
-                    exitCodes.push(exitCode);
-                }
-                reporters.push(report);
-                runTask.output = '';
-                observer.complete();
-            });
-
-            runner.run(run);
+            prepareRunnerTask.output = '';
+            observer.complete();
         });
 
-        return {
-            title: env,
-            task: (ctx, task) => {
-                runTask = task;
-                return runObserver;
-            },
-        };
+        runPromise = runner.run(run);
+        runPromise
+            .then(() => observer.complete())
+            .catch((err) => observer.error(err));
     });
 
     return {
         title: `${runner.name} runner`,
         task: () => new Listr([
             {
-                title: 'prepare',
+                title: 'prepare specs',
                 skip: () => !prepare,
                 task: (ctx, task) => {
-                    prepareTask = task;
-                    return prepareObserver;
+                    prepareSpecsTask = task;
+                    return prepareSpecsObserver;
+                },
+            },
+            {
+                title: 'prepare environments',
+                skip: () => !run,
+                task: (ctx, task) => {
+                    prepareRunnerTask = task;
+                    return prepareRunnerObserver;
                 },
             },
             {
                 title: 'run',
                 skip: () => !run,
-                task: () => new Listr(tasks),
+                task: () => new Listr(tasks, {
+                    concurrent: true,
+                }),
             },
         ]),
     };
@@ -271,20 +294,22 @@ async function runTests(app, project, runners, files, prepare = true, run = true
     const Renderer = require('../../lib/Cli/renderer');
     const Reporter = require('../../lib/TestRunners/Reporter');
 
-    let exitCodes = [];
-    let reporters = [];
+    let reports = [];
     let coverageMap = require('istanbul-lib-coverage').createCoverageMap({});
-    let list = new Listr(runners.map((runner) => runTest(project, runner, files, prepare, run, coverageMap, exitCodes, reporters)), {
+    let list = new Listr(runners.map((runner) => runTest(project, runner, files, prepare, run, coverageMap, reports)), {
         concurrent: true,
         renderer: Renderer,
     });
 
     await list.run();
 
-    reporters.forEach((report) => {
-        app.logger.newline();
-        app.logger.log(Reporter.formatReport(report));
+    let reporter = new Reporter();
+    reports.forEach((report) => {
+        reporter.merge(report);
     });
+
+    app.logger.newline();
+    app.logger.log(Reporter.formatReport(reporter.getReport()));
 
     if (run) {
         if (!Reporter.isEmptyCoverage(coverageMap)) {
@@ -294,8 +319,7 @@ async function runTests(app, project, runners, files, prepare = true, run = true
         }
     }
 
-    let finalExitCode = Math.max(...exitCodes);
-    return { runners, coverage: coverageMap, exitCode: finalExitCode };
+    return { runners, reporter, coverage: coverageMap };
 }
 
 /**

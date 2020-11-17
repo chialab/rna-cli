@@ -11,7 +11,6 @@ Run unit and e2e tests in Node and Browser environments, using [Mocha](https://m
 * `--concurrency <number>` Set concurrency level for tests.
 * `--context <path>` Use a specific HTML document for tests.
 * `--headless` Run browsers in headless mode.
-* `--loglevel <DISABLE|INFO|DEBUG|WARN|ERROR>` Log level for tests.
 * `--prepare` Prepare tests build but skip run.
 * `--run` Skip tests build.
 * `--timeout <number>` Set the tests timeout.
