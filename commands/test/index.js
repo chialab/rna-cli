@@ -292,7 +292,7 @@ function runTest(project, runner, files, prepare, run, reports = []) {
 async function runTests(app, project, runners, files, prepare = true, run = true) {
     const Listr = require('listr');
     const Renderer = require('../../lib/Cli/renderer');
-    const { Reporter } = require('../../lib/TestRunners/Reporter');
+    const { formatReport, Reporter } = require('../../lib/TestRunners/Reporter');
 
     let reports = [];
     let list = new Listr(runners.map((runner) => runTest(project, runner, files, prepare, run, reports)), {
@@ -308,7 +308,7 @@ async function runTests(app, project, runners, files, prepare = true, run = true
     });
 
     app.logger.newline();
-    app.logger.log(Reporter.formatReport(reporter.getReport()));
+    app.logger.log(formatReport(reporter.getReport()));
 
     return { runners, reporter };
 }
