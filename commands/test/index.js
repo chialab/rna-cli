@@ -12,7 +12,7 @@ module.exports = (program) => {
         .readme(`${__dirname}/README.md`)
         .option('[--targets <string>]', 'A supported browserslist query.')
         .option('[--node]', 'Run tests in node context.')
-        .option('[--browser [browserName]]', 'Run tests in browser context.')
+        .option('[--browsers [browserName]]', 'Run tests in browser context.')
         .option('[--saucelabs]', 'Use SauceLabs as browsers provider.')
         .option('[--coverage]', 'Generate a code coverage report.')
         .option('[--concurrency <number>]', 'Set concurrency level for tests.')
@@ -27,6 +27,11 @@ module.exports = (program) => {
 
             const cwd = process.cwd();
             const project = await Project.init(cwd);
+
+            if (options.browser) {
+                app.logger.warn('--browser option has been deprecated, use --browsers');
+                options.browsers = options.browser;
+            }
 
             // check sauce values
             if (options.saucelabs) {
@@ -123,12 +128,16 @@ module.exports = (program) => {
                 return;
             }
 
-            let environments = [options.node && 'node', options.browser && 'browser', options.saucelabs && 'saucelabs'].filter(Boolean);
+            let environments = [
+                options.node && 'node',
+                options.browsers && 'browser',
+                options.saucelabs && 'saucelabs',
+            ].filter(Boolean);
             if (!environments.length) {
                 // If test environment is not provide, use `browser` as default.
                 environments.push('node', 'browser');
                 options.node = true;
-                options.browser = true;
+                options.browsers = true;
             }
 
             if (typeof options.context === 'string') {
@@ -146,7 +155,7 @@ module.exports = (program) => {
             let result = await runTests(app, project, runners, files, !options.run, !options.prepare);
 
             if (options.watch && !options.prepare) {
-                const collectedFiles = [];
+                let collectedFiles = [];
                 let timeout;
 
                 // start the watch task
@@ -220,15 +229,18 @@ function runTest(project, runner, files, prepare, run, reports = []) {
                 let runTask;
 
                 let runObserver = new Observable(async (observer) => {
-                    observer.next('running tests...');
+                    observer.next('setting up tests...');
+                    runTask.title = reporter.name;
 
                     runner.on(TestRunner.RUN_PROGRESS_EVENT, (reporterInstance, title) => {
                         if (reporter === reporterInstance) {
+                            runTask.title = reporter.name;
                             observer.next(`running ${title}...`);
                         }
                     });
 
                     runner.on(TestRunner.RUN_END_EVENT, () => {
+                        runTask.title = reporter.name;
                         if (reporter.getReport().failed.length) {
                             observer.error({ message: '' });
                             runTask.output = '';
@@ -276,7 +288,7 @@ function runTest(project, runner, files, prepare, run, reports = []) {
                 },
             },
             {
-                title: 'prepare environments',
+                title: 'prepare runner',
                 skip: () => !run,
                 task: (ctx, task) => {
                     prepareRunnerTask = task;
@@ -325,8 +337,10 @@ async function runTests(app, project, runners, files, prepare = true, run = true
         reporter.merge(report);
     });
 
-    app.logger.newline();
-    app.logger.log(formatReport(reporter.getReport()));
+    if (run) {
+        app.logger.newline();
+        app.logger.log(formatReport(reporter.getReport()));
+    }
 
     return { runners, reporter };
 }
@@ -352,10 +366,18 @@ async function getRunners(app, project, files, options, environments = []) {
             let runner = new NodeTestRunner();
             await runner.setup(options);
             runners.push(runner);
-        } else if (taskEnvName === 'browser' || taskEnvName === 'saucelabs') {
+        } else if (taskEnvName === 'browser') {
             const BrowserTestRunner = require('../../lib/TestRunners/BrowserTestRunner');
             let runner = new BrowserTestRunner();
             await runner.setup(options);
+            runners.push(runner);
+        } else if (taskEnvName === 'saucelabs') {
+            const SaucelabsTestRunner = require('../../lib/TestRunners/SaucelabsTestRunner');
+            let runner = new SaucelabsTestRunner();
+            await runner.setup({
+                ...options,
+                browsers: typeof options.saucelabs === 'string' ? options.saucelabs : undefined,
+            });
             runners.push(runner);
         }
     }
