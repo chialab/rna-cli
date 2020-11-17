@@ -189,7 +189,7 @@ module.exports = (program) => {
         });
 };
 
-function runTest(project, runner, files, prepare, run, coverageMap, reports = []) {
+function runTest(project, runner, files, prepare, run, reports = []) {
     const Listr = require('listr');
     const TestRunner = require('../../lib/TestRunners/TestRunner');
     const { Observable } = require('rxjs');
@@ -228,10 +228,7 @@ function runTest(project, runner, files, prepare, run, coverageMap, reports = []
                         }
                     });
 
-                    runner.on(TestRunner.RUN_END_EVENT, (reporter) => {
-                        let report = reporter.getReport();
-                        coverageMap.merge(report.coverage);
-                        reports.push(report);
+                    runner.on(TestRunner.RUN_END_EVENT, () => {
                         runTask.output = '';
                         observer.complete();
                     });
@@ -255,7 +252,10 @@ function runTest(project, runner, files, prepare, run, coverageMap, reports = []
 
         runPromise = runner.run(run);
         runPromise
-            .then(() => observer.complete())
+            .then((reporter) => {
+                reports.push(reporter.getReport());
+                observer.complete();
+            })
             .catch((err) => observer.error(err));
     });
 
@@ -292,11 +292,10 @@ function runTest(project, runner, files, prepare, run, coverageMap, reports = []
 async function runTests(app, project, runners, files, prepare = true, run = true) {
     const Listr = require('listr');
     const Renderer = require('../../lib/Cli/renderer');
-    const Reporter = require('../../lib/TestRunners/Reporter');
+    const { Reporter } = require('../../lib/TestRunners/Reporter');
 
     let reports = [];
-    let coverageMap = require('istanbul-lib-coverage').createCoverageMap({});
-    let list = new Listr(runners.map((runner) => runTest(project, runner, files, prepare, run, coverageMap, reports)), {
+    let list = new Listr(runners.map((runner) => runTest(project, runner, files, prepare, run, reports)), {
         concurrent: true,
         renderer: Renderer,
     });
@@ -311,15 +310,7 @@ async function runTests(app, project, runners, files, prepare = true, run = true
     app.logger.newline();
     app.logger.log(Reporter.formatReport(reporter.getReport()));
 
-    if (run) {
-        if (!Reporter.isEmptyCoverage(coverageMap)) {
-            app.logger.newline();
-            app.logger.log(Reporter.formatCoverage(coverageMap));
-            app.logger.newline();
-        }
-    }
-
-    return { runners, reporter, coverage: coverageMap };
+    return { runners, reporter };
 }
 
 /**
