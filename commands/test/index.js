@@ -310,12 +310,13 @@ function runTest(project, runner, files, prepare, run, reports = []) {
 async function runTests(app, project, runners, files, prepare = true, run = true) {
     const Listr = require('listr');
     const Renderer = require('../../lib/Cli/renderer');
+    const VerboseRenderer = require('listr-verbose-renderer');
     const { formatReport, Reporter } = require('../../lib/TestRunners/Reporter');
 
     let reports = [];
     let list = new Listr(runners.map((runner) => runTest(project, runner, files, prepare, run, reports)), {
         concurrent: true,
-        renderer: Renderer,
+        renderer: process.stdout.isTTY ? Renderer : VerboseRenderer,
     });
 
     try {

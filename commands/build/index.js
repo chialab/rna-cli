@@ -386,12 +386,13 @@ async function runBundlers(app, project, bundlers, invalidate = []) {
     const Listr = require('listr');
     const Bundler = require('../../lib/Bundlers/Bundler');
     const Renderer = require('../../lib/Cli/renderer');
+    const VerboseRenderer = require('listr-verbose-renderer');
     const Linter = require('../../lib/Linters/Linter');
 
     let warnings = [], analysis = [];
     let list = new Listr(bundlers.map((bundler) => runBundler(project, bundler, invalidate, warnings, analysis)), {
         concurrent: true,
-        renderer: Renderer,
+        renderer: process.stdout.isTTY ? Renderer : VerboseRenderer,
     });
 
     await list.run();
