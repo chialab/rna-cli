@@ -229,8 +229,13 @@ function runTest(project, runner, files, prepare, run, reports = []) {
                     });
 
                     runner.on(TestRunner.RUN_END_EVENT, () => {
-                        runTask.output = '';
-                        observer.complete();
+                        if (reporter.getReport().failed.length) {
+                            observer.error({ message: '' });
+                            runTask.output = '';
+                        } else {
+                            runTask.output = '';
+                            observer.complete();
+                        }
                     });
 
                     runPromise
@@ -282,6 +287,7 @@ function runTest(project, runner, files, prepare, run, reports = []) {
                 title: 'run',
                 skip: () => !run,
                 task: () => new Listr(tasks, {
+                    exitOnError: false,
                     concurrent: true,
                 }),
             },
@@ -300,7 +306,19 @@ async function runTests(app, project, runners, files, prepare = true, run = true
         renderer: Renderer,
     });
 
-    await list.run();
+    try {
+        await list.run();
+    } catch (err) {
+        if (err && err.toString().indexOf('ListrError') === 0) {
+            let errors = err.errors;
+            let error = errors.find((err) => err.message);
+            if (error) {
+                throw error;
+            }
+        } else {
+            throw err;
+        }
+    }
 
     let reporter = new Reporter();
     reports.forEach((report) => {
