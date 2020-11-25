@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0-beta.1](https://github.com/chialab/rna-cli/compare/v4.0.0-beta.0...v4.0.0-beta.1) (2020-11-25)
+
 ## [4.0.0-beta.0](https://github.com/chialab/rna-cli/compare/v3.13.0...v4.0.0-beta.0) (2020-11-25)
 
 
