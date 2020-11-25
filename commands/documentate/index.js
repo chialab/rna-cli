@@ -85,15 +85,8 @@ module.exports = (program) => {
  */
 async function generate(app, project, input, output, options) {
     // start the `documentation` task.
-    try {
-        const sourceFile = bundle(input.path);
-        const template = templates.markdown;
-        template(sourceFile, Object.assign({}, options, { out: output.path }));
-        app.logger.stop();
-        app.logger.success('documentation created', project.relative(output));
-    } catch(err) {
-        // ops.
-        app.logger.stop();
-        throw err;
-    }
+    let sourceFile = bundle(input.path);
+    let template = templates.markdown;
+    template(sourceFile, Object.assign({}, options, { out: output.path }));
+    app.logger.success('documentation created', project.relative(output));
 }

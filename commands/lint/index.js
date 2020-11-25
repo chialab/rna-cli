@@ -120,21 +120,14 @@ module.exports = (program) => {
  */
 async function eslint(app, project, options, files) {
     const ESLint = require('../../lib/Linters/ESLint');
-
-    try {
-        const linter = new ESLint();
-        await linter.setup(project, options);
-        const report = await linter.lint(files);
-        if (report.errorCount || report.warningCount) {
-            app.logger.log(ESLint.format(linter.result));
-        }
-        app.logger.stop();
-        if (report.errorCount) {
-            return report;
-        }
-    } catch (err) {
-        app.logger.stop();
-        throw err;
+    let linter = new ESLint();
+    await linter.setup(project, options);
+    let report = await linter.lint(files);
+    if (report.errorCount || report.warningCount) {
+        app.logger.log(ESLint.format(linter.result));
+    }
+    if (report.errorCount) {
+        return report;
     }
 }
 
@@ -148,20 +141,13 @@ async function eslint(app, project, options, files) {
  */
 async function stylelint(app, project, options, files) {
     const Stylelint = require('../../lib/Linters/Stylelint');
-
-    try {
-        const linter = new Stylelint();
-        await linter.setup(project, options);
-        const report = await linter.lint(files);
-        if (report.errorCount || report.warningCount) {
-            app.logger.log(Stylelint.format(linter.result));
-        }
-        app.logger.stop();
-        if (report.errorCount) {
-            return report;
-        }
-    } catch(err) {
-        app.logger.stop();
-        throw err;
+    let linter = new Stylelint();
+    await linter.setup(project, options);
+    let report = await linter.lint(files);
+    if (report.errorCount || report.warningCount) {
+        app.logger.log(Stylelint.format(linter.result));
+    }
+    if (report.errorCount) {
+        return report;
     }
 }
