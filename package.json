@@ -19,6 +19,9 @@
   "engines": {
     "node": ">=10.12.0"
   },
+  "scripts": {
+    "release": "standard-version"
+  },
   "dependencies": {
     "@babel/core": "^7.12.7",
     "@babel/helper-module-imports": "^7.12.5",
@@ -114,6 +117,7 @@
   "devDependencies": {
     "@chialab/eslint-config": "^1.1.1",
     "@chialab/stylelint-config": "^1.0.0",
-    "@types/node": "^14.14.9"
+    "@types/node": "^14.14.9",
+    "standard-version": "^9.0.0"
   }
 }
