@@ -25,7 +25,6 @@ module.exports = (program) => {
         .option('[--jsx.pragma]', 'The JSX pragma to use.')
         .option('[--jsx.pragmaFrag]', 'The JSX pragma fragment to use.')
         .option('[--jsx.module]', 'The module to auto import for JSX pragma.')
-        .option('[--typings [file]', 'Generate typescript declarations.')
         .option('[--analyze]', 'Print analytic report for script size.')
         .option('[--link] <package1,package2|pattern>', 'Symlinked dependencies to build along the main bundle.')
         .option('[--serve]', 'Should serve the output folder with livereload.')
@@ -142,24 +141,22 @@ module.exports = (program) => {
                         if (output && !entry.linked) {
                             let bundler = await buildEntry(app, entry, libFile, output, Object.assign({}, options, {
                                 targets: options.targets || await entry.browserslist(),
-                                typings: options.typings === true,
                             }));
                             bundlers.push(bundler);
                         } else {
                             if (moduleFile) {
                                 let bundler = await buildEntry(app, entry, libFile, moduleFile, Object.assign({}, options, {
-                                    targets: Targets.fromFeatures('module', 'async').toQuery(),
+                                    targets: options.targets || Targets.fromFeatures('module', 'async').toQuery(),
                                     format: 'esm',
                                     lint: !mainFile && options.lint,
-                                    typings: options.typings === true,
                                 }));
                                 bundlers.push(bundler);
                             }
                             if (!entry.linked || !moduleFile) {
                                 if (mainFile) {
                                     let bundler = await buildEntry(app, entry, libFile, mainFile, Object.assign({}, options, {
-                                        targets: options.targets || await entry.browserslist(), format: 'cjs',
-                                        typings: options.typings === true,
+                                        targets: options.targets || Targets.parse('node 10').toQuery(),
+                                        format: 'cjs',
                                     }));
                                     bundlers.push(bundler);
                                 }
@@ -169,7 +166,6 @@ module.exports = (program) => {
                                     let bundler = await buildEntry(app, entry, libFile, browserFile, Object.assign({}, options, {
                                         targets: options.targets || await entry.browserslist(),
                                         format: 'umd',
-                                        typings: options.typings === true,
                                     }));
                                     bundlers.push(bundler);
                                 }
@@ -208,7 +204,6 @@ module.exports = (program) => {
                             let moduleOutput = mainFile ? mainFile : output;
                             let bundler = await buildEntry(app, entry, moduleFile, moduleOutput, Object.assign({ bundle: true }, options, {
                                 targets: options.targets || await entry.browserslist(),
-                                typings: options.typings === true,
                             }));
                             bundlers.push(bundler);
                         }
@@ -239,7 +234,6 @@ module.exports = (program) => {
 
                     let bundler = await buildEntry(app, project, entry, output, Object.assign({}, options, {
                         targets: options.targets || await project.browserslist(),
-                        typings: options.typings === true,
                     }));
                     bundlers.push(bundler);
                 }
@@ -486,7 +480,6 @@ async function buildEntry(app, project, entry, output, options) {
             lint: options.lint !== false,
             cache: options.cache !== false,
             analyze: options.analyze,
-            typings: options.typings,
             jsx: options.jsx != false ? {
                 module: options['jsx.module'],
                 pragma: options['jsx.pragma'],
