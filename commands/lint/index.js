@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('lint')
         .description('Lint your source files.')
+        .deprecate('4.0.0', 'Use configuration presets.')
         .readme(`${__dirname}/README.md`)
         .option('<file|package>', 'The packages or the files to lint.')
         .option('[--fix]', 'Should autofix warnings.')
@@ -16,26 +17,32 @@ module.exports = (program) => {
             const { isJSFile, isStyleFile, Project } = require('../../lib/File');
 
             const cwd = process.cwd();
-            const project = new Project(cwd);
+            const project = await Project.init(cwd);
 
             let entries = [];
             if (options.arguments.length) {
-                entries = project.resolve(options.arguments);
+                entries = await project.resolve(options.arguments);
             } else {
-                const workspaces = project.workspaces;
+                let workspaces = await project.getWorkspaces();
                 if (workspaces) {
-                    workspaces.forEach((ws) => {
-                        let srcDirectory = ws.directories.src;
-                        if (srcDirectory && srcDirectory.exists()) {
-                            entries.push(...srcDirectory.resolve('**/*'));
-                        } else if (ws.directory('src').exists()) {
-                            entries.push(...ws.directory('src').resolve('**/*'));
-                        }
-                    });
+                    await Promise.all(
+                        workspaces.map(async (ws) => {
+                            let srcDirectory = ws.directories.src;
+                            if (srcDirectory && await srcDirectory.exists()) {
+                                let subEntries = await srcDirectory.resolve('**/*');
+                                entries.push(...subEntries);
+                            } else if (await ws.directory('src').exists()) {
+                                let subEntries = await ws.directory('src').resolve('**/*');
+                                entries.push(...subEntries);
+                            }
+                        })
+                    );
                 } else if (project.directories.src) {
-                    entries.push(...project.directories.src.resolve('**/*'));
-                } else if (project.directory('src').exists()) {
-                    entries.push(...project.directory('src').resolve('**/*'));
+                    let subEntries = await project.directories.src.resolve('**/*');
+                    entries.push(...subEntries);
+                } else if (await project.directory('src').exists()) {
+                    let subEntries = await project.directory('src').resolve('**/*');
+                    entries.push(...subEntries);
                 }
             }
 
@@ -113,22 +120,14 @@ module.exports = (program) => {
  */
 async function eslint(app, project, options, files) {
     const ESLint = require('../../lib/Linters/ESLint');
-    app.logger.play('running ESLint...');
-
-    try {
-        const linter = new ESLint();
-        await linter.setup(project, options);
-        const report = await linter.lint(files);
-        if (report.errorCount || report.warningCount) {
-            app.logger.log(ESLint.format(linter.result));
-        }
-        app.logger.stop();
-        if (report.errorCount) {
-            return report;
-        }
-    } catch (err) {
-        app.logger.stop();
-        throw err;
+    let linter = new ESLint();
+    await linter.setup(project, options);
+    let report = await linter.lint(files);
+    if (report.errorCount || report.warningCount) {
+        app.logger.log(ESLint.format(linter.result));
+    }
+    if (report.errorCount) {
+        return report;
     }
 }
 
@@ -142,21 +141,13 @@ async function eslint(app, project, options, files) {
  */
 async function stylelint(app, project, options, files) {
     const Stylelint = require('../../lib/Linters/Stylelint');
-    app.logger.play('running stylelint...');
-
-    try {
-        const linter = new Stylelint();
-        await linter.setup(project, options);
-        const report = await linter.lint(files);
-        if (report.errorCount || report.warningCount) {
-            app.logger.log(Stylelint.format(linter.result));
-        }
-        app.logger.stop();
-        if (report.errorCount) {
-            return report;
-        }
-    } catch(err) {
-        app.logger.stop();
-        throw err;
+    let linter = new Stylelint();
+    await linter.setup(project, options);
+    let report = await linter.lint(files);
+    if (report.errorCount || report.warningCount) {
+        app.logger.log(Stylelint.format(linter.result));
+    }
+    if (report.errorCount) {
+        return report;
     }
 }

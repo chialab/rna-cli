@@ -52,77 +52,77 @@ module.exports = async function npmTask(app, options, project, templates) {
             name: 'workspaces',
             message: formatQuestion('workspaces'),
             default: project.get('workspaces') && project.get('workspaces').join(', '),
-            when: () => !project.parent,
+            when: async () => !(await project.getParent()),
         },
         {
             type: 'input',
             name: 'src',
             message: formatQuestion('base src path'),
             default: project.get('directories.src'),
-            when: (answers) => !answers.workspaces,
+            when: (answers) => !answers.get('workspaces'),
         },
         {
             type: 'input',
             name: 'lib',
             message: formatQuestion('source entry point'),
             default: project.get('lib'),
-            when: (answers) => !answers.workspaces,
+            when: (answers) => !answers.get('workspaces'),
         },
         {
             type: 'input',
             name: 'style',
             message: formatQuestion('style entry point'),
             default: project.get('style'),
-            when: (answers) => !answers.workspaces,
+            when: (answers) => !answers.get('workspaces'),
         },
         {
             type: 'input',
             name: 'test',
             message: formatQuestion('base test path'),
             default: project.get('directories.test'),
-            when: (answers) => !answers.workspaces,
+            when: (answers) => !answers.get('workspaces'),
         },
         {
             type: 'input',
             name: 'module',
             message: formatQuestion('es module entry point'),
             default: project.get('module'),
-            when: (answers) => !answers.workspaces,
+            when: (answers) => !answers.get('workspaces'),
         },
         {
             type: 'input',
             name: 'main',
             message: formatQuestion('cjs module entry point'),
             default: project.get('main'),
-            when: (answers) => !answers.workspaces,
+            when: (answers) => !answers.get('workspaces'),
         },
         {
             type: 'input',
             name: 'browser',
             message: formatQuestion('browser module entry point'),
             default: project.get('browser'),
-            when: (answers) => !answers.workspaces,
+            when: (answers) => !answers.get('workspaces'),
         },
         {
             type: 'input',
             name: 'dist',
             message: formatQuestion('base dist path'),
             default: project.get('directories.dist'),
-            when: (answers) => !answers.workspaces && (answers.module || answers.main || answers.browser),
+            when: (answers) => !answers.get('workspaces') && (answers.module || answers.main || answers.browser),
         },
         {
             type: 'input',
             name: 'types',
             message: formatQuestion('types entry point'),
             default: project.get('types'),
-            when: (answers) => !answers.workspaces && (answers.module || answers.main || answers.browser),
+            when: (answers) => !answers.get('workspaces') && (answers.module || answers.main || answers.browser),
         },
         {
             type: 'input',
             name: 'public',
             message: formatQuestion('public path'),
             default: project.get('directories.public'),
-            when: (answers) => !answers.workspaces && !answers.module && !answers.main && !answers.browser,
+            when: (answers) => !answers.get('workspaces') && !answers.module && !answers.main && !answers.browser,
         },
         {
             type: 'input',
@@ -208,7 +208,7 @@ module.exports = async function npmTask(app, options, project, templates) {
         let scripts = {
             build: 'rna build --production',
             watch: 'rna build --watch',
-            test: 'rna lint + unit',
+            test: 'rna lint && rna test',
             lint: 'rna lint',
             start: 'yarn install --ignore-scripts && yarn watch',
             prepublish: 'yarn run build',
@@ -229,22 +229,22 @@ module.exports = async function npmTask(app, options, project, templates) {
     }
 
     // Write `package.json`.
-    project.save();
+    await project.save();
 
     if (!project.get('private')) {
         // NPMIGNORE
-        const ignoreFile = project.file('.npmignore');
-        const ignoreTemplate = templates.file('npmignore');
+        let ignoreFile = project.file('.npmignore');
+        let ignoreTemplate = templates.file('npmignore');
 
         // "Append" configuration to `.npmignore`.
-        configurator(ignoreFile, ignoreTemplate.read(), '# RNA');
+        await configurator(ignoreFile, await ignoreTemplate.read(), '# RNA');
     }
 
     if (project.get('workspaces')) {
-        const lernaJson = project.file('lerna.json');
-        if (!lernaJson.exists()) {
-            const lernaPackage = require('lerna/package.json');
-            lernaJson.writeJson({
+        let lernaJson = project.file('lerna.json');
+        if (await lernaJson.isNew()) {
+            let lernaPackage = require('lerna/package.json');
+            await lernaJson.writeJson({
                 lerna: lernaPackage.version,
                 version: project.get('version') || '0.0.0',
                 npmClient: 'yarn',

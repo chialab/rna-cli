@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('publish')
         .description('Publish to Git and NPM.')
+        .deprecate('4.0.0', 'Use Lerna or standard-version.')
         .readme(`${__dirname}/README.md`)
         .option('[version]', 'The version to bump')
         .option('[--patch]', 'Deploy a patch version of the package(s).')
@@ -21,7 +22,7 @@ module.exports = (program) => {
         .action(async (app, options) => {
             const { Project } = require('../../lib/File');
             const cwd = process.cwd();
-            const project = new Project(cwd);
+            const project = await Project.init(cwd);
 
             let version;
             if (options.arguments.length) {

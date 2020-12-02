@@ -9,12 +9,12 @@ const { configurator } = require('../utils');
  * @param {NavigationDirectory} templates The templates directory.
  * @returns {Promise}
  */
-module.exports = (app, options, project, templates) => {
-    const editorConfig = project.file('.editorconfig');
-    const template = templates.file('editorconfig');
+module.exports = async (app, options, project, templates) => {
+    let editorConfig = project.file('.editorconfig');
+    let template = templates.file('editorconfig');
 
     // "Append" configuration to `.editorconfig`.
-    configurator(editorConfig, template.read(), '# RNA');
+    await configurator(editorConfig, await template.read(), '# RNA');
 
     app.logger.success('.editorconfig updated', project.relative(editorConfig));
 };

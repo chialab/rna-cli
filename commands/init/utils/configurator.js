@@ -6,13 +6,13 @@
  * @param {string} delimiter Delimiter.
  * @returns {void}
  */
-module.exports = (file, content, delimiter) => {
+module.exports = async (file, content, delimiter) => {
     let prevContent = '';
-    if (file.exists()) {
-        prevContent = file.read();
+    if (await file.exists()) {
+        prevContent = await file.read();
     }
     let splitted = prevContent.split(new RegExp(`\n?${delimiter}\n?`));
     splitted[1] = `${delimiter}\n${content}\n${delimiter}`; // Why arbitrarily at index 1? ~~fquffio
     prevContent = splitted.join('\n');
-    file.write(prevContent.trim());
+    await file.write(prevContent.trim());
 };

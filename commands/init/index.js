@@ -8,6 +8,7 @@ module.exports = (program) => {
     program
         .command('init')
         .description('Setup a new project.')
+        .deprecate('4.0.0', 'Use GitHub templates.')
         .readme(`${__dirname}/README.md`)
         .option('<dir>', 'The project root to create.')
         .option('[--fs]', 'File system setup.')
@@ -29,8 +30,8 @@ module.exports = (program) => {
 
             await mkdir(cwd, { recursive: true });
 
-            const project = new Project(cwd);
-            const parentProject = project.parent;
+            const project = await Project.init(cwd);
+            const parentProject = await project.getParent();
             const templates = new Directory(__dirname).directory('templates');
 
             // active all flags if none is selected
