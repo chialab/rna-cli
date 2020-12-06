@@ -419,8 +419,12 @@ function runBundler(project, bundler, invalidate = [], warnings = [], analysis =
             if (!child) {
                 let outputFiles = await Promise.all(
                     files.map(async (file) => {
-                        let { size, zipped } = await file.size();
-                        return `${project.relative(file)} (${size}, ${zipped} zipped)`;
+                        if (file.path.match(/\.(js|css|html)$/)) {
+                            let { size, zipped } = await file.size();
+                            return `${project.relative(file)} (${size}, ${zipped} zipped)`;
+                        }
+
+                        return `${project.relative(file)}`;
                     })
                 );
                 writerTask.output = outputFiles.join('\n');
