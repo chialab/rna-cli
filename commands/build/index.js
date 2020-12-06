@@ -20,7 +20,6 @@ module.exports = (program) => {
         .option('[--production]', 'Prepare output for production env.')
         .option('[--no-map]', 'Do not produce source map.')
         .option('[--no-lint]', 'Do not lint files before build.')
-        .option('[--no-cache]', 'Should not cache global dependencies for memory optimizations.')
         .option('[--recursive]', 'Recursively build monorepo packages.')
         .option('[--jsx.pragma]', 'The JSX pragma to use.')
         .option('[--jsx.pragmaFrag]', 'The JSX pragma fragment to use.')
@@ -268,6 +267,7 @@ module.exports = (program) => {
                     promise = promise
                         .then(async () => {
                             try {
+                                console.log(bundler);
                                 await runBundlers(app, project, [bundler], invalidate);
                             } catch (err) {
                                 //
@@ -482,7 +482,6 @@ async function buildEntry(app, project, entry, output, options) {
             production: options.production,
             map: options.map,
             lint: options.lint !== false,
-            cache: options.cache !== false,
             analyze: options.analyze,
             jsx: options.jsx != false ? {
                 module: options['jsx.module'],
