@@ -267,7 +267,6 @@ module.exports = (program) => {
                     promise = promise
                         .then(async () => {
                             try {
-                                console.log(bundler);
                                 await runBundlers(app, project, [bundler], invalidate);
                             } catch (err) {
                                 //
@@ -322,15 +321,14 @@ module.exports = (program) => {
 };
 
 function filterChangedBundles(bundles, files) {
-    const { realpathSync } = require('fs');
-    files = files.map((file) => realpathSync(file.path));
-    return bundles
+    let result = bundles
         .filter((bundle) => {
             if (!bundle.files) {
-                return [];
+                return false;
             }
-            return files.some((file) => bundle.files.includes(file));
+            return files.some((file) => bundle.files.includes(file.path));
         });
+    return result;
 }
 
 async function runBundlers(app, project, bundlers, invalidate = []) {
@@ -375,47 +373,68 @@ function runBundler(project, bundler, invalidate = [], warnings = [], analysis =
     let { output } = bundler.options;
 
     let bundleObserver = new Observable((observer) => {
-        bundler.on(Bundler.BUILD_START_EVENT, (input, code) => {
+        let onStart = (input, code) => {
             observer.next(`building ${code ? 'inline code' : `${project.relative(input)}`}...`);
-        });
-
-        bundler.on(Bundler.BUILD_PROGRESS_EVENT, (file) => {
+        };
+        let onProgress = (file) => {
             observer.next(`building ${project.relative(file)}...`);
-        });
-
-        bundler.on(Bundler.BUILD_END_EVENT, (input, code, child) => {
+        };
+        let onWarn = (message) => {
+            warnings.push(message);
+        };
+        let onAnalysis = (result) => {
+            analysis.push(result);
+        };
+        let off = () => {
+            bundler.off(Bundler.BUILD_START_EVENT, onStart);
+            bundler.off(Bundler.BUILD_PROGRESS_EVENT, onProgress);
+            bundler.off(Bundler.WARN_EVENT, onWarn);
+            bundler.off(Bundler.ANALYSIS_EVENT, onAnalysis);
+            bundler.off(Bundler.BUILD_END_EVENT, onEnd);
+            bundler.off(Bundler.BUNDLE_END_EVENT, onEnd);
+            bundler.off(Bundler.ERROR_EVENT, onError);
+        };
+        let onEnd = (input, code, child) => {
             if (!child) {
                 bundlerTask.output = '';
                 observer.complete();
+                off();
             }
-        });
-
-        bundler.on(Bundler.ERROR_EVENT, (error) => {
+        };
+        let onError = (error) => {
             observer.error(error);
-        });
+            off();
+        };
 
-        bundler.on(Bundler.WARN_EVENT, (message) => {
-            warnings.push(message);
-        });
-
-        bundler.on(Bundler.ANALYSIS_EVENT, (result) => {
-            analysis.push(result);
-        });
+        bundler.on(Bundler.BUILD_START_EVENT, onStart);
+        bundler.on(Bundler.BUILD_PROGRESS_EVENT, onProgress);
+        bundler.on(Bundler.WARN_EVENT, onWarn);
+        bundler.on(Bundler.ANALYSIS_EVENT, onAnalysis);
+        bundler.on(Bundler.BUILD_END_EVENT, onEnd);
+        bundler.on(Bundler.BUNDLE_END_EVENT, onEnd);
+        bundler.on(Bundler.ERROR_EVENT, onError);
 
         bundler.build(invalidate);
     });
 
     let writeObserver = new Observable((observer) => {
         let files = [];
-
-        bundler.on(Bundler.WRITE_PROGRESS_EVENT, (file) => {
+        let onProgress = (file) => {
             observer.next(`writing ${project.relative(file)}...`);
             if (files.indexOf(file) === -1) {
                 files.push(file);
             }
-        });
-
-        bundler.on(Bundler.WRITE_END_EVENT, async (child) => {
+        };
+        let onWarn = (message) => {
+            warnings.push(message);
+        };
+        let off = () => {
+            bundler.off(Bundler.WRITE_PROGRESS_EVENT, onProgress);
+            bundler.off(Bundler.WARN_EVENT, onWarn);
+            bundler.off(Bundler.WRITE_END_EVENT, onEnd);
+            bundler.off(Bundler.ERROR_EVENT, onError);
+        };
+        let onEnd = async (child) => {
             if (!child) {
                 let outputFiles = await Promise.all(
                     files.map(async (file) => {
@@ -428,18 +447,19 @@ function runBundler(project, bundler, invalidate = [], warnings = [], analysis =
                     })
                 );
                 writerTask.output = outputFiles.join('\n');
-
                 observer.complete();
+                off();
             }
-        });
-
-        bundler.on(Bundler.ERROR_EVENT, (error) => {
+        };
+        let onError = (error) => {
             observer.error(error);
-        });
+            off();
+        };
 
-        bundler.on(Bundler.WARN_EVENT, (message) => {
-            warnings.push(message);
-        });
+        bundler.on(Bundler.WRITE_PROGRESS_EVENT, onProgress);
+        bundler.on(Bundler.WARN_EVENT, onWarn);
+        bundler.on(Bundler.WRITE_END_EVENT, onEnd);
+        bundler.on(Bundler.ERROR_EVENT, onError);
 
         bundler.write();
     });
