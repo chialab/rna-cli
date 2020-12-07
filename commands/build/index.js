@@ -18,6 +18,7 @@ module.exports = (program) => {
         .option('[--format]', 'Specify the format of the JavaScript bundle. Available formats are `es`, `umd`, `iife` and `cjs`.')
         .option('[--bundle]', 'Should bundle dependencies along the source files.')
         .option('[--production]', 'Prepare output for production env.')
+        .option('[--legacy]', 'Should generate legacy code.')
         .option('[--no-map]', 'Do not produce source map.')
         .option('[--no-lint]', 'Do not lint files before build.')
         .option('[--recursive]', 'Recursively build monorepo packages.')
@@ -34,7 +35,6 @@ module.exports = (program) => {
         .option('[--compress]', 'Activate gzip compression on static files.')
         .action(async (app, options = {}) => {
             const path = require('path');
-            const Targets = require('../../lib/Targets');
             const { Project } = require('../../lib/File');
 
             const cwd = process.cwd();
@@ -139,13 +139,23 @@ module.exports = (program) => {
                     if (libFile) {
                         if (output && !entry.linked) {
                             let bundler = await buildEntry(app, entry, libFile, output, Object.assign({}, options, {
-                                targets: options.targets || await entry.browserslist(),
+                                targets: options.targets || await (options.legacy ?
+                                    entry.browserslist(2) :
+                                    options.production ?
+                                        entry.browserslist(1) :
+                                        entry.browserslist(0)
+                                ),
                             }));
                             bundlers.push(bundler);
                         } else {
                             if (moduleFile) {
                                 let bundler = await buildEntry(app, entry, libFile, moduleFile, Object.assign({}, options, {
-                                    targets: options.targets || Targets.fromFeatures('module', 'async').toQuery(),
+                                    targets: options.targets || await (options.legacy ?
+                                        entry.browserslist(2) :
+                                        options.production ?
+                                            entry.browserslist(1) :
+                                            entry.browserslist(0)
+                                    ),
                                     format: 'esm',
                                     lint: !mainFile && options.lint,
                                 }));
@@ -154,7 +164,12 @@ module.exports = (program) => {
                             if (!entry.linked || !moduleFile) {
                                 if (mainFile) {
                                     let bundler = await buildEntry(app, entry, libFile, mainFile, Object.assign({}, options, {
-                                        targets: options.targets || Targets.parse('node 10').toQuery(),
+                                        targets: options.targets || await (options.legacy ?
+                                            entry.browserslist(2) :
+                                            options.production ?
+                                                entry.browserslist(1) :
+                                                entry.browserslist(0)
+                                        ),
                                         format: 'cjs',
                                     }));
                                     bundlers.push(bundler);
@@ -163,7 +178,12 @@ module.exports = (program) => {
                             if (!entry.linked || !(mainFile || moduleFile)) {
                                 if (browserFile) {
                                     let bundler = await buildEntry(app, entry, libFile, browserFile, Object.assign({}, options, {
-                                        targets: options.targets || await entry.browserslist(),
+                                        targets: options.targets || await (options.legacy ?
+                                            entry.browserslist(2) :
+                                            options.production ?
+                                                entry.browserslist(1) :
+                                                entry.browserslist(0)
+                                        ),
                                         format: 'umd',
                                     }));
                                     bundlers.push(bundler);
@@ -178,11 +198,23 @@ module.exports = (program) => {
                                     (browserFile && `${browserFile.basename}.css`) ||
                                     `${project.scopeName}.css`,
                                 );
-                                let bundler = await buildEntry(app, entry, styleFile, styleOutput, Object.assign({}, options, { targets: options.targets || await entry.browserslist() }));
+                                let bundler = await buildEntry(app, entry, styleFile, styleOutput, Object.assign({}, options, {
+                                    targets: options.targets || await (options.legacy ?
+                                        entry.browserslist(2) :
+                                        options.production ?
+                                            entry.browserslist(1) :
+                                            entry.browserslist(0)
+                                    ),
+                                }));
                                 bundlers.push(bundler);
                             }
                             if (libFile.extname === '.html' && (entry.directories.public || entry.directories.lib)) {
-                                let bundler = await buildEntry(app, entry, libFile, entry.directories.public || entry.directories.lib, Object.assign({}, options, { targets: options.targets || await entry.browserslist() }));
+                                let bundler = await buildEntry(app, entry, libFile, entry.directories.public || entry.directories.lib, Object.assign({}, options, {
+                                    targets: options.targets || await (options.legacy || options.production ?
+                                        entry.browserslist(2) :
+                                        entry.browserslist(0)
+                                    ),
+                                }));
                                 bundlers.push(bundler);
                             }
                         }
@@ -202,7 +234,12 @@ module.exports = (program) => {
                         if (moduleFile) {
                             let moduleOutput = mainFile ? mainFile : output;
                             let bundler = await buildEntry(app, entry, moduleFile, moduleOutput, Object.assign({ bundle: true }, options, {
-                                targets: options.targets || await entry.browserslist(),
+                                targets: options.targets || await (options.legacy ?
+                                    entry.browserslist(2) :
+                                    options.production ?
+                                        entry.browserslist(1) :
+                                        entry.browserslist(0)
+                                ),
                             }));
                             bundlers.push(bundler);
                         }
@@ -210,7 +247,12 @@ module.exports = (program) => {
                         if (styleFile) {
                             let styleOutput = mainFile ? mainFile.parent.file(`${mainFile.basename}.css`) : output;
                             let bundler = await buildEntry(app, entry, styleFile, styleOutput, Object.assign({}, options, {
-                                targets: options.targets || await entry.browserslist(),
+                                targets: options.targets || await (options.legacy ?
+                                    entry.browserslist(2) :
+                                    options.production ?
+                                        entry.browserslist(1) :
+                                        entry.browserslist(0)
+                                ),
                             }));
                             bundlers.push(bundler);
                         }
@@ -232,7 +274,12 @@ module.exports = (program) => {
                     }
 
                     let bundler = await buildEntry(app, project, entry, output, Object.assign({}, options, {
-                        targets: options.targets || await project.browserslist(),
+                        targets: options.targets || await (options.legacy ?
+                            project.browserslist(2) :
+                            options.production ?
+                                project.browserslist(entry.extname === '.html' ? 2 : 1) :
+                                project.browserslist(0)
+                        ),
                     }));
                     bundlers.push(bundler);
                 }
