@@ -80,26 +80,7 @@ module.exports = (program) => {
             }
 
             if (options.link) {
-                const linkedFilter = options.link.split(',').map((pattern) => new RegExp(pattern.replace(/\//, '\\/')));
-                const filterLinkedDependencies = async (project, results = []) => {
-                    let dependencies = await project.getLinkedDependencies();
-                    let workspaces = await project.getWorkspaces();
-                    await Promise.all(
-                        dependencies
-                            .concat(workspaces || [])
-                            .filter((pkg) => linkedFilter.some((regex) => pkg.get('name').match(regex)))
-                            .map(async (pkg) => {
-                                if (!results.find((p) => p.get('name') === pkg.get('name'))) {
-                                    results.push(pkg);
-                                    await filterLinkedDependencies(pkg, results);
-                                }
-                            })
-                    );
-
-                    return results;
-                };
-
-                let dependencies = await filterLinkedDependencies(project);
+                let dependencies = await filterLinkedDependencies(project, options.link);
                 let { list } = Project.sort(dependencies);
                 list.forEach((pkg) => {
                     pkg.linked = true;
@@ -107,7 +88,7 @@ module.exports = (program) => {
                 entries.unshift(...list);
             }
 
-            const bundlersList = [];
+            let bundlersList = [];
 
             // Process entries.
             for (let i = 0; i < entries.length; i++) {
@@ -367,15 +348,29 @@ module.exports = (program) => {
         });
 };
 
+async function filterLinkedDependencies(project, modules, results = []) {
+    let linkedFilter = modules.split(',').map((pattern) => new RegExp(pattern.replace(/\//, '\\/')));
+    let dependencies = await project.getLinkedDependencies();
+    let workspaces = await project.getWorkspaces();
+    await Promise.all(
+        dependencies
+            .concat(workspaces || [])
+            .filter((pkg) => linkedFilter.some((regex) => pkg.get('name').match(regex)))
+            .map(async (pkg) => {
+                if (!results.find((p) => p.get('name') === pkg.get('name'))) {
+                    results.push(pkg);
+                    await filterLinkedDependencies(pkg, modules, results);
+                }
+            })
+    );
+
+    return results;
+}
+
 function filterChangedBundles(bundles, files) {
-    let result = bundles
-        .filter((bundle) => {
-            if (!bundle.files) {
-                return false;
-            }
-            return files.some((file) => bundle.files.includes(file.path));
-        });
-    return result;
+    return bundles.filter((bundle) =>
+        files.some((file) => bundle.files.includes(file.path))
+    );
 }
 
 async function runBundlers(app, project, bundlers, invalidate = []) {
