@@ -413,13 +413,14 @@ function runBundler(project, bundler, invalidate = [], warnings = [], analysis =
 
     let bundlerTask, writerTask;
     let { output } = bundler.options;
+    let root = project.parent || project;
 
     let bundleObserver = new Observable((observer) => {
         let onStart = (input, code) => {
             observer.next(`building ${code ? 'inline code' : `${project.relative(input)}`}...`);
         };
         let onProgress = (file) => {
-            observer.next(`building ${project.relative(file)}...`);
+            observer.next(`building ${root.relative(file)}...`);
         };
         let onWarn = (message) => {
             warnings.push(message);

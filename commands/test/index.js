@@ -203,6 +203,7 @@ function runTest(project, runner, files, prepare, run, reports = []) {
     const TestRunner = require('../../lib/TestRunners/TestRunner');
     const { Observable } = require('rxjs');
 
+    let root = project.parent || project;
     let tasks = [];
     let prepareSpecsTask, prepareRunnerTask, runPromise;
     let prepareSpecsObserver = new Observable(async (observer) => {
@@ -211,7 +212,7 @@ function runTest(project, runner, files, prepare, run, reports = []) {
         });
 
         runner.on(TestRunner.PREPARE_PROGRESS_EVENT, (file) => {
-            observer.next(`building ${project.relative(file)}...`);
+            observer.next(`building ${root.relative(file)}...`);
         });
 
         runner.on(TestRunner.PREPARE_END_EVENT, () => {
