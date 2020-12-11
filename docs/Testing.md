@@ -1,4 +1,4 @@
-RNA provides the `unit` command to run tests in browsers and Node environments, using [Mocha](https://mochajs.org/) as test framework, [Chai](https://www.chaijs.com/) as assertion library and [Karma](http://karma-runner.github.io) as test runner for browsers.
+RNA provides the `test` command to run tests in browsers and Node environments, using [Mocha](https://mochajs.org/) as test framework, [Chai](https://www.chaijs.com/) as assertion library and [Karma](http://karma-runner.github.io) as test runner for browsers.
 
 ## Write a test
 
@@ -23,13 +23,13 @@ Once you have wrote a test file, you can run the suite in browser, cloud browser
 
 ### Browser
 
-Running `$ rna unit test/*.spec.js --browser` RNA will lookup in your machine for installed browsers to launch. Supported browsers are `chrome`, `firefox`, `edge`, `ie`, `safari` and `opera`. You can specify a single browser to run (`--browser chrome`) or just a subset of the available (`--browser edge,firefox`).
+Running `$ rna test test/*.spec.js --browser` RNA will lookup in your machine for installed browsers to launch. Supported browsers are `chrome`, `firefox`, `edge`, `ie`, `safari` and `opera`. You can specify a single browser to run (`--browser chrome`) or a subset of the available (`--browser edge,firefox`).
 
 Every test is launched with a clean profile, so cookies are not stored permanently and extensions are not loaded, also when using the watch mode (`--watch`).
 
 ### Node
 
-To test Node environments, simply run the `$ rna unit test/*.spec.js --node` command.
+To test Node environments, run the `$ rna test test/*.spec.js --node` command.
 
 ### Cloud
 
@@ -37,4 +37,4 @@ In order to run tests in the SauceLabs cloud, please [read this article](./Testi
 
 ## Coverage reports
 
-Adding the `--coverage` flag to the `unit` command, RNA will produce coverage reports in the `test/__coverage__` directory. Code coverage is provided by the [Istanbul](https://istanbul.js.org/) library in HTML and `lcov` formats, so you can monitor the coverage of a PR or the global state of the project using integrations like [Codecov](https://codecov.io/).
+Adding the `--coverage` flag to the `test` command, RNA will produce coverage reports in the `test/__coverage__` directory. Code coverage is provided by the [Istanbul](https://istanbul.js.org/) library in HTML and `lcov` formats, so you can monitor the coverage of a PR or the global state of the project using integrations like [Codecov](https://codecov.io/).

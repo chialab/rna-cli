@@ -18,7 +18,7 @@
 
 **Testing**
 
-* [Unit testing](./Unit-testing)
+* [Testing](./Testing)
 * [Testing with SauceLabs](./Testing-with-SauceLabs)
 
 **Dev**
