@@ -8,8 +8,7 @@ yarn-error.log
 .stylelintcache
 
 # TEST
-/test/__coverage__
-/test/__generated__
+coverage
 
 # BUILD
 /dist

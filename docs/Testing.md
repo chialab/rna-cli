@@ -37,4 +37,4 @@ In order to run tests in the SauceLabs cloud, please [read this article](./Testi
 
 ## Coverage reports
 
-Adding the `--coverage` flag to the `test` command, RNA will produce coverage reports in the `test/__coverage__` directory. Code coverage is provided by the [Istanbul](https://istanbul.js.org/) library in HTML and `lcov` formats, so you can monitor the coverage of a PR or the global state of the project using integrations like [Codecov](https://codecov.io/).
+Adding the `--coverage` flag to the `test` command, RNA will produce coverage reports in the `coverage` directory. Code coverage is provided by the [Istanbul](https://istanbul.js.org/) library in HTML and `lcov` formats, so you can monitor the coverage of a PR or the global state of the project using integrations like [Codecov](https://codecov.io/).

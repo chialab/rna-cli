@@ -69,6 +69,7 @@ module.exports = (program) => {
             options = Object.assign({}, options, {
                 targets: options.targets || await project.browserslist(),
                 root: project.directories.test || project.directory('test'),
+                coverageDir: project.directories.coverage || project.directory('coverage'),
                 project,
             });
 
