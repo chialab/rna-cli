@@ -11,12 +11,13 @@ const _ = require('lodash');
  * @returns {Promise}
  */
 module.exports = async function directoriesTask(app, otpions, project, templates) {
-    const directories = project.directories;
-    const srcDir = directories.src;
-    const publicDir = directories.public;
-    const styleFile = project.get('style') && project.file(project.get('style'));
-    const moduleFile = project.get('module') && project.file(project.get('module'));
-    const mainFile = project.get('main') && project.file(project.get('main'));
+    let directories = project.directories;
+    let srcDir = directories.src;
+    let publicDir = directories.public;
+    let styleFile = project.get('style') && project.file(project.get('style'));
+    let moduleFile = project.get('exports') && project.file(project.get('exports')) ||
+        project.get('module') && project.file(project.get('module'));
+    let mainFile = project.get('main') && project.file(project.get('main'));
 
     for (let dir in directories) {
         await directories[dir].ensure();
@@ -41,7 +42,7 @@ module.exports = async function directoriesTask(app, otpions, project, templates
     }
 
     if (moduleFile) {
-        // Ensure path specified in `package.json` "module" exists.
+        // Ensure path specified in `package.json` "exports" exists.
         if (await moduleFile.isNew()) {
             await moduleFile.write('');
         }

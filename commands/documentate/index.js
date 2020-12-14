@@ -49,10 +49,11 @@ module.exports = (program) => {
 
                 if (entry instanceof Project) {
                     // process package
-                    const libFile = entry.get('lib') && entry.file(entry.get('lib'));
-                    const moduleFile = entry.get('module') && entry.file(entry.get('module'));
-                    const mainFile = entry.get('main') && entry.file(entry.get('main'));
-                    const input = libFile || moduleFile || mainFile;
+                    let libFile = entry.get('lib') && entry.file(entry.get('lib'));
+                    let moduleFile = entry.get('exports') && entry.file(entry.get('exports')) ||
+                        entry.get('module') && entry.file(entry.get('module'));
+                    let mainFile = entry.get('main') && entry.file(entry.get('main'));
+                    let input = libFile || moduleFile || mainFile;
                     if (!input) {
                         throw new Error('no files for documentation found');
                     }

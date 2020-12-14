@@ -179,8 +179,10 @@ module.exports = async function npmTask(app, options, project, templates) {
         project.unset('directories.dist');
     }
     if (answers.module) {
+        project.set('exports', answers.exports);
         project.set('module', answers.module);
     } else {
+        project.unset('exports');
         project.unset('module');
     }
     if (answers.main) {
