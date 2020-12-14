@@ -23,8 +23,8 @@ module.exports = (program) => {
                 throw new Error('missing \'output\' property');
             }
 
-            const cwd = process.cwd();
-            const project = await Project.init(cwd);
+            let cwd = process.cwd();
+            let project = await Project.init(cwd);
 
             let entries;
             if (options.arguments.length) {
@@ -50,7 +50,9 @@ module.exports = (program) => {
                 if (entry instanceof Project) {
                     // process package
                     let libFile = entry.get('lib') && entry.file(entry.get('lib'));
-                    let moduleFile = entry.get('exports') && entry.file(entry.get('exports')) ||
+                    let exports = entry.get('exports');
+                    let moduleFile = typeof exports === 'string' && entry.file(exports) ||
+                        typeof exports === 'object' && ('.' in exports) && entry.file(exports['.']) ||
                         entry.get('module') && entry.file(entry.get('module'));
                     let mainFile = entry.get('main') && entry.file(entry.get('main'));
                     let input = libFile || moduleFile || mainFile;

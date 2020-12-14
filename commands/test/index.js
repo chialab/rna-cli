@@ -206,20 +206,33 @@ function runTest(project, runner, files, prepare, run, reports = []) {
 
     let root = project.parent || project;
     let tasks = [];
+    let warnings = [];
     let prepareSpecsTask, prepareRunnerTask, runPromise;
     let prepareSpecsObserver = new Observable(async (observer) => {
-        runner.on(TestRunner.PREPARE_START_EVENT, () => {
+        let onWarn = (message) => {
+            warnings.push(message);
+        };
+        let onStart = () => {
             observer.next('building specs...');
-        });
-
-        runner.on(TestRunner.PREPARE_PROGRESS_EVENT, (file) => {
+        };
+        let onProgress = (file) => {
             observer.next(`building ${root.relative(file)}...`);
-        });
-
-        runner.on(TestRunner.PREPARE_END_EVENT, () => {
-            prepareSpecsTask.output = '';
+        };
+        let onEnd = () => {
+            prepareSpecsTask.output = warnings.join('\n');
             observer.complete();
-        });
+            off();
+        };
+        let off = () => {
+            runner.off(TestRunner.PREPARE_START_EVENT, onStart);
+            runner.off(TestRunner.PREPARE_PROGRESS_EVENT, onProgress);
+            runner.off(TestRunner.PREPARE_END_EVENT, onEnd);
+        };
+
+        runner.on(TestRunner.PREPARE_START_EVENT, onStart);
+        runner.on(TestRunner.PREPARE_PROGRESS_EVENT, onProgress);
+        runner.on(TestRunner.PREPARE_END_EVENT, onEnd);
+        runner.on(TestRunner.PREPARE_WARN_EVENT, onWarn);
 
         runner.build(files)
             .catch((err) => observer.error(err));

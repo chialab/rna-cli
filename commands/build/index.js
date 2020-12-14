@@ -99,7 +99,9 @@ module.exports = (program) => {
                     app.logger.heading(`building project ${entry.get('name')}:`);
 
                     let libFile = entry.get('lib') && entry.file(entry.get('lib'));
-                    let moduleFile = entry.get('exports') && entry.file(entry.get('exports')) ||
+                    let exports = entry.get('exports');
+                    let moduleFile = typeof exports === 'string' && entry.file(exports) ||
+                        typeof exports === 'object' && ('.' in exports) && entry.file(exports['.']) ||
                         entry.get('module') && entry.file(entry.get('module'));
                     let mainFile = entry.get('main') && entry.file(entry.get('main'));
                     let browserFile = entry.get('browser') && entry.file(entry.get('browser'));

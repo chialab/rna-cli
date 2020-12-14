@@ -15,7 +15,9 @@ module.exports = async function directoriesTask(app, otpions, project, templates
     let srcDir = directories.src;
     let publicDir = directories.public;
     let styleFile = project.get('style') && project.file(project.get('style'));
-    let moduleFile = project.get('exports') && project.file(project.get('exports')) ||
+    let exports = project.get('exports');
+    let moduleFile = typeof exports === 'string' && project.file(exports) ||
+        typeof exports === 'object' && ('.' in exports) && project.file(exports['.']) ||
         project.get('module') && project.file(project.get('module'));
     let mainFile = project.get('main') && project.file(project.get('main'));
 
