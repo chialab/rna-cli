@@ -4,7 +4,7 @@ RNA can build (and bundle) style files with CSS or SCSS syntax:
 $ rna build src/index.scss --output public/index.css
 ```
 
-A source map will be generated (it can be disabled via the --no-map flag) and all included files will be linted (unless --no-lint is specified).
+A source map will be generated (it can be disabled via the --no-map flag).
 
 RNA will also minify the final CSS code if the flag `--production` is passed.
 

@@ -19,8 +19,8 @@ module.exports = (program) => {
         .option('[--bundle]', 'Should bundle dependencies along the source files.')
         .option('[--production]', 'Prepare output for production env.')
         .option('[--legacy]', 'Should generate legacy code.')
+        .option('[--lint]', 'Lint files before build.')
         .option('[--no-map]', 'Do not produce source map.')
-        .option('[--no-lint]', 'Do not lint files before build.')
         .option('[--recursive]', 'Recursively build monorepo packages.')
         .option('[--jsx.pragma]', 'The JSX pragma to use.')
         .option('[--jsx.pragmaFrag]', 'The JSX pragma fragment to use.')
@@ -547,7 +547,7 @@ async function buildEntry(app, project, entry, output, options) {
             bundle: options.bundle,
             production: options.production,
             map: options.map,
-            lint: options.lint !== false,
+            lint: options.lint,
             analyze: options.analyze,
             jsx: options.jsx != false ? {
                 module: options['jsx.module'],
@@ -571,7 +571,7 @@ async function buildEntry(app, project, entry, output, options) {
             targets: options.targets,
             production: options.production,
             map: options.map,
-            lint: options.lint !== false,
+            lint: options.lint,
         });
 
         // collect the generated Bundle
@@ -591,7 +591,7 @@ async function buildEntry(app, project, entry, output, options) {
             production: options.production,
             format: options.format,
             map: options.map,
-            lint: options.lint !== false,
+            lint: options.lint,
             base: Object.prototype.hasOwnProperty.call(options, 'base') ? options.base : undefined,
             icon: Object.prototype.hasOwnProperty.call(options, 'icon') ? options.icon : undefined,
             scripts: Object.prototype.hasOwnProperty.call(options, 'scripts') ? options.scripts : undefined,

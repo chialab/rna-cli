@@ -1,4 +1,4 @@
-JavaScript (or TypeScript) files typically require a lot of tasks, tools and configurations. RNA aims to provide a configuration-free task for JS distribution build, with a great support for source maps (it can be disabled via the `--no-map` flag) and linting all supported files (unless `--no-lint` is specified).
+JavaScript (or TypeScript) files typically require a lot of tasks, tools and configurations. RNA aims to provide a configuration-free task for JS distribution build, with a great support for source maps (it can be disabled via the `--no-map` flag).
 
 Example:
 ```sh

@@ -24,8 +24,8 @@ rna build <input> [...options]
 * `--bundle` Should bundle dependencies along the source files.
 * `--production` Minify the output of the JavaScript and CSS bundles.
 * `--legacy` Should generate legacy code.
+* `--lint` Lint files before build.
 * `--no-map` Do not produce source map.
-* `--no-lint` Do not lint files before build.
 * `--jsx.pragma` The JSX pragma to use.
 * `--jsx.pragmaFrag` The JSX pragma fragment to use.
 * `--jsx.module` The module to auto import for JSX pragma.
