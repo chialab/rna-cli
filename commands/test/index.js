@@ -199,12 +199,12 @@ module.exports = (program) => {
         });
 };
 
-function runTest(project, runner, files, prepare, run, reports = []) {
+async function runTest(project, runner, files, prepare, run, reports = []) {
     const Listr = require('listr');
     const TestRunner = require('../../lib/TestRunners/TestRunner');
     const { Observable } = require('rxjs');
 
-    let root = project.parent || project;
+    let root = await project.getParent() || project;
     let tasks = [];
     let warnings = [];
     let prepareSpecsTask, prepareRunnerTask, runPromise;
@@ -213,10 +213,10 @@ function runTest(project, runner, files, prepare, run, reports = []) {
             warnings.push(message);
         };
         let onStart = () => {
-            observer.next('building specs...');
+            observer.next('building specs');
         };
         let onProgress = (file) => {
-            observer.next(`building ${root.relative(file)}...`);
+            observer.next(`building ${root.relative(file)}`);
         };
         let onEnd = () => {
             prepareSpecsTask.output = warnings.join('\n');
@@ -244,13 +244,13 @@ function runTest(project, runner, files, prepare, run, reports = []) {
                 let runTask;
 
                 let runObserver = new Observable(async (observer) => {
-                    observer.next('setting up tests...');
+                    observer.next('setting up tests');
                     runTask.title = reporter.name;
 
                     runner.on(TestRunner.RUN_PROGRESS_EVENT, (reporterInstance, title) => {
                         if (reporter === reporterInstance) {
                             runTask.title = reporter.name;
-                            observer.next(`running ${title}...`);
+                            observer.next(`running ${title}`);
                         }
                     });
 
@@ -329,7 +329,8 @@ async function runTests(app, project, runners, files, prepare = true, run = true
     const { formatReport, Reporter } = require('../../lib/TestRunners/Reporter');
 
     let reports = [];
-    let list = new Listr(runners.map((runner) => runTest(project, runner, files, prepare, run, reports)), {
+    let steps = await Promise.all(runners.map((runner) => runTest(project, runner, files, prepare, run, reports)));
+    let list = new Listr(steps, {
         concurrent: true,
         renderer: process.stdout.isTTY ? Renderer : VerboseRenderer,
     });

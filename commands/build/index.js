@@ -385,7 +385,8 @@ async function runBundlers(app, project, bundlers, invalidate = []) {
     const Linter = require('../../lib/Linters/Linter');
 
     let warnings = [], analysis = [];
-    let list = new Listr(bundlers.map((bundler) => runBundler(project, bundler, invalidate, warnings, analysis)), {
+    let steps = await Promise.all(bundlers.map((bundler) => runBundler(project, bundler, invalidate, warnings, analysis)));
+    let list = new Listr(steps, {
         concurrent: true,
         renderer: process.stdout.isTTY ? Renderer : VerboseRenderer,
     });
@@ -409,21 +410,21 @@ async function runBundlers(app, project, bundlers, invalidate = []) {
     app.logger.newline();
 }
 
-function runBundler(project, bundler, invalidate = [], warnings = [], analysis = []) {
+async function runBundler(project, bundler, invalidate = [], warnings = [], analysis = []) {
     const Listr = require('listr');
     const Bundler = require('../../lib/Bundlers/Bundler');
     const { Observable } = require('rxjs');
 
     let bundlerTask, writerTask;
     let { output } = bundler.options;
-    let root = project.parent || project;
+    let root = await project.getParent() || project;
 
     let bundleObserver = new Observable((observer) => {
         let onStart = (input, code) => {
-            observer.next(`building ${code ? 'inline code' : `${project.relative(input)}`}...`);
+            observer.next(`building ${code ? 'inline code' : `${project.relative(input)}`}`);
         };
         let onProgress = (file) => {
-            observer.next(`building ${root.relative(file)}...`);
+            observer.next(`building ${root.relative(file)}`);
         };
         let onWarn = (message) => {
             warnings.push(message);
@@ -466,7 +467,7 @@ function runBundler(project, bundler, invalidate = [], warnings = [], analysis =
     let writeObserver = new Observable((observer) => {
         let files = [];
         let onProgress = (file) => {
-            observer.next(`writing ${project.relative(file)}...`);
+            observer.next(`writing ${project.relative(file)}`);
             if (files.indexOf(file) === -1) {
                 files.push(file);
             }
