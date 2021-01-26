@@ -8,7 +8,7 @@ module.exports = (program) => {
     program
         .command('config')
         .readme(`${__dirname}/README.md`)
-        .description('Set RNA cli configiration.')
+        .description('Set rna cli configuration.')
         .option('[key] [value]', 'The key/value pair to set.')
         .option('--delete', 'Remove the key.')
         .action(async (app, options) => {

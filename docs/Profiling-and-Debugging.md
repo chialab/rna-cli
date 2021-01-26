@@ -16,7 +16,7 @@ Open Chrome and navigate to `chrome://inspect`. The Node target should be now in
 
 # Using VS Code
 
-* Open the RNA CLI project in VS Code.
+* Open the rna cli project in VS Code.
 * Select from the `Debug` menu the `Start Debugging` command
 * Select Node.js app
 

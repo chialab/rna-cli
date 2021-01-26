@@ -50,7 +50,7 @@ $ docker run chialab/rna-cli rna --version
 * [**unit**](./commands/unit) - Run project unit tests.
 * [**publish**](./commands/publish) - Publish to NPM.
 * [**documentate**](./commands/documentate) - Generate API references.
-* [**config**](./commands/config) - Set RNA cli configuration.
+* [**config**](./commands/config) - Set rna cli configuration.
 
 ---
 
