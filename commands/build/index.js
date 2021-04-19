@@ -103,7 +103,7 @@ module.exports = (program) => {
                         (entry.getDefaultExport() && entry.file(entry.getDefaultExport())) ||
                         (entry.get('module') && entry.file(entry.get('module')));
                     let mainFile = entry.get('main') && entry.file(entry.get('main'));
-                    let browserFile = entry.get('browser') && entry.file(entry.get('browser'));
+                    let browserFile = typeof entry.get('browser') === 'string' && entry.file(entry.get('browser'));
                     let styleFile = entry.get('style') && entry.file(entry.get('style'));
 
                     let output;
